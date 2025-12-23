@@ -1,0 +1,188 @@
+/* pages/patrol/create/create.wxss */
+
+.section {
+  margin-bottom: 24rpx;
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 24rpx;
+  display: flex;
+  align-items: center;
+}
+
+/* 位置信息 */
+.location-info {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 24rpx;
+  background: var(--bg-tertiary);
+  border-radius: 16rpx;
+  border: 1px solid var(--border-color);
+}
+
+.location-text {
+  flex: 1;
+  font-size: 26rpx;
+  color: var(--text-secondary);
+  word-break: break-all;
+}
+
+.btn-location {
+  padding: 16rpx 24rpx;
+  background: linear-gradient(135deg, rgba(216, 180, 254, 0.15), rgba(192, 132, 252, 0.15));
+  color: var(--accent-primary);
+  border: 1px solid var(--accent-primary);
+  border-radius: 12rpx;
+  font-size: 24rpx;
+  font-weight: 600;
+}
+
+/* Picker */
+.picker-display {
+  padding: 24rpx;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 16rpx;
+  color: var(--text-primary);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.picker-arrow {
+  font-size: 40rpx;
+  color: var(--text-muted);
+  font-weight: 300;
+}
+
+/* 严重程度选择器 */
+.severity-selector {
+  display: flex;
+  gap: 16rpx;
+}
+
+.severity-item {
+  flex: 1;
+  padding: 24rpx 16rpx;
+  background: var(--bg-tertiary);
+  border: 2rpx solid var(--border-color);
+  border-radius: 16rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+  transition: all 0.3s ease;
+}
+
+.severity-item.active {
+  background: linear-gradient(135deg, rgba(216, 180, 254, 0.15), rgba(192, 132, 252, 0.15));
+  border-color: var(--accent-primary);
+  transform: scale(1.05);
+}
+
+.severity-star {
+  font-size: 48rpx;
+  color: var(--text-muted);
+}
+
+.severity-item.active .severity-star {
+  color: #f59e0b;
+}
+
+.severity-text {
+  font-size: 24rpx;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.severity-item.active .severity-text {
+  color: var(--accent-primary);
+}
+
+/* 照片网格 */
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16rpx;
+  margin-bottom: 16rpx;
+}
+
+.photo-item {
+  aspect-ratio: 1;
+  border-radius: 16rpx;
+  overflow: hidden;
+  position: relative;
+}
+
+.photo-item image {
+  width: 100%;
+  height: 100%;
+}
+
+.photo-delete {
+  position: absolute;
+  top: 8rpx;
+  right: 8rpx;
+  width: 48rpx;
+  height: 48rpx;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36rpx;
+  font-weight: 300;
+  backdrop-filter: blur(8rpx);
+}
+
+.photo-add {
+  aspect-ratio: 1;
+  background: var(--bg-tertiary);
+  border: 2rpx dashed var(--border-color);
+  border-radius: 16rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+  transition: all 0.3s ease;
+}
+
+.photo-add:active {
+  background: var(--bg-secondary);
+  border-color: var(--accent-primary);
+}
+
+.add-icon {
+  font-size: 64rpx;
+  color: var(--text-muted);
+  font-weight: 300;
+}
+
+.add-text {
+  font-size: 22rpx;
+  color: var(--text-muted);
+}
+
+.photo-tip {
+  font-size: 22rpx;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* 提交区域 */
+.submit-section {
+  display: flex;
+  gap: 24rpx;
+  margin-top: 48rpx;
+  padding-bottom: 40rpx;
+}
+
+.submit-section .btn {
+  flex: 1;
+}

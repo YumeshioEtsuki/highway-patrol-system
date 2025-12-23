@@ -1,0 +1,58 @@
+{
+  "pages": [
+    "pages/login/login",
+    "pages/register/register",
+    "pages/patrol/list/list",
+    "pages/patrol/create/create",
+    "pages/patrol/detail/detail",
+    "pages/admin/list/list",
+    "pages/admin/detail/detail",
+    "pages/profile/profile"
+  ],
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#1a2332",
+    "navigationBarTitleText": "公路巡查系统",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#0f1419"
+  },
+  "lazyCodeLoading": "requiredComponents",
+  "tabBar": {
+    "custom": false,
+    "color": "#7d8a99",
+    "selectedColor": "#c084fc",
+    "backgroundColor": "#1a2332",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/patrol/list/list",
+        "text": "巡查",
+        "iconPath": "/images/tab/patrol.png",
+        "selectedIconPath": "/images/tab/patrol-active.png"
+      },
+      {
+        "pagePath": "pages/admin/list/list",
+        "text": "管理",
+        "iconPath": "/images/tab/admin.png",
+        "selectedIconPath": "/images/tab/admin-active.png"
+      },
+      {
+        "pagePath": "pages/profile/profile",
+        "text": "我的",
+        "iconPath": "/images/tab/profile.png",
+        "selectedIconPath": "/images/tab/profile-active.png"
+      }
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "requiredPrivateInfos": [
+    "getLocation",
+    "chooseLocation"
+  ],
+  "permission": {
+    "scope.userLocation": {
+      "desc": "用于记录巡查位置"
+    }
+  }
+}

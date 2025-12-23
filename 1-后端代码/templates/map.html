@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>世界地图分析 - 公路巡查系统</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"></noscript>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+  <style>
+    :root{--bg:#0f172a;--panel:rgba(255,255,255,0.02);--stroke:rgba(255,255,255,0.08);--muted:#94a3b8;--primary:#5b8bff;--accent:#7af0d8;--radius:18px;--shadow:0 20px 60px rgba(0,0,0,0.35);} 
+    *{box-sizing:border-box}
+    body{font-family:"Space Grotesk","Microsoft YaHei",sans-serif;margin:0;min-height:100vh;background:radial-gradient(120% 120% at 20% 20%, rgba(91,139,255,0.25), transparent 45%),radial-gradient(100% 140% at 80% 10%, rgba(122,240,216,0.18), transparent 50%),#050914;color:#f4f6fb;padding:26px 18px}
+    .page{max-width:1200px;margin:0 auto;background:var(--panel);border:1px solid var(--stroke);border-radius:18px;box-shadow:var(--shadow);backdrop-filter:blur(10px);overflow:hidden}
+    .hero{padding:22px 26px;background:linear-gradient(120deg, rgba(91,139,255,0.16), rgba(122,240,216,0.12));border-bottom:1px solid var(--stroke);display:flex;justify-content:space-between;align-items:center}
+    .hero h1{margin:0;font-size:24px}
+    .content{display:grid;grid-template-columns:1.4fr 1fr;gap:12px;padding:16px}
+    .card{background:rgba(255,255,255,0.03);border:1px solid var(--stroke);border-radius:14px;padding:14px}
+    #worldMap{width:100%;height:620px;border-radius:12px}
+    .chart{width:100%;height:190px;margin-top:10px}
+    .inline-link{color:#9fd6ff;text-decoration:none}
+    .inline-link:hover{text-decoration:underline}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="hero">
+      <div>
+        <h1 id="pageTitle">🌍 世界地图分析</h1>
+        <small id="pageSubtitle" style="color:var(--muted)">点击大洲查看区域统计，或选择下拉菜单查看全球数据</small>
+      </div>
+      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+        <div style="display:flex; gap:6px; background:rgba(255,255,255,0.04); border:1px solid var(--stroke); border-radius:8px; padding:3px;">
+          <button id="viewWorld" style="padding:6px 14px; background:rgba(91,139,255,0.9); border:none; border-radius:6px; color:#fff; font-size:13px; cursor:pointer; transition:all 0.2s ease; font-weight:500;">🌍 世界</button>
+          <button id="viewChina" style="padding:6px 14px; background:transparent; border:none; border-radius:6px; color:#94a3b8; font-size:13px; cursor:pointer; transition:all 0.2s ease; font-weight:500;">🇨🇳 中国</button>
+        </div>
+        <select id="regionSelector" style="padding:8px 14px;background:rgba(255,255,255,0.05);border:1px solid var(--stroke);border-radius:8px;color:#cbd5e1;font-size:13px;cursor:pointer">
+          <option value="">全球总体</option>
+          <option value="Asia">亚洲 Asia</option>
+          <option value="Europe">欧洲 Europe</option>
+          <option value="North America">北美洲 North America</option>
+          <option value="South America">南美洲 South America</option>
+          <option value="Africa">非洲 Africa</option>
+          <option value="Oceania">大洋洲 Oceania</option>
+          <option value="Antarctica">南极洲 Antarctica</option>
+        </select>
+        <select id="provinceSelector" style="display:none; padding:8px 14px;background:rgba(255,255,255,0.05);border:1px solid var(--stroke);border-radius:8px;color:#cbd5e1;font-size:13px;cursor:pointer">
+          <option value="">全国总体</option>
+          <option value="beijing">北京市</option>
+          <option value="tianjin">天津市</option>
+          <option value="shanghai">上海市</option>
+          <option value="chongqing">重庆市</option>
+          <option value="hebei">河北省</option>
+          <option value="shanxi">山西省</option>
+          <option value="liaoning">辽宁省</option>
+          <option value="jilin">吉林省</option>
+          <option value="heilongjiang">黑龙江省</option>
+          <option value="jiangsu">江苏省</option>
+          <option value="zhejiang">浙江省</option>
+          <option value="anhui">安徽省</option>
+          <option value="fujian">福建省</option>
+          <option value="jiangxi">江西省</option>
+          <option value="shandong">山东省</option>
+          <option value="henan">河南省</option>
+          <option value="hubei">湖北省</option>
+          <option value="hunan">湖南省</option>
+          <option value="guangdong">广东省</option>
+          <option value="hainan">海南省</option>
+          <option value="sichuan">四川省</option>
+          <option value="guizhou">贵州省</option>
+          <option value="yunnan">云南省</option>
+          <option value="shaanxi">陕西省</option>
+          <option value="gansu">甘肃省</option>
+          <option value="qinghai">青海省</option>
+          <option value="taiwan">台湾省</option>
+          <option value="neimenggu">内蒙古自治区</option>
+          <option value="guangxi">广西壮族自治区</option>
+          <option value="xizang">西藏自治区</option>
+          <option value="ningxia">宁夏回族自治区</option>
+          <option value="xinjiang">新疆维吾尔自治区</option>
+          <option value="xianggang">香港特别行政区</option>
+          <option value="aomen">澳门特别行政区</option>
+        </select>
+        <a id="backBtn1" class="inline-link" href="/patrol.html" style="display:inline-block; padding:6px 12px; background:rgba(91,139,255,0.1); border:1px solid rgba(91,139,255,0.3); border-radius:6px; text-decoration:none; color:#9fd6ff; white-space:nowrap; transition:all 0.2s ease;" title="返回巡查页面">🔙 返回巡查</a>
+        <a id="backBtn2" class="inline-link" href="/admin.html" style="display:none; padding:6px 12px; background:rgba(91,139,255,0.1); border:1px solid rgba(91,139,255,0.3); border-radius:6px; text-decoration:none; color:#9fd6ff; white-space:nowrap; transition:all 0.2s ease;" title="返回管理员页面">📊 返回管理员</a>
+      </div>
+    </div>
+    <div class="content">
+      <div class="card">
+        <div id="worldMap"></div>
+      </div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <h3 id="regionTitle" style="margin:0;color:#cbd5e1">全球总体</h3>
+          <small id="recordCount" style="color:var(--muted)">加载中...</small>
+        </div>
+        <div id="pie" class="chart"></div>
+        <div id="bar" class="chart"></div>
+        <div id="line" class="chart"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    console.log('✅ 页面JS开始执行');
+    
+    // 当前视图状态
+    let currentView = 'world'; // 'world' 或 'china'
+    let currentProvinceAdcode = null;
+    let currentProvinceName = '';
+    let currentCityName = '';
+    const geoCache = {}; // 缓存已加载的 GeoJSON，避免重复请求
+    
+    // 中国省份ID到名称的映射
+    const PROVINCE_NAMES = {
+      'beijing': '北京市', 'tianjin': '天津市', 'shanghai': '上海市', 'chongqing': '重庆市',
+      'hebei': '河北省', 'shanxi': '山西省', 'liaoning': '辽宁省', 'jilin': '吉林省',
+      'heilongjiang': '黑龙江省', 'jiangsu': '江苏省', 'zhejiang': '浙江省', 'anhui': '安徽省',
+      'fujian': '福建省', 'jiangxi': '江西省', 'shandong': '山东省', 'henan': '河南省',
+      'hubei': '湖北省', 'hunan': '湖南省', 'guangdong': '广东省', 'hainan': '海南省',
+      'sichuan': '四川省', 'guizhou': '贵州省', 'yunnan': '云南省', 'shaanxi': '陕西省',
+      'gansu': '甘肃省', 'qinghai': '青海省', 'taiwan': '台湾省',
+      'neimenggu': '内蒙古自治区', 'guangxi': '广西壮族自治区', 'xizang': '西藏自治区',
+      'ningxia': '宁夏回族自治区', 'xinjiang': '新疆维吾尔自治区',
+      'xianggang': '香港特别行政区', 'aomen': '澳门特别行政区'
+    };
+
+    // 省级中文名到行政区划代码映射（用于加载省级与市级边界）
+    const PROVINCE_NAME_TO_ADCODE = {
+      '北京市': '110000','天津市': '120000','河北省': '130000','山西省': '140000','内蒙古自治区': '150000',
+      '辽宁省': '210000','吉林省': '220000','黑龙江省': '230000','上海市': '310000','江苏省': '320000',
+      '浙江省': '330000','安徽省': '340000','福建省': '350000','江西省': '360000','山东省': '370000',
+      '河南省': '410000','湖北省': '420000','湖南省': '430000','广东省': '440000','广西壮族自治区': '450000',
+      '海南省': '460000','重庆市': '500000','四川省': '510000','贵州省': '520000','云南省': '530000',
+      '西藏自治区': '540000','陕西省': '610000','甘肃省': '620000','青海省': '630000','宁夏回族自治区': '640000',
+      '新疆维吾尔自治区': '650000','台湾省': '710000','香港特别行政区': '810000','澳门特别行政区': '820000'
+    };
+
+    // 反查：中文名 -> selector 用的 key
+    const PROVINCE_NAME_TO_ID = Object.entries(PROVINCE_NAMES).reduce((acc, [id, name]) => {
+      acc[name] = id;
+      return acc;
+    }, {});
+    
+    // 过滤掉小岛/南海诸岛等干扰要素
+    function filterGeojson(geoJson, options = {}) {
+      const {
+        dropTinyPolygons = true,
+        ratioThreshold = 0.015, // 相对主轮廓面积的阈值
+        minArea = 0.002        // 绝对面积兜底，过滤极小碎片
+      } = options;
+
+      const block = /islands?|is\.|岛|群岛|诸岛|南海诸岛|南沙群岛|西沙群岛|中沙群岛|黄岩岛|reunion|mayotte|guadeloupe|martinique|saint|圣诞岛|安的列斯|马提尼克|留尼汪|马约特/i;
+      const dropByName = new Set(['南海诸岛', '南沙群岛', '西沙群岛', '中沙群岛', '黄岩岛']);
+
+      const bboxArea = (polygonCoords) => {
+        // polygonCoords: [ [ [lon, lat], ... ] ]
+        const flat = polygonCoords.flat();
+        const lats = flat.map(p => p[1]);
+        const lons = flat.map(p => p[0]);
+        const latMin = Math.min(...lats), latMax = Math.max(...lats);
+        const lonMin = Math.min(...lons), lonMax = Math.max(...lons);
+        return (latMax - latMin) * (lonMax - lonMin);
+      };
+
+      const cleanGeometry = (geometry) => {
+        if (!dropTinyPolygons || !geometry || !geometry.type) return geometry;
+
+        if (geometry.type === 'MultiPolygon') {
+          const polys = geometry.coordinates || [];
+          if (!polys.length) return geometry;
+          const areas = polys.map(p => bboxArea(p));
+          const maxArea = Math.max(...areas);
+          const kept = polys.filter((poly, idx) => {
+            const area = areas[idx];
+            return area >= maxArea * ratioThreshold || area >= minArea;
+          });
+          const coords = kept.length ? kept : [polys[areas.indexOf(maxArea)]]; // 至少保留主体轮廓
+          return { ...geometry, coordinates: coords };
+        }
+
+        if (geometry.type === 'Polygon') {
+          const coords = geometry.coordinates || [];
+          if (!coords.length) return geometry;
+          const area = bboxArea(coords);
+          if (area < minArea) return geometry; // 单一主体，直接保留
+          return geometry;
+        }
+
+        return geometry;
+      };
+
+      const cleanedFeatures = (geoJson.features || [])
+        .filter(f => {
+          const name = (f.properties && (f.properties.name || f.properties.NL_NAME_1 || f.properties.fullname)) || '';
+          if (dropByName.has(name.trim())) return false;
+          return !block.test(name);
+        })
+        .map(f => ({ ...f, geometry: cleanGeometry(f.geometry) }));
+
+      return { ...geoJson, features: cleanedFeatures };
+    }
+
+    // 计算指定要素的经纬度边界（用于精确城市筛选）
+    function getFeatureBoundsByName(geoJson, targetName) {
+      if (!geoJson || !geoJson.features) return null;
+      const match = geoJson.features.find(f => {
+        const name = (f.properties && (f.properties.name || f.properties.NL_NAME_1 || f.properties.fullname)) || '';
+        return name === targetName;
+      });
+      if (!match || !match.geometry) return null;
+
+      const collect = [];
+      const pushCoords = (coords) => {
+        coords.forEach(c => {
+          if (Array.isArray(c[0])) {
+            pushCoords(c);
+          } else if (Array.isArray(c) && c.length >= 2) {
+            collect.push({ lon: c[0], lat: c[1] });
+          }
+        });
+      };
+
+      if (match.geometry.type === 'Polygon') {
+        pushCoords(match.geometry.coordinates || []);
+      } else if (match.geometry.type === 'MultiPolygon') {
+        match.geometry.coordinates.forEach(p => pushCoords(p));
+      }
+
+      if (!collect.length) return null;
+      const lats = collect.map(p => p.lat);
+      const lons = collect.map(p => p.lon);
+      return {
+        lat_min: Math.min(...lats),
+        lat_max: Math.max(...lats),
+        lon_min: Math.min(...lons),
+        lon_max: Math.max(...lons)
+      };
+    }
+
+    // 内嵌简化的世界地图GeoJSON数据
+    const WORLD_MAP_DATA = {"type":"FeatureCollection","features":[
+      {"type":"Feature","properties":{"name":"China"},"geometry":{"type":"Polygon","coordinates":[[[73,53],[73,18],[135,18],[135,53],[73,53]]]}},
+      {"type":"Feature","properties":{"name":"United States"},"geometry":{"type":"Polygon","coordinates":[[[-125,50],[-125,25],[-65,25],[-65,50],[-125,50]]]}},
+      {"type":"Feature","properties":{"name":"Russia"},"geometry":{"type":"Polygon","coordinates":[[[30,80],[30,42],[180,42],[180,80],[30,80]]]}},
+      {"type":"Feature","properties":{"name":"Brazil"},"geometry":{"type":"Polygon","coordinates":[[[-73,5],[-73,-34],[-34,-34],[-34,5],[-73,5]]]}},
+      {"type":"Feature","properties":{"name":"Canada"},"geometry":{"type":"Polygon","coordinates":[[[-141,83],[-141,42],[-52,42],[-52,83],[-141,83]]]}},
+      {"type":"Feature","properties":{"name":"Australia"},"geometry":{"type":"Polygon","coordinates":[[[113,-44],[113,-10],[154,-10],[154,-44],[113,-44]]]}},
+      {"type":"Feature","properties":{"name":"India"},"geometry":{"type":"Polygon","coordinates":[[[68,35],[68,8],[97,8],[97,35],[68,35]]]}},
+      {"type":"Feature","properties":{"name":"Argentina"},"geometry":{"type":"Polygon","coordinates":[[[-73,-22],[-73,-55],[-53,-55],[-53,-22],[-73,-22]]]}},
+      {"type":"Feature","properties":{"name":"Kazakhstan"},"geometry":{"type":"Polygon","coordinates":[[[46,55],[46,40],[87,40],[87,55],[46,55]]]}},
+      {"type":"Feature","properties":{"name":"Algeria"},"geometry":{"type":"Polygon","coordinates":[[[-9,37],[-9,19],[12,19],[12,37],[-9,37]]]}},
+      {"type":"Feature","properties":{"name":"Mexico"},"geometry":{"type":"Polygon","coordinates":[[[-117,33],[-117,14],[-86,14],[-86,33],[-117,33]]]}},
+      {"type":"Feature","properties":{"name":"Saudi Arabia"},"geometry":{"type":"Polygon","coordinates":[[[34,32],[34,16],[56,16],[56,32],[34,32]]]}},
+      {"type":"Feature","properties":{"name":"Indonesia"},"geometry":{"type":"Polygon","coordinates":[[[95,-11],[95,6],[141,6],[141,-11],[95,-11]]]}},
+      {"type":"Feature","properties":{"name":"Libya"},"geometry":{"type":"Polygon","coordinates":[[[10,33],[10,20],[25,20],[25,33],[10,33]]]}},
+      {"type":"Feature","properties":{"name":"Iran"},"geometry":{"type":"Polygon","coordinates":[[[44,40],[44,25],[63,25],[63,40],[44,40]]]}},
+      {"type":"Feature","properties":{"name":"Mongolia"},"geometry":{"type":"Polygon","coordinates":[[[88,52],[88,42],[120,42],[120,52],[88,52]]]}},
+      {"type":"Feature","properties":{"name":"Chad"},"geometry":{"type":"Polygon","coordinates":[[[14,24],[14,8],[24,8],[24,24],[14,24]]]}},
+      {"type":"Feature","properties":{"name":"Niger"},"geometry":{"type":"Polygon","coordinates":[[[0,24],[0,11],[16,11],[16,24],[0,24]]]}},
+      {"type":"Feature","properties":{"name":"Angola"},"geometry":{"type":"Polygon","coordinates":[[[12,-5],[12,-18],[24,-18],[24,-5],[12,-5]]]}},
+      {"type":"Feature","properties":{"name":"Mali"},"geometry":{"type":"Polygon","coordinates":[[[-12,25],[-12,11],[4,11],[4,25],[-12,25]]]}},
+      {"type":"Feature","properties":{"name":"South Africa"},"geometry":{"type":"Polygon","coordinates":[[[16,-35],[16,-23],[33,-23],[33,-35],[16,-35]]]}},
+      {"type":"Feature","properties":{"name":"Colombia"},"geometry":{"type":"Polygon","coordinates":[[[-79,13],[-79,-4],[-66,-4],[-66,13],[-79,13]]]}},
+      {"type":"Feature","properties":{"name":"Ethiopia"},"geometry":{"type":"Polygon","coordinates":[[[33,15],[33,3],[48,3],[48,15],[33,15]]]}},
+      {"type":"Feature","properties":{"name":"Bolivia"},"geometry":{"type":"Polygon","coordinates":[[[-69,-10],[-69,-23],[-57,-23],[-57,-10],[-69,-10]]]}},
+      {"type":"Feature","properties":{"name":"Mauritania"},"geometry":{"type":"Polygon","coordinates":[[[-17,27],[-17,15],[-5,15],[-5,27],[-17,27]]]}},
+      {"type":"Feature","properties":{"name":"Egypt"},"geometry":{"type":"Polygon","coordinates":[[[25,32],[25,22],[37,22],[37,32],[25,32]]]}},
+      {"type":"Feature","properties":{"name":"Tanzania"},"geometry":{"type":"Polygon","coordinates":[[[30,-1],[30,-12],[40,-12],[40,-1],[30,-1]]]}},
+      {"type":"Feature","properties":{"name":"Nigeria"},"geometry":{"type":"Polygon","coordinates":[[[3,14],[3,4],[15,4],[15,14],[3,14]]]}},
+      {"type":"Feature","properties":{"name":"Venezuela"},"geometry":{"type":"Polygon","coordinates":[[[-73,12],[-73,1],[-60,1],[-60,12],[-73,12]]]}},
+      {"type":"Feature","properties":{"name":"Pakistan"},"geometry":{"type":"Polygon","coordinates":[[[61,37],[61,24],[77,24],[77,37],[61,37]]]}},
+      {"type":"Feature","properties":{"name":"Mozambique"},"geometry":{"type":"Polygon","coordinates":[[[30,-11],[30,-27],[41,-27],[41,-11],[30,-11]]]}},
+      {"type":"Feature","properties":{"name":"Turkey"},"geometry":{"type":"Polygon","coordinates":[[[26,42],[26,36],[45,36],[45,42],[26,42]]]}},
+      {"type":"Feature","properties":{"name":"Chile"},"geometry":{"type":"Polygon","coordinates":[[[-75,-18],[-75,-56],[-66,-56],[-66,-18],[-75,-18]]]}},
+      {"type":"Feature","properties":{"name":"Zambia"},"geometry":{"type":"Polygon","coordinates":[[[22,-8],[22,-18],[34,-18],[34,-8],[22,-8]]]}},
+      {"type":"Feature","properties":{"name":"Morocco"},"geometry":{"type":"Polygon","coordinates":[[[-13,36],[-13,28],[-1,28],[-1,36],[-13,36]]]}},
+      {"type":"Feature","properties":{"name":"Afghanistan"},"geometry":{"type":"Polygon","coordinates":[[[61,38],[61,29],[75,29],[75,38],[61,38]]]}},
+      {"type":"Feature","properties":{"name":"Somalia"},"geometry":{"type":"Polygon","coordinates":[[[41,12],[41,-2],[51,-2],[51,12],[41,12]]]}},
+      {"type":"Feature","properties":{"name":"Central African Rep."},"geometry":{"type":"Polygon","coordinates":[[[15,11],[15,2],[28,2],[28,11],[15,11]]]}},
+      {"type":"Feature","properties":{"name":"Ukraine"},"geometry":{"type":"Polygon","coordinates":[[[22,52],[22,45],[40,45],[40,52],[22,52]]]}},
+      {"type":"Feature","properties":{"name":"Botswana"},"geometry":{"type":"Polygon","coordinates":[[[20,-18],[20,-27],[29,-27],[29,-18],[20,-18]]]}},
+      {"type":"Feature","properties":{"name":"Madagascar"},"geometry":{"type":"Polygon","coordinates":[[[43,-12],[43,-26],[51,-26],[51,-12],[43,-12]]]}},
+      {"type":"Feature","properties":{"name":"Kenya"},"geometry":{"type":"Polygon","coordinates":[[[34,5],[34,-5],[42,-5],[42,5],[34,5]]]}},
+      {"type":"Feature","properties":{"name":"France"},"geometry":{"type":"Polygon","coordinates":[[[-5,51],[-5,42],[10,42],[10,51],[-5,51]]]}},
+      {"type":"Feature","properties":{"name":"Yemen"},"geometry":{"type":"Polygon","coordinates":[[[43,19],[43,12],[54,12],[54,19],[43,19]]]}},
+      {"type":"Feature","properties":{"name":"Thailand"},"geometry":{"type":"Polygon","coordinates":[[[97,21],[97,6],[106,6],[106,21],[97,21]]]}},
+      {"type":"Feature","properties":{"name":"Spain"},"geometry":{"type":"Polygon","coordinates":[[[-10,44],[-10,36],[4,36],[4,44],[-10,44]]]}},
+      {"type":"Feature","properties":{"name":"Turkmenistan"},"geometry":{"type":"Polygon","coordinates":[[[53,43],[53,36],[67,36],[67,43],[53,43]]]}},
+      {"type":"Feature","properties":{"name":"Cameroon"},"geometry":{"type":"Polygon","coordinates":[[[9,13],[9,2],[16,2],[16,13],[9,13]]]}},
+      {"type":"Feature","properties":{"name":"Papua New Guinea"},"geometry":{"type":"Polygon","coordinates":[[[141,-1],[141,-12],[156,-12],[156,-1],[141,-1]]]}},
+      {"type":"Feature","properties":{"name":"Sweden"},"geometry":{"type":"Polygon","coordinates":[[[11,69],[11,55],[24,55],[24,69],[11,69]]]}},
+      {"type":"Feature","properties":{"name":"Uzbekistan"},"geometry":{"type":"Polygon","coordinates":[[[56,46],[56,37],[73,37],[73,46],[56,46]]]}},
+      {"type":"Feature","properties":{"name":"Iraq"},"geometry":{"type":"Polygon","coordinates":[[[39,37],[39,29],[49,29],[49,37],[39,37]]]}},
+      {"type":"Feature","properties":{"name":"Paraguay"},"geometry":{"type":"Polygon","coordinates":[[[-63,-20],[-63,-28],[-54,-28],[-54,-20],[-63,-20]]]}},
+      {"type":"Feature","properties":{"name":"Zimbabwe"},"geometry":{"type":"Polygon","coordinates":[[[25,-16],[25,-23],[33,-23],[33,-16],[25,-16]]]}},
+      {"type":"Feature","properties":{"name":"Japan"},"geometry":{"type":"Polygon","coordinates":[[[130,46],[130,31],[146,31],[146,46],[130,46]]]}},
+      {"type":"Feature","properties":{"name":"Germany"},"geometry":{"type":"Polygon","coordinates":[[[6,55],[6,47],[15,47],[15,55],[6,55]]]}},
+      {"type":"Feature","properties":{"name":"Congo"},"geometry":{"type":"Polygon","coordinates":[[[12,4],[12,-13],[32,-13],[32,4],[12,4]]]}},
+      {"type":"Feature","properties":{"name":"Finland"},"geometry":{"type":"Polygon","coordinates":[[[20,70],[20,60],[32,60],[32,70],[20,70]]]}},
+      {"type":"Feature","properties":{"name":"Malaysia"},"geometry":{"type":"Polygon","coordinates":[[[100,7],[100,1],[119,1],[119,7],[100,7]]]}},
+      {"type":"Feature","properties":{"name":"Vietnam"},"geometry":{"type":"Polygon","coordinates":[[[102,24],[102,8],[110,8],[110,24],[102,24]]]}},
+      {"type":"Feature","properties":{"name":"Norway"},"geometry":{"type":"Polygon","coordinates":[[[5,71],[5,58],[31,58],[31,71],[5,71]]]}},
+      {"type":"Feature","properties":{"name":"Poland"},"geometry":{"type":"Polygon","coordinates":[[[14,55],[14,49],[24,49],[24,55],[14,55]]]}},
+      {"type":"Feature","properties":{"name":"Italy"},"geometry":{"type":"Polygon","coordinates":[[[7,47],[7,37],[19,37],[19,47],[7,47]]]}},
+      {"type":"Feature","properties":{"name":"Philippines"},"geometry":{"type":"Polygon","coordinates":[[[117,21],[117,5],[127,5],[127,21],[117,21]]]}},
+      {"type":"Feature","properties":{"name":"Ecuador"},"geometry":{"type":"Polygon","coordinates":[[[-81,2],[-81,-5],[-75,-5],[-75,2],[-81,2]]]}},
+      {"type":"Feature","properties":{"name":"Burkina Faso"},"geometry":{"type":"Polygon","coordinates":[[[-6,15],[-6,10],[3,10],[3,15],[-6,15]]]}},
+      {"type":"Feature","properties":{"name":"New Zealand"},"geometry":{"type":"Polygon","coordinates":[[[166,-34],[166,-47],[179,-47],[179,-34],[166,-34]]]}},
+      {"type":"Feature","properties":{"name":"Gabon"},"geometry":{"type":"Polygon","coordinates":[[[9,2],[9,-4],[15,-4],[15,2],[9,2]]]}},
+      {"type":"Feature","properties":{"name":"Guinea"},"geometry":{"type":"Polygon","coordinates":[[[-15,13],[-15,7],[-7,7],[-7,13],[-15,13]]]}},
+      {"type":"Feature","properties":{"name":"United Kingdom"},"geometry":{"type":"Polygon","coordinates":[[[-8,61],[-8,50],[2,50],[2,61],[-8,61]]]}},
+      {"type":"Feature","properties":{"name":"Ghana"},"geometry":{"type":"Polygon","coordinates":[[[-4,12],[-4,5],[2,5],[2,12],[-4,12]]]}},
+      {"type":"Feature","properties":{"name":"Romania"},"geometry":{"type":"Polygon","coordinates":[[[20,48],[20,44],[30,44],[30,48],[20,48]]]}},
+      {"type":"Feature","properties":{"name":"Laos"},"geometry":{"type":"Polygon","coordinates":[[[100,23],[100,14],[108,14],[108,23],[100,23]]]}},
+      {"type":"Feature","properties":{"name":"Uganda"},"geometry":{"type":"Polygon","coordinates":[[[30,4],[30,-2],[35,-2],[35,4],[30,4]]]}},
+      {"type":"Feature","properties":{"name":"Guyana"},"geometry":{"type":"Polygon","coordinates":[[[-61,9],[-61,1],[-57,1],[-57,9],[-61,9]]]}},
+      {"type":"Feature","properties":{"name":"Oman"},"geometry":{"type":"Polygon","coordinates":[[[52,27],[52,17],[60,17],[60,27],[52,27]]]}},
+      {"type":"Feature","properties":{"name":"Belarus"},"geometry":{"type":"Polygon","coordinates":[[[23,57],[23,51],[33,51],[33,57],[23,57]]]}},
+      {"type":"Feature","properties":{"name":"Kyrgyzstan"},"geometry":{"type":"Polygon","coordinates":[[[70,43],[70,40],[80,40],[80,43],[70,43]]]}},
+      {"type":"Feature","properties":{"name":"Senegal"},"geometry":{"type":"Polygon","coordinates":[[[-18,17],[-18,12],[-11,12],[-11,17],[-18,17]]]}},
+      {"type":"Feature","properties":{"name":"Syria"},"geometry":{"type":"Polygon","coordinates":[[[36,38],[36,33],[42,33],[42,38],[36,38]]]}},
+      {"type":"Feature","properties":{"name":"Cambodia"},"geometry":{"type":"Polygon","coordinates":[[[103,15],[103,10],[108,10],[108,15],[103,15]]]}},
+      {"type":"Feature","properties":{"name":"Uruguay"},"geometry":{"type":"Polygon","coordinates":[[[-58,-31],[-58,-35],[-53,-35],[-53,-31],[-58,-31]]]}},
+      {"type":"Feature","properties":{"name":"Tunisia"},"geometry":{"type":"Polygon","coordinates":[[[8,38],[8,31],[12,31],[12,38],[8,38]]]}},
+      {"type":"Feature","properties":{"name":"Bangladesh"},"geometry":{"type":"Polygon","coordinates":[[[88,27],[88,21],[93,21],[93,27],[88,27]]]}},
+      {"type":"Feature","properties":{"name":"Nepal"},"geometry":{"type":"Polygon","coordinates":[[[80,31],[80,26],[88,26],[88,31],[80,31]]]}},
+      {"type":"Feature","properties":{"name":"Greece"},"geometry":{"type":"Polygon","coordinates":[[[20,42],[20,35],[29,35],[29,42],[20,42]]]}},
+      {"type":"Feature","properties":{"name":"Nicaragua"},"geometry":{"type":"Polygon","coordinates":[[[-87,16],[-87,11],[-83,11],[-83,16],[-87,16]]]}},
+      {"type":"Feature","properties":{"name":"Eritrea"},"geometry":{"type":"Polygon","coordinates":[[[37,18],[37,13],[43,13],[43,18],[37,18]]]}},
+      {"type":"Feature","properties":{"name":"Korea"},"geometry":{"type":"Polygon","coordinates":[[[124,43],[124,33],[131,33],[131,43],[124,43]]]}},
+      {"type":"Feature","properties":{"name":"Malawi"},"geometry":{"type":"Polygon","coordinates":[[[33,-10],[33,-17],[36,-17],[36,-10],[33,-10]]]}},
+      {"type":"Feature","properties":{"name":"Benin"},"geometry":{"type":"Polygon","coordinates":[[[1,13],[1,6],[4,6],[4,13],[1,13]]]}},
+      {"type":"Feature","properties":{"name":"Honduras"},"geometry":{"type":"Polygon","coordinates":[[[-90,17],[-90,13],[-83,13],[-83,17],[-90,17]]]}},
+      {"type":"Feature","properties":{"name":"Liberia"},"geometry":{"type":"Polygon","coordinates":[[[-12,9],[-12,4],[-7,4],[-7,9],[-12,9]]]}},
+      {"type":"Feature","properties":{"name":"Bulgaria"},"geometry":{"type":"Polygon","coordinates":[[[23,45],[23,41],[29,41],[29,45],[23,45]]]}},
+      {"type":"Feature","properties":{"name":"Cuba"},"geometry":{"type":"Polygon","coordinates":[[[-85,24],[-85,20],[-74,20],[-74,24],[-85,24]]]}},
+      {"type":"Feature","properties":{"name":"Guatemala"},"geometry":{"type":"Polygon","coordinates":[[[-93,18],[-93,14],[-88,14],[-88,18],[-93,18]]]}},
+      {"type":"Feature","properties":{"name":"Iceland"},"geometry":{"type":"Polygon","coordinates":[[[-25,67],[-25,63],[-13,63],[-13,67],[-25,67]]]}},
+      {"type":"Feature","properties":{"name":"Jordan"},"geometry":{"type":"Polygon","coordinates":[[[35,34],[35,29],[40,29],[40,34],[35,34]]]}},
+      {"type":"Feature","properties":{"name":"Portugal"},"geometry":{"type":"Polygon","coordinates":[[[-10,42],[-10,37],[-6,37],[-6,42],[-10,42]]]}},
+      {"type":"Feature","properties":{"name":"Serbia"},"geometry":{"type":"Polygon","coordinates":[[[19,47],[19,42],[23,42],[23,47],[19,47]]]}},
+      {"type":"Feature","properties":{"name":"Azerbaijan"},"geometry":{"type":"Polygon","coordinates":[[[45,42],[45,39],[51,39],[51,42],[45,42]]]}},
+      {"type":"Feature","properties":{"name":"Austria"},"geometry":{"type":"Polygon","coordinates":[[[10,49],[10,46],[17,46],[17,49],[10,49]]]}},
+      {"type":"Feature","properties":{"name":"United Arab Emirates"},"geometry":{"type":"Polygon","coordinates":[[[51,27],[51,22],[57,22],[57,27],[51,27]]]}},
+      {"type":"Feature","properties":{"name":"Czech Rep."},"geometry":{"type":"Polygon","coordinates":[[[12,52],[12,48],[19,48],[19,52],[12,52]]]}},
+      {"type":"Feature","properties":{"name":"Panama"},"geometry":{"type":"Polygon","coordinates":[[[-83,10],[-83,7],[-77,7],[-77,10],[-83,10]]]}},
+      {"type":"Feature","properties":{"name":"Sierra Leone"},"geometry":{"type":"Polygon","coordinates":[[[-14,10],[-14,7],[-10,7],[-10,10],[-14,10]]]}},
+      {"type":"Feature","properties":{"name":"Ireland"},"geometry":{"type":"Polygon","coordinates":[[[-11,56],[-11,51],[-6,51],[-6,56],[-11,56]]]}},
+      {"type":"Feature","properties":{"name":"Georgia"},"geometry":{"type":"Polygon","coordinates":[[[40,44],[40,41],[47,41],[47,44],[40,44]]]}},
+      {"type":"Feature","properties":{"name":"Sri Lanka"},"geometry":{"type":"Polygon","coordinates":[[[80,10],[80,6],[82,6],[82,10],[80,10]]]}},
+      {"type":"Feature","properties":{"name":"Lithuania"},"geometry":{"type":"Polygon","coordinates":[[[21,57],[21,54],[27,54],[27,57],[21,57]]]}},
+      {"type":"Feature","properties":{"name":"Latvia"},"geometry":{"type":"Polygon","coordinates":[[[21,58],[21,56],[28,56],[28,58],[21,58]]]}},
+      {"type":"Feature","properties":{"name":"Costa Rica"},"geometry":{"type":"Polygon","coordinates":[[[-86,12],[-86,8],[-82,8],[-82,12],[-86,12]]]}},
+      {"type":"Feature","properties":{"name":"Denmark"},"geometry":{"type":"Polygon","coordinates":[[[8,58],[8,54],[15,54],[15,58],[8,58]]]}},
+      {"type":"Feature","properties":{"name":"Netherlands"},"geometry":{"type":"Polygon","coordinates":[[[3,54],[3,51],[7,51],[7,54],[3,54]]]}},
+      {"type":"Feature","properties":{"name":"Switzerland"},"geometry":{"type":"Polygon","coordinates":[[[6,48],[6,46],[11,46],[11,48],[6,48]]]}},
+      {"type":"Feature","properties":{"name":"Bosnia and Herz."},"geometry":{"type":"Polygon","coordinates":[[[16,46],[16,43],[20,43],[20,46],[16,46]]]}},
+      {"type":"Feature","properties":{"name":"Belgium"},"geometry":{"type":"Polygon","coordinates":[[[3,52],[3,49],[7,49],[7,52],[3,52]]]}},
+      {"type":"Feature","properties":{"name":"Israel"},"geometry":{"type":"Polygon","coordinates":[[[34,34],[34,30],[36,30],[36,34],[34,34]]]}},
+      {"type":"Feature","properties":{"name":"Armenia"},"geometry":{"type":"Polygon","coordinates":[[[44,42],[44,39],[47,39],[47,42],[44,42]]]}},
+      {"type":"Feature","properties":{"name":"Albania"},"geometry":{"type":"Polygon","coordinates":[[[19,43],[19,40],[21,40],[21,43],[19,43]]]}},
+      {"type":"Feature","properties":{"name":"Slovenia"},"geometry":{"type":"Polygon","coordinates":[[[13,47],[13,45],[17,45],[17,47],[13,47]]]}},
+      {"type":"Feature","properties":{"name":"Kuwait"},"geometry":{"type":"Polygon","coordinates":[[[47,31],[47,29],[49,29],[49,31],[47,31]]]}},
+      {"type":"Feature","properties":{"name":"Qatar"},"geometry":{"type":"Polygon","coordinates":[[[51,27],[51,25],[52,25],[52,27],[51,27]]]}}
+    ]};
+    
+    // 国家到大洲的映射表
+    const countryToRegion = {
+      'China': 'Asia', 'India': 'Asia', 'Japan': 'Asia', 'Korea': 'Asia',
+      'Thailand': 'Asia', 'Vietnam': 'Asia', 'Indonesia': 'Asia', 'Malaysia': 'Asia',
+      'Singapore': 'Asia', 'Philippines': 'Asia', 'Myanmar': 'Asia', 'Pakistan': 'Asia',
+      'Bangladesh': 'Asia', 'Afghanistan': 'Asia', 'Iran': 'Asia', 'Iraq': 'Asia',
+      'Saudi Arabia': 'Asia', 'Turkey': 'Asia', 'Israel': 'Asia', 'Kazakhstan': 'Asia',
+      
+      // 欧洲
+      'Russia': 'Europe', 'Germany': 'Europe', 'France': 'Europe', 'United Kingdom': 'Europe',
+      'Italy': 'Europe', 'Spain': 'Europe', 'Poland': 'Europe', 'Ukraine': 'Europe',
+      'Netherlands': 'Europe', 'Belgium': 'Europe', 'Greece': 'Europe', 'Portugal': 'Europe',
+      'Sweden': 'Europe', 'Austria': 'Europe', 'Switzerland': 'Europe', 'Norway': 'Europe',
+      'Denmark': 'Europe', 'Finland': 'Europe', 'Ireland': 'Europe', 'Czech Rep.': 'Europe',
+      
+      // 北美洲
+      'United States': 'North America', 'Canada': 'North America', 'Mexico': 'North America',
+      'Cuba': 'North America', 'Guatemala': 'North America', 'Honduras': 'North America',
+      'Nicaragua': 'North America', 'Costa Rica': 'North America', 'Panama': 'North America',
+      
+      // 南美洲
+      'Brazil': 'South America', 'Argentina': 'South America', 'Colombia': 'South America',
+      'Chile': 'South America', 'Peru': 'South America', 'Venezuela': 'South America',
+      'Ecuador': 'South America', 'Bolivia': 'South America', 'Paraguay': 'South America',
+      'Uruguay': 'South America',
+      
+      // 非洲
+      'Egypt': 'Africa', 'South Africa': 'Africa', 'Nigeria': 'Africa', 'Kenya': 'Africa',
+      'Ethiopia': 'Africa', 'Ghana': 'Africa', 'Morocco': 'Africa', 'Algeria': 'Africa',
+      'Tunisia': 'Africa', 'Libya': 'Africa', 'Sudan': 'Africa', 'Tanzania': 'Africa',
+      
+      // 大洋洲
+      'Australia': 'Oceania', 'New Zealand': 'Oceania', 'Papua New Guinea': 'Oceania',
+      'Fiji': 'Oceania'
+    };
+
+    let charts = {pie:null, bar:null, line:null};
+    let mapChart;
+
+    async function initMap(){
+      console.log('🗺️ 开始初始化地图');
+      
+      // 等待ECharts加载
+      await waitFor(() => window.echarts);
+      console.log('✅ ECharts已加载');
+      
+      // 从本地文件加载真实的世界地图GeoJSON数据
+      try {
+        console.log('📡 正在加载真实世界地图数据...');
+        const response = await fetch('/assets/world.json');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const worldGeoJsonRaw = await response.json();
+        const worldGeoJson = filterGeojson(worldGeoJsonRaw);
+        console.log('✅ 成功加载真实地图数据，包含', worldGeoJson.features.length, '个国家/地区（已过滤小岛）');
+        echarts.registerMap('world', worldGeoJson);
+      } catch (error) {
+        console.error('❌ 加载真实地图数据失败:', error);
+        console.log('📦 降级使用内嵌地图数据');
+        echarts.registerMap('world', filterGeojson(WORLD_MAP_DATA));
+      }
+      
+      mapChart = echarts.init(document.getElementById('worldMap'));
+      console.log('✅ 地图实例已创建');
+      
+      // 配置地图
+      const option = {
+        backgroundColor: 'transparent',
+        tooltip: {
+          trigger: 'item',
+          formatter: '{b}',
+          backgroundColor: 'rgba(15,23,42,0.9)',
+          borderColor: '#3b82f6',
+          textStyle: {color: '#cbd5e1'}
+        },
+        visualMap: {
+          show: false,
+          min: 0,
+          max: 100,
+          inRange: {
+            color: ['#1e3a8a', '#2563eb']
+          }
+        },
+        series: [{
+          type: 'map',
+          map: 'world',
+          roam: true,
+          aspectScale: 0.85,
+          zoom: 1.2,
+          label: {
+            show: false // 默认不显示国名，避免密集
+          },
+          itemStyle: {
+            areaColor: '#1e3a8a',
+            borderColor: '#3b82f6',
+            borderWidth: 0.8
+          },
+          emphasis: {
+            itemStyle: {
+              areaColor: '#2563eb',
+              borderColor: '#60a5fa',
+              borderWidth: 1.5
+            },
+            label: {
+              show: true,
+              color: '#ffffff',
+              fontSize: 12
+            }
+          },
+          select: {
+            itemStyle: {
+              areaColor: '#1d4ed8'
+            }
+          }
+        }]
+      };
+      mapChart.setOption(option);
+      
+      // 点击国家时，获取对应的大洲并刷新图表
+      mapChart.off('click');
+      mapChart.on('click', async (params)=>{
+        const countryName = params.name;
+        // 点击中国时自动切换到中国视图
+        if (countryName === 'China') {
+          switchView('china');
+          return;
+        }
+
+        const region = countryToRegion[countryName];
+        
+        if (region) {
+          document.getElementById('regionSelector').value = region;
+          document.getElementById('regionTitle').textContent = region + ' · 分析';
+          const stats = await fetchStats({ scope: 'world', region });
+          renderCharts(stats);
+        } else {
+          console.log('未映射的国家:', countryName);
+          document.getElementById('regionTitle').textContent = countryName + ' · 数据';
+          const stats = await fetchStats({ scope: 'world', region: '' });
+          renderCharts(stats);
+        }
+      });
+    }
+
+    async function initChinaMap(){
+      console.log('🗺️ 开始初始化中国地图');
+      
+      // 等待ECharts加载
+      await waitFor(() => window.echarts);
+      
+      // 尝试加载中国地图GeoJSON数据
+      try {
+        console.log('📡 正在加载中国地图数据...');
+        const response = await fetch('https://geo.datav.aliyun.com/areas_v3/bound/100000_full.json');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const chinaGeoJsonRaw = await response.json();
+        const chinaGeoJson = filterGeojson(chinaGeoJsonRaw);
+        console.log('✅ 成功加载中国地图数据，包含', chinaGeoJson.features.length, '个省级行政区（已过滤小岛/南海诸岛）');
+        echarts.registerMap('china', chinaGeoJson);
+        geoCache['china'] = chinaGeoJson;
+      } catch (error) {
+        console.error('❌ 加载中国地图数据失败:', error);
+        alert('加载中国地图数据失败，请检查网络连接');
+        return;
+      }
+      
+      if (!mapChart) {
+        mapChart = echarts.init(document.getElementById('worldMap'));
+      }
+      console.log('✅ 地图实例已就绪');
+      
+      // 配置中国地图
+      const option = {
+        backgroundColor: 'transparent',
+        tooltip: {
+          trigger: 'item',
+          formatter: '{b}',
+          backgroundColor: 'rgba(15,23,42,0.9)',
+          borderColor: '#7af0d8',
+          textStyle: {color: '#cbd5e1'}
+        },
+        visualMap: {
+          show: false,
+          min: 0,
+          max: 100,
+          inRange: {
+            color: ['#064e3b', '#10b981']
+          }
+        },
+        series: [{
+          type: 'map',
+          map: 'china',
+          roam: true,
+          zoom: 1.2,
+          label: {
+            show: true,
+            color: '#94a3b8',
+            fontSize: 10
+          },
+          itemStyle: {
+            areaColor: '#064e3b',
+            borderColor: '#10b981',
+            borderWidth: 1
+          },
+          emphasis: {
+            itemStyle: {
+              areaColor: '#059669',
+              borderColor: '#34d399',
+              borderWidth: 1.5
+            },
+            label: {
+              show: true,
+              color: '#ffffff',
+              fontSize: 12,
+              fontWeight: 'bold'
+            }
+          },
+          select: {
+            itemStyle: {
+              areaColor: '#10b981'
+            }
+          },
+          // 再次确保隐藏南海诸岛
+          regions: [{
+            name: '南海诸岛',
+            itemStyle: { opacity: 0, color: 'rgba(0,0,0,0)', borderColor: 'rgba(0,0,0,0)' },
+            emphasis: { itemStyle: { opacity: 0, color: 'rgba(0,0,0,0)', borderColor: 'rgba(0,0,0,0)' }, label: { show: false } },
+            select: { itemStyle: { opacity: 0, color: 'rgba(0,0,0,0)', borderColor: 'rgba(0,0,0,0)' } },
+            label: { show: false }
+          }]
+        }]
+      };
+      
+      mapChart.setOption(option, true);
+      console.log('✅ 中国地图配置完成');
+      bindChinaClick();
+    }
+
+    function bindChinaClick() {
+      mapChart.off('click');
+      mapChart.on('click', async (params) => {
+        if (currentView !== 'china') return;
+        const provinceName = params.name;
+        currentProvinceName = provinceName;
+        currentProvinceAdcode = PROVINCE_NAME_TO_ADCODE[provinceName];
+        currentCityName = '';
+        document.getElementById('regionTitle').textContent = provinceName + ' · 数据';
+        if (PROVINCE_NAME_TO_ID[provinceName]) {
+          document.getElementById('provinceSelector').value = PROVINCE_NAME_TO_ID[provinceName];
+        }
+        // 切换到该省地图并尝试获取省级统计
+        await loadProvinceMap(provinceName, currentProvinceAdcode);
+        const stats = await fetchStats({ scope: 'province', province: provinceName });
+        renderCharts(stats);
+      });
+    }
+
+    async function loadProvinceMap(provinceName, adcode) {
+      if (!adcode) {
+        console.warn('未找到省份编码，跳过省级地图加载:', provinceName);
+        return;
+      }
+      const mapKey = `province-${adcode}`;
+      if (!geoCache[mapKey]) {
+        try {
+          const url = `https://geo.datav.aliyun.com/areas_v3/bound/${adcode}_full.json`;
+          console.log('📡 加载省级地图:', provinceName, url);
+          const res = await fetch(url);
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const gjRaw = await res.json();
+          const gj = filterGeojson(gjRaw);
+          geoCache[mapKey] = gj;
+          echarts.registerMap(mapKey, gj);
+        } catch (e) {
+          console.error('省级地图加载失败:', provinceName, e);
+          return;
+        }
+      }
+
+      // 配置省级地图（显示下属城市）
+      const option = {
+        backgroundColor: 'transparent',
+        tooltip: {
+          trigger: 'item',
+          formatter: '{b}',
+          backgroundColor: 'rgba(15,23,42,0.9)',
+          borderColor: '#7af0d8',
+          textStyle: {color: '#cbd5e1'}
+        },
+        series: [{
+          type: 'map',
+          map: mapKey,
+          roam: true,
+          zoom: 1.15,
+          label: {
+            show: true,
+            color: '#9ae6b4',
+            fontSize: 10
+          },
+          itemStyle: {
+            areaColor: '#0b3b30',
+            borderColor: '#22c55e',
+            borderWidth: 1
+          },
+          emphasis: {
+            itemStyle: {
+              areaColor: '#059669',
+              borderColor: '#34d399',
+              borderWidth: 1.5
+            },
+            label: {
+              show: true,
+              color: '#fff',
+              fontSize: 12,
+              fontWeight: 'bold'
+            }
+          },
+          regions: [{ name: '南海诸岛', itemStyle: { opacity: 0 }, label: { show: false } }]
+        }]
+      };
+
+      mapChart.setOption(option, true);
+
+      // 绑定城市点击：如果已选中该城市则取消，否则显示城市数据
+      mapChart.off('click');
+      mapChart.on('click', async (p) => {
+        if (currentView !== 'china') return;
+        const cityName = p.name;
+        
+        // 如果点击的城市已被选中，则取消选中（返回省份视图）
+        if (currentCityName === cityName) {
+          currentCityName = '';
+          document.getElementById('regionTitle').textContent = `${provinceName} · 数据`;
+          const stats = await fetchStats({ scope: 'province', province: provinceName });
+          renderCharts(stats);
+        } else {
+          // 否则显示新城市的数据
+          currentCityName = cityName;
+          document.getElementById('regionTitle').textContent = `${provinceName} · ${cityName} · 数据`;
+          const bounds = getFeatureBoundsByName(geoCache[mapKey], cityName);
+          const stats = await fetchStats({ scope: 'city', province: provinceName, city: cityName, bounds });
+          renderCharts(stats);
+        }
+      });
+
+      // 空白区域点击返回中国总览
+      mapChart.getZr().off('click', zrBackgroundHandler);
+      mapChart.getZr().on('click', zrBackgroundHandler);
+    }
+
+    // 背景点击返回上一级地图（中国地图→世界地图，省级地图→中国地图）
+    async function zrBackgroundHandler(ev) {
+      // 如果点到地图要素，则忽略（有 target 且不是整个画布）
+      if (ev.target) return;
+      if (currentProvinceAdcode) {
+        // 在省级地图时点击空白，返回中国地图
+        switchView('china');
+      } else if (currentView === 'china') {
+        // 在中国地图时点击空白，返回世界地图
+        switchView('world');
+      }
+    }
+
+    async function switchView(view) {
+      currentView = view;
+      const worldBtn = document.getElementById('viewWorld');
+      const chinaBtn = document.getElementById('viewChina');
+      const regionSelector = document.getElementById('regionSelector');
+      const provinceSelector = document.getElementById('provinceSelector');
+      const pageTitle = document.getElementById('pageTitle');
+      const pageSubtitle = document.getElementById('pageSubtitle');
+      
+      if (view === 'world') {
+        // 切换到世界视图
+        worldBtn.style.background = 'rgba(91,139,255,0.9)';
+        worldBtn.style.color = '#fff';
+        chinaBtn.style.background = 'transparent';
+        chinaBtn.style.color = '#94a3b8';
+        regionSelector.style.display = 'block';
+        provinceSelector.style.display = 'none';
+        pageTitle.textContent = '🌍 世界地图分析';
+        pageSubtitle.textContent = '点击大洲查看区域统计，或选择下拉菜单查看全球数据';
+        currentProvinceAdcode = null;
+        currentProvinceName = '';
+        currentCityName = '';
+        initMap();
+        // 加载世界数据
+        const stats = await fetchStats({ scope:'world', region:'' });
+        renderCharts(stats);
+      } else {
+        // 切换到中国视图
+        chinaBtn.style.background = 'rgba(16,185,129,0.9)';
+        chinaBtn.style.color = '#fff';
+        worldBtn.style.background = 'transparent';
+        worldBtn.style.color = '#94a3b8';
+        regionSelector.style.display = 'none';
+        provinceSelector.style.display = 'block';
+        pageTitle.textContent = '🇨🇳 中国地图分析';
+        pageSubtitle.textContent = '点击省份查看区域统计，或选择下拉菜单查看各省数据';
+        currentProvinceAdcode = null;
+        currentProvinceName = '';
+        currentCityName = '';
+        document.getElementById('provinceSelector').value = '';
+        document.getElementById('regionTitle').textContent = '全国总体 · 数据';
+        initChinaMap();
+        // 加载中国全国数据
+        const stats = await fetchStats({ scope:'china', province:'' });
+        renderCharts(stats);
+      }
+    }
+
+    async function backToChinaBase() {
+      if (currentView !== 'china') return;
+      currentProvinceAdcode = null;
+      currentProvinceName = '';
+      currentCityName = '';
+      document.getElementById('provinceSelector').value = '';
+      document.getElementById('regionTitle').textContent = '全国总体 · 数据';
+      await initChinaMap();
+      const stats = await fetchStats({ scope:'china', province:'' });
+      renderCharts(stats);
+    }
+
+    async function fetchStats(params){
+      const { scope = 'world', region = '', province = '', city = '', bounds = null } = typeof params === 'string' ? { scope:'world', region: params } : (params || {});
+      // 使用公开接口，带上作用域参数，后端可按需调整
+      const searchParams = new URLSearchParams();
+      searchParams.set('scope', scope);
+      if (region) searchParams.set('region', region);
+      if (province) searchParams.set('province', province);
+      if (city) searchParams.set('city', city);
+      if (bounds && bounds.lat_min !== undefined) {
+        searchParams.set('lat_min', bounds.lat_min);
+        searchParams.set('lat_max', bounds.lat_max);
+        searchParams.set('lon_min', bounds.lon_min);
+        searchParams.set('lon_max', bounds.lon_max);
+      }
+
+      const url = `/api/public/stats?${searchParams.toString()}`;
+      try{
+        console.log('📡 请求统计数据:', url);
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        console.log('📥 收到数据:', data);
+        if(!data || data.severity_breakdown === undefined){ 
+          console.warn('⚠️ 数据格式可能不完整:', data);
+        }
+        return data;
+      }catch(e){
+        console.error('❌ 统计数据获取失败:', e);
+        // 返回示例数据
+        return {
+          total_records: 0,
+          status_breakdown: {pending:0, processing:0, resolved:0},
+          type_breakdown: [{label:'路面破损',count:5},{label:'护栏损坏',count:3},{label:'标志缺失',count:2}],
+          severity_breakdown: [{label:1,count:1},{label:2,count:2},{label:3,count:3},{label:4,count:3},{label:5,count:1}],
+          recent_7_days: 5,
+          recent_30_days: 20
+        }
+      }
+    }
+
+    function renderCharts(stats){
+      console.log('🎨 开始渲染图表...', stats);
+      const pieEl = document.getElementById('pie');
+      const barEl = document.getElementById('bar');
+      const lineEl = document.getElementById('line');
+      charts.pie = charts.pie || echarts.init(pieEl);
+      charts.bar = charts.bar || echarts.init(barEl);
+      charts.line = charts.line || echarts.init(lineEl);
+      
+      // 更新记录数显示
+      const totalRecords = stats.total_records || 0;
+      document.getElementById('recordCount').textContent = `共 ${totalRecords} 条记录`;
+
+      // 问题类型分布：圆环图
+      const pieOpt = {
+        title:{text:'问题类型分布', left:'left', textStyle:{color:'#cbd5e1', fontSize:14}},
+        tooltip:{trigger:'item', formatter:'{b}: {c} ({d}%)'},
+        series:[{type:'pie', radius:['40%','70%'], data:(stats.type_breakdown||[]).map(i=>({name:i.label, value:i.count})),
+          itemStyle:{borderColor:'#0f172a', borderWidth:2},
+          label:{color:'#cbd5e1', fontSize:11}}]
+      };
+      charts.pie.setOption(pieOpt);
+
+      // 严重度分布：折线图（曲线）
+      const lineOpt2 = {
+        title:{text:'严重度分布', left:'left', textStyle:{color:'#cbd5e1', fontSize:14}},
+        tooltip:{trigger:'axis'},
+        xAxis:{type:'category', data:(stats.severity_breakdown||[]).map(i=>'级别'+i.label), 
+               axisLine:{lineStyle:{color:'#334155'}}, axisLabel:{color:'#94a3b8'}},
+        yAxis:{type:'value', axisLine:{lineStyle:{color:'#334155'}}, 
+               splitLine:{lineStyle:{color:'#1f2937'}}, axisLabel:{color:'#94a3b8'}},
+        series:[{type:'line', data:(stats.severity_breakdown||[]).map(i=>i.count), 
+                smooth:true, lineStyle:{color:'#7af0d8', width:2.5}, 
+                areaStyle:{color:'rgba(122,240,216,0.15)'}, symbolSize:8, symbol:'circle'}]
+      };
+      charts.bar.setOption(lineOpt2);
+
+      const daily = (stats.daily || []).map(d=>({date:d.date, count:d.count}));
+      const dates = daily.length ? daily.map(d=>d.date) : ['近7天','近30天'];
+      const values = daily.length ? daily.map(d=>d.count) : [stats.recent_7_days||0, stats.recent_30_days||0];
+      const trendLineOpt = {
+        title:{text:'新增趋势', left:'left', textStyle:{color:'#cbd5e1', fontSize:14}},
+        tooltip:{trigger:'axis'},
+        xAxis:{type:'category', data:dates, axisLine:{lineStyle:{color:'#334155'}}, axisLabel:{color:'#94a3b8'}},
+        yAxis:{type:'value', axisLine:{lineStyle:{color:'#334155'}}, 
+               splitLine:{lineStyle:{color:'#1f2937'}}, axisLabel:{color:'#94a3b8'}},
+        series:[{type:'line', data:values, smooth:true, lineStyle:{color:'#ff9800', width:2.5}, 
+                areaStyle:{color:'rgba(255,152,0,0.15)'}, symbolSize:6}]
+      };
+      charts.line.setOption(trendLineOpt);
+    }
+
+    function waitFor(condFn, interval=50, timeout=5000){
+      return new Promise((resolve, reject)=>{
+        const start = Date.now();
+        const timer = setInterval(()=>{
+          if(condFn()) {clearInterval(timer); resolve(true);} 
+          else if(Date.now()-start>timeout){clearInterval(timer); reject(new Error('timeout'));}
+        }, interval);
+      });
+    }
+
+    (async function(){
+      console.log('🚀 页面加载开始');
+      
+      // 检查用户身份，根据不同身份显示不同按鑒
+      try {
+        const res = await fetch('/api/me', {
+          headers: {'Authorization': `Bearer ${localStorage.getItem('access_token')}`}
+        });
+        if (res.ok) {
+          const user = await res.json();
+          console.log('👤 用户身份:', user.role);
+          if (user.role === 'admin') {
+            // 管理员：显示两个按鑒
+            document.getElementById('backBtn1').style.display = 'inline-block';
+            document.getElementById('backBtn2').style.display = 'inline-block';
+          } else {
+            // 普通用户：只显示返回patrol按鑒
+            document.getElementById('backBtn1').style.display = 'inline-block';
+            document.getElementById('backBtn2').style.display = 'none';
+          }
+        } else {
+          // 未登录：绑定返回patrol按鑒
+          document.getElementById('backBtn1').style.display = 'inline-block';
+        }
+      } catch (e) {
+        console.warn('⚠️ 用户信息获取失败:', e);
+        document.getElementById('backBtn1').style.display = 'inline-block';
+      }
+      
+      // 先显示一个简单的消息确认JS正在运行
+      document.getElementById('worldMap').innerHTML = '<div style="padding:24px;color:#7af0d8">⏳ 正在加载地图...</div>';
+      
+      try {
+        // 先加载统计数据和图表
+        console.log('📊 加载统计数据...');
+        const stats = await fetchStats({ scope:'world', region:'' });
+        console.log('✅ 统计数据加载成功:', stats);
+        renderCharts(stats);
+        
+        // 清除加载提示
+        document.getElementById('worldMap').innerHTML = '';
+        
+        // 再初始化地图
+        console.log('🗺️ 初始化地图...');
+        await initMap();
+        console.log('✅ 地图初始化成功');
+
+        // 视图切换按钮事件监听
+        document.getElementById('viewWorld').addEventListener('click', () => {
+          switchView('world');
+        });
+        
+        document.getElementById('viewChina').addEventListener('click', () => {
+          switchView('china');
+        });
+        
+        // 区域选择器事件监听
+        document.getElementById('regionSelector').addEventListener('change', async (e) => {
+          const region = e.target.value;
+          const displayName = region || '全球总体';
+          document.getElementById('regionTitle').textContent = displayName + ' · 分析';
+          console.log('🔄 切换区域:', region);
+          const stats = await fetchStats({ scope:'world', region });
+          renderCharts(stats);
+          if (currentView === 'world') {
+            await initMap();
+          }
+        });
+        
+        // 省份选择器事件监听
+        document.getElementById('provinceSelector').addEventListener('change', async (e) => {
+          const provinceId = e.target.value;
+          const displayName = provinceId ? PROVINCE_NAMES[provinceId] : '全国总体';
+          document.getElementById('regionTitle').textContent = displayName + ' · 分析';
+          console.log('🔄 切换省份:', provinceId, displayName);
+          currentProvinceName = displayName;
+          currentProvinceAdcode = PROVINCE_NAME_TO_ADCODE[displayName] || null;
+          currentCityName = '';
+          if (provinceId && currentProvinceAdcode) {
+            await loadProvinceMap(displayName, currentProvinceAdcode);
+            const stats = await fetchStats({ scope:'province', province: displayName });
+            renderCharts(stats);
+          } else {
+            const stats = await fetchStats({ scope:'china', province:'' });
+            renderCharts(stats);
+            await initChinaMap();
+          }
+        });
+        
+      } catch (e) {
+        console.error('❌ 初始化错误:', e);
+        console.error('错误堆栈:', e.stack);
+        document.getElementById('worldMap').innerHTML = '<div style="padding:24px;color:#fca5a5">❌ 初始化失败：'+ e.message +'<br><small style="color:#94a3b8">错误: ' + e.stack + '</small></div>';
+        // 即使地图失败，也尝试显示图表
+        try {
+          const stats = await fetchStats({ scope:'world', region:'' });
+          renderCharts(stats);
+        } catch (chartError) {
+          console.error('图表也失败了:', chartError);
+        }
+      }
+      
+      console.log('✅ 初始化脚本执行完毕');
+    })();
+  </script>
+</body>
+</html>

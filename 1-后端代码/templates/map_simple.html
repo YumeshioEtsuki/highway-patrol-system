@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>世界地图分析</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+  <style>
+    body{font-family:sans-serif;margin:0;padding:20px;background:#0f172a;color:#fff}
+    .container{max-width:1200px;margin:0 auto}
+    h1{margin:0 0 20px 0}
+    #map{width:100%;height:600px;background:#1e293b;border-radius:8px}
+    .stats{margin-top:20px;display:grid;grid-template-columns:repeat(3,1fr);gap:15px}
+    .chart{height:250px;background:#1e293b;border-radius:8px;padding:10px}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🌍 世界地图分析</h1>
+    <div id="map"></div>
+    <div class="stats">
+      <div id="chart1" class="chart"></div>
+      <div id="chart2" class="chart"></div>
+      <div id="chart3" class="chart"></div>
+    </div>
+  </div>
+
+  <script>
+    console.log('开始加载页面');
+    
+    // 等待DOM加载完成
+    window.addEventListener('DOMContentLoaded', async () => {
+      console.log('DOM已加载');
+      
+      try {
+        // 初始化图表
+        const chart1 = echarts.init(document.getElementById('chart1'));
+        const chart2 = echarts.init(document.getElementById('chart2'));
+        const chart3 = echarts.init(document.getElementById('chart3'));
+        
+        console.log('图表初始化成功');
+        
+        // 获取数据
+        const response = await fetch('/api/public/stats');
+        const data = await response.json();
+        console.log('数据获取成功:', data);
+        
+        // 渲染饼图
+        chart1.setOption({
+          title: {text: '问题类型', textStyle: {color: '#fff'}},
+          tooltip: {trigger: 'item'},
+          series: [{
+            type: 'pie',
+            data: (data.type_breakdown || []).map(i => ({name: i.label, value: i.count}))
+          }]
+        });
+        
+        // 渲染柱状图
+        chart2.setOption({
+          title: {text: '严重度', textStyle: {color: '#fff'}},
+          tooltip: {trigger: 'axis'},
+          xAxis: {type: 'category', data: (data.severity_breakdown || []).map(i => '级别' + i.label)},
+          yAxis: {type: 'value'},
+          series: [{type: 'bar', data: (data.severity_breakdown || []).map(i => i.count)}]
+        });
+        
+        // 渲染折线图
+        chart3.setOption({
+          title: {text: '趋势', textStyle: {color: '#fff'}},
+          tooltip: {trigger: 'axis'},
+          xAxis: {type: 'category', data: ['近7天', '近30天']},
+          yAxis: {type: 'value'},
+          series: [{
+            type: 'line',
+            data: [data.recent_7_days || 0, data.recent_30_days || 0]
+          }]
+        });
+        
+        console.log('图表渲染完成');
+        
+        // 加载地图
+        console.log('开始加载世界地图...');
+        const mapResponse = await fetch('https://echarts.apache.org/examples/data/asset/geo/world.json');
+        const worldGeo = await mapResponse.json();
+        echarts.registerMap('world', worldGeo);
+        console.log('地图数据加载成功');
+        
+        // 初始化地图
+        const mapChart = echarts.init(document.getElementById('map'));
+        mapChart.setOption({
+          tooltip: {trigger: 'item', formatter: '{b}'},
+          series: [{
+            type: 'map',
+            map: 'world',
+            roam: true,
+            itemStyle: {
+              areaColor: '#2563eb',
+              borderColor: '#60a5fa'
+            },
+            emphasis: {
+              itemStyle: {areaColor: '#3b82f6'},
+              label: {show: true, color: '#fff'}
+            }
+          }]
+        });
+        
+        console.log('地图渲染完成');
+        
+      } catch (error) {
+        console.error('错误:', error);
+        document.getElementById('map').innerHTML = '<p style="color:red;padding:20px">加载失败: ' + error.message + '</p>';
+      }
+    });
+  </script>
+</body>
+</html>

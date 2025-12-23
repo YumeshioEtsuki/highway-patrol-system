@@ -1,0 +1,5 @@
+# Ignore exports and logs in backend only
+/exports/**
+!/exports/.gitkeep
+/logs/**
+!/logs/.gitkeep

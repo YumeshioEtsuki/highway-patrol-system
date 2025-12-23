@@ -1,0 +1,102 @@
+<!-- pages/patrol/detail/detail.wxml -->
+<view class="container">
+  <!-- 加载状态 -->
+  <view class="loading" wx:if="{{loading}}">
+    <text>加载中...</text>
+  </view>
+
+  <!-- 主内容 -->
+  <view wx:else>
+    <!-- 状态横幅 -->
+    <view class="status-banner" style="background: {{statusColor}}">
+      <text class="status-text">{{statusText}}</text>
+    </view>
+
+    <!-- 问题信息 -->
+    <view class="section card">
+      <view class="section-header">
+        <view class="section-title">问题信息</view>
+        <view class="badge badge-primary">{{problemTypeText}}</view>
+      </view>
+      
+      <view class="info-item" wx:if="{{record.description || record.problem_desc}}">
+        <text class="info-label">问题描述</text>
+        <text class="info-value">{{record.description || record.problem_desc}}</text>
+      </view>
+
+      <view class="info-item" wx:if="{{record.severity}}">
+        <text class="info-label">严重程度</text>
+        <view class="severity-display">
+          <text class="star {{index < record.severity ? 'active' : ''}}" wx:for="{{[1,2,3,4,5]}}" wx:key="*this">★</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 位置信息 -->
+    <view class="section card">
+      <view class="section-title">位置信息</view>
+      
+      <view class="info-item" wx:if="{{record.segment_id}}">
+        <text class="info-label">路段编号</text>
+        <text class="info-value">{{record.segment_id}}</text>
+      </view>
+
+      <view class="info-item" wx:if="{{record.location_desc}}">
+        <text class="info-label">位置描述</text>
+        <text class="info-value">{{record.location_desc}}</text>
+      </view>
+
+      <view class="info-item" wx:if="{{record.latitude && record.longitude}}">
+        <text class="info-label">GPS坐标</text>
+        <text class="info-value">{{record.latitude}}, {{record.longitude}}</text>
+      </view>
+
+      <button class="btn btn-secondary" bindtap="openMap" wx:if="{{record.latitude && record.longitude}}">📍 在地图中查看</button>
+    </view>
+
+    <!-- 现场照片 -->
+    <view class="section card" wx:if="{{photos.length > 0}}">
+      <view class="section-title">现场照片 ({{photos.length}}张)</view>
+      
+      <view class="photo-grid">
+        <image class="photo-item" 
+               wx:for="{{photos}}" 
+               wx:key="index" 
+               src="{{item}}" 
+               mode="aspectFill"
+               bindtap="previewPhoto"
+               data-index="{{index}}">
+        </image>
+      </view>
+    </view>
+
+    <!-- 时间信息 -->
+    <view class="section card">
+      <view class="section-title">时间记录</view>
+      
+      <view class="timeline">
+        <view class="timeline-item">
+          <view class="timeline-dot"></view>
+          <view class="timeline-content">
+            <text class="timeline-label">巡查时间</text>
+            <text class="timeline-value">{{patrolTime}}</text>
+          </view>
+        </view>
+        
+        <view class="timeline-item" wx:if="{{record.admin_remarks || record.admin_remark}}">
+          <view class="timeline-dot active"></view>
+          <view class="timeline-content">
+            <text class="timeline-label">管理员备注</text>
+            <text class="timeline-value">{{record.admin_remarks || record.admin_remark}}</text>
+            <text class="timeline-time" wx:if="{{record.updated_at}}">{{record.updated_at}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 操作按钮 -->
+    <view class="action-section">
+      <button class="btn btn-primary" bindtap="goBack">返回列表</button>
+    </view>
+  </view>
+</view>

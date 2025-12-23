@@ -1,0 +1,2366 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>公路巡查系统 - 管理面板</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 性能优化：预连接 CDN 减少 DNS 查询和握手延迟 -->
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    <!-- font-display:swap 避免字体加载阻塞文本渲染 -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"></noscript>
+    <!-- 延迟加载 Chart.js / ECharts 避免阻塞渲染 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js" defer></script>
+    <style>
+:root {
+    --bg: #0f172a;
+    --card: #0b1223;
+    --muted: #94a3b8;
+    --primary: #5b8bff;
+    --primary-2: #7af0d8;
+    --stroke: rgba(255,255,255,0.08);
+    --shadow: 0 20px 60px rgba(0,0,0,0.35);
+    --radius: 14px;
+    --glass: linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+}
+* { box-sizing: border-box; }
+body {
+    font-family: "Space Grotesk", "Microsoft YaHei", sans-serif;
+    min-height: 100vh;
+    margin: 0;
+    background: radial-gradient(120% 120% at 20% 20%, rgba(91,139,255,0.25), transparent 45%),
+                radial-gradient(100% 140% at 80% 10%, rgba(122,240,216,0.18), transparent 50%),
+                #050914;
+    color: #f4f6fb;
+    padding: 32px 18px 80px;
+}
+.page {
+    max-width: 1220px;
+    margin: 0 auto;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--stroke);
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+}
+.hero {
+    background: linear-gradient(120deg, rgba(91,139,255,0.18), rgba(122,240,216,0.14));
+    padding: 28px 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    border-bottom: 1px solid var(--stroke);
+}
+.hero-title { margin: 0; font-size: 26px; font-weight: 700; letter-spacing: 0.3px; }
+.hero-sub { margin: 6px 0 0 0; color: var(--muted); font-size: 14px; }
+.hero-badge {
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: rgba(122,240,216,0.16);
+    color: #9ff6e2;
+    font-weight: 600;
+    border: 1px solid rgba(122,240,216,0.3);
+}
+
+.section {
+    padding: 26px 32px 18px;
+    border-bottom: 1px solid var(--stroke);
+}
+.section h2 { margin: 0 0 14px 0; letter-spacing: 0.2px; }
+.section p.lead { margin: 0 0 18px 0; color: var(--muted); }
+
+.toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    background: var(--glass);
+    border: 1px solid var(--stroke);
+    padding: 12px;
+    border-radius: var(--radius);
+}
+
+button, select, input[type="date"], input[type="text"], input[type="number"] {
+    font-family: inherit;
+}
+button {
+    padding: 12px 16px;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 15px;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    background: linear-gradient(135deg, #5b8bff, #4a68ff);
+    color: #fff;
+    box-shadow: 0 8px 24px rgba(91,115,255,0.3), 0 0 0 0 rgba(91,139,255,0);
+    font-weight: 600;
+    letter-spacing: 0.2px;
+}
+button:hover { 
+    transform: translateY(-2px) scale(1.02); 
+    box-shadow: 0 12px 32px rgba(91,115,255,0.35), 0 0 0 0 rgba(91,139,255,0);
+}
+button:active {
+    transform: translateY(0) scale(0.98);
+    box-shadow: 0 4px 12px rgba(91,115,255,0.25);
+}
+button:focus-visible {
+    outline: 2px solid rgba(91,139,255,0.5);
+    outline-offset: 2px;
+}
+.btn-verify { 
+    background: linear-gradient(135deg, #5b8bff, #7c9fff);
+    box-shadow: 0 8px 24px rgba(91,139,255,0.25);
+}
+.btn-verify:hover { box-shadow: 0 12px 32px rgba(91,139,255,0.35); }
+.btn-status { 
+    background: linear-gradient(135deg, #1fc9a1, #13b58d);
+    box-shadow: 0 8px 24px rgba(31,201,161,0.25);
+}
+.btn-status:hover { box-shadow: 0 12px 32px rgba(31,201,161,0.35); }
+.btn-reinit { 
+    background: linear-gradient(135deg, #ff6b6b, #e45252);
+    box-shadow: 0 8px 24px rgba(255,107,107,0.25);
+}
+.btn-reinit:hover { box-shadow: 0 12px 32px rgba(255,107,107,0.35); }
+.btn-enter { 
+    background: linear-gradient(135deg, #1f2a44, #172133); 
+    border-color: rgba(91,139,255,0.25);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    color: #cbd5e1;
+}
+.btn-enter:hover { 
+    border-color: rgba(91,139,255,0.4);
+    background: linear-gradient(135deg, #2d3d5a, #233d4a);
+    box-shadow: 0 6px 16px rgba(91,139,255,0.15);
+    color: #e2e8f0;
+}
+.btn-process { 
+    background: linear-gradient(135deg, #f0a500, #ff7a00); 
+    padding: 6px 12px; 
+    border-radius: 8px; 
+    border: none;
+    box-shadow: 0 6px 16px rgba(240,165,0,0.25);
+}
+.btn-process:hover { box-shadow: 0 8px 20px rgba(240,165,0,0.35); }
+.btn-complete { 
+    background: linear-gradient(135deg, #3bd4a3, #23b87f); 
+    padding: 6px 12px; 
+    border-radius: 8px; 
+    border: none;
+    box-shadow: 0 6px 16px rgba(59,212,163,0.25);
+}
+.btn-complete:hover { box-shadow: 0 8px 20px rgba(59,212,163,0.35); }
+.btn-disabled { 
+    background: #4b5563; 
+    cursor: not-allowed;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* 高级下拉表样式 - 行业顶尖标准 */
+.select-premium {
+    background: linear-gradient(135deg, rgba(91,139,255,0.08), rgba(122,240,216,0.04)) !important;
+    border: 1.2px solid rgba(91,139,255,0.25) !important;
+    color: #e2e8f0 !important;
+    padding: 11px 14px !important;
+    border-radius: 10px !important;
+    min-height: 44px !important;
+    appearance: none !important;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.25), inset 0 1px 2px rgba(255,255,255,0.06) !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23e2e8f0' d='M1 1l5 5 5-5'/%3E%3C/svg%3E") !important;
+    background-position: right 12px center !important;
+    background-repeat: no-repeat !important;
+    padding-right: 36px !important;
+    letter-spacing: 0.2px !important;
+}
+
+.select-premium:hover {
+    border-color: rgba(91,139,255,0.4) !important;
+    box-shadow: 0 8px 24px rgba(91,139,255,0.18), inset 0 1px 2px rgba(255,255,255,0.08) !important;
+}
+
+.select-premium:focus {
+    outline: none !important;
+    border-color: rgba(91,139,255,0.5) !important;
+    box-shadow: 0 0 0 3px rgba(91,139,255,0.12), 0 8px 24px rgba(91,139,255,0.2), inset 0 1px 2px rgba(255,255,255,0.08) !important;
+}
+
+.select-premium option {
+    background: #0a1020 !important;
+    color: #e2e8f0 !important;
+    font-weight: 500 !important;
+}
+
+select, input[type="date"], input[type="text"], input[type="number"] {
+    background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+    border: 1.2px solid var(--stroke);
+    color: #e2e8f0;
+    padding: 11px 14px;
+    border-radius: 10px;
+    min-height: 44px;
+    appearance: none;
+    box-shadow: inset 0 1px 2px rgba(255,255,255,0.04), 0 6px 16px rgba(0,0,0,0.25);
+    color-scheme: dark;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+select:hover, input[type="date"]:hover, input[type="text"]:hover, input[type="number"]:hover {
+    border-color: rgba(91,139,255,0.35);
+    box-shadow: inset 0 1px 2px rgba(255,255,255,0.06), 0 8px 20px rgba(91,139,255,0.1);
+}
+select:focus, input[type="date"]:focus, input[type="text"]:focus, input[type="number"]:focus {
+    outline: none;
+    border-color: rgba(91,139,255,0.5);
+    box-shadow: 0 0 0 3px rgba(91,139,255,0.12), inset 0 1px 2px rgba(255,255,255,0.06), 0 8px 24px rgba(91,139,255,0.15);
+}
+select option { background: #0a1020; color: #e2e8f0; font-weight: 500; }
+input::placeholder { color: #64748b; font-style: italic; }
+input[type="date"]::-webkit-calendar-picker-indicator { 
+    filter: invert(1) sepia(1) saturate(5) hue-rotate(175deg); 
+    opacity: 1;
+    cursor: pointer;
+}
+
+.log-panel {
+    background: #0a0f1c;
+    color: #f8fafc;
+    padding: 16px;
+    border-radius: var(--radius);
+    font-family: "SFMono-Regular", Consolas, monospace;
+    font-size: 14px;
+    line-height: 1.6;
+    max-height: 360px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    border: 1px solid var(--stroke);
+}
+.log-line { margin: 4px 0; }
+.log-success { color: #34d399; }
+.log-error { color: #fca5a5; }
+.log-warn { color: #fbbf24; }
+.log-info { color: #60a5fa; }
+.log-complete {
+    color: #c084fc;
+    font-weight: 600;
+    margin-top: 8px;
+    border-top: 1px solid #1f2937;
+    padding-top: 8px;
+}
+
+.dashboard {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin: 18px 0;
+}
+.dash-card {
+    background: var(--glass);
+    border-radius: var(--radius);
+    padding: 14px;
+    border: 1px solid var(--stroke);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+}
+.dash-title { font-size: 12px; color: var(--muted); margin: 0 0 6px 0; letter-spacing: 0.4px; text-transform: uppercase; }
+.dash-value { font-size: 26px; font-weight: 700; margin: 0; }
+.charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 16px; }
+.chart-box { background: var(--glass); padding: 14px; border-radius: var(--radius); border: 1px solid var(--stroke); box-shadow: 0 12px 30px rgba(0,0,0,0.25); }
+
+.card {
+    background: var(--glass);
+    border: 1px solid var(--stroke);
+    border-radius: var(--radius);
+    padding: 16px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.2);
+}
+
+/* 行业顶尖标准的筛选条设计 */
+.filter-row {
+    display: grid;
+    grid-template-columns: auto 120px 110px 130px 130px 110px 1fr auto auto auto;
+    gap: 12px;
+    align-items: center;
+    margin: 18px 0 8px;
+    padding: 18px 16px;
+    background: linear-gradient(135deg, rgba(91,139,255,0.04), rgba(122,240,216,0.02));
+    border: 1.2px solid var(--stroke);
+    border-radius: 14px;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.filter-row:hover {
+    border-color: rgba(91,139,255,0.25);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.04);
+}
+.filter-row label { display: none; }
+.filter-row button { 
+    height: 44px; 
+    padding: 0 18px; 
+    font-size: 14px; 
+    font-weight: 600;
+    border-radius: 10px; 
+    letter-spacing: 0.2px;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.filter-row button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(75,115,255,0.25);
+}
+.filter-row select,
+.filter-row input[type="date"],
+.filter-row input[type="text"],
+.filter-row input[type="number"] {
+    height: 44px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+}
+.filter-row select:hover,
+.filter-row input:hover {
+    border-color: rgba(91,139,255,0.35);
+    box-shadow: 0 4px 12px rgba(91,139,255,0.1), inset 0 1px 2px rgba(255,255,255,0.04);
+}
+.filter-row select:focus,
+.filter-row input:focus {
+    outline: none;
+    border-color: rgba(91,139,255,0.5);
+    box-shadow: 0 0 0 3px rgba(91,139,255,0.12), 0 6px 16px rgba(91,139,255,0.15), inset 0 1px 2px rgba(255,255,255,0.04);
+}
+.filter-row select:focus-visible,
+.filter-row input:focus-visible {
+    outline: 2px solid rgba(91,139,255,0.5);
+    outline-offset: 2px;
+}
+.filter-row .pill { 
+    justify-self: start;
+    font-weight: 700;
+    color: #cbd5e1;
+    font-size: 13px;
+    letter-spacing: 0.4px;
+}
+.filter-row .w-select { min-width: 110px; max-width: 140px; }
+.filter-row .w-date { width: 130px; min-width: 120px; }
+.filter-row .w-keyword { width: 100%; max-width: none; }
+.filter-row .w-quick { min-width: 110px; max-width: 140px; }
+.filter-row .w-spacer { display: none; }
+.pill {
+    border-radius: 999px;
+    border: 1.2px solid rgba(91,139,255,0.3);
+    background: linear-gradient(135deg, rgba(91,139,255,0.08), rgba(122,240,216,0.04));
+    padding: 10px 14px;
+    color: #cbd5e1;
+    font-weight: 600;
+    font-size: 13px;
+    transition: all 0.25s ease;
+}
+.pill:hover {
+    border-color: rgba(91,139,255,0.4);
+    background: linear-gradient(135deg, rgba(91,139,255,0.12), rgba(122,240,216,0.06));
+    color: #e2e8f0;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+    background: #0a1020;
+    border: 1px solid var(--stroke);
+    border-radius: 12px;
+    overflow: hidden;
+}
+th, td { padding: 10px 12px; }
+th { background: rgba(255,255,255,0.04); color: #e2e8f0; text-align: left; font-weight: 600; letter-spacing: 0.3px; }
+tbody tr { border-bottom: 1px solid rgba(255,255,255,0.04); }
+tbody tr:nth-child(2n) { background: rgba(255,255,255,0.02); }
+tbody tr:hover { background: rgba(91,139,255,0.08); }
+
+/* 骨架屏样式：表格加载占位 */
+.skeleton-shimmer {
+    background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.12) 37%, rgba(255,255,255,0.05) 63%);
+    background-size: 400% 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+}
+@keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+.skeleton-table { border:1px solid var(--stroke); border-radius:12px; overflow:hidden; }
+.skeleton-row { display:grid; grid-template-columns: 60px 120px 140px 140px 80px 160px 120px 160px 120px; gap:0; }
+.skeleton-cell { height: 36px; border-bottom:1px solid rgba(255,255,255,0.06); }
+.skeleton-header { height: 40px; background: rgba(255,255,255,0.04); border-bottom:1px solid var(--stroke); }
+
+    /* 骨架屏样式：统计卡片与图表占位 */
+    .stats-skeleton {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 12px;
+        margin: 18px 0;
+    }
+    .skeleton-card {
+        height: 68px;
+        border-radius: var(--radius);
+        border: 1px solid var(--stroke);
+        background: rgba(255,255,255,0.04);
+    }
+    .charts-skeleton {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 16px;
+    }
+    .skeleton-chart {
+        height: 240px;
+        border-radius: var(--radius);
+        border: 1px solid var(--stroke);
+        background: rgba(255,255,255,0.04);
+    }
+.live-photos {
+    margin-bottom: 18px;
+    padding: 12px;
+    border: 1px dashed var(--stroke);
+    background: rgba(255,255,255,0.03);
+    border-radius: var(--radius);
+}
+.live-photos__header { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px; }
+.live-photos__toggle { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color:#e2e8f0; border-radius:8px; padding:6px 10px; cursor:pointer; }
+.live-photos__body { display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:12px; align-items:start; }
+.live-photos.collapsed .live-photos__body { display: none; }
+.photo-modal__img {
+    max-width: 100%;
+    max-height: 78vh;
+    object-fit: contain;
+    border-radius: 12px;
+    background: #0c1326;
+}
+
+.live-photo-card {
+    display: inline-block;
+    margin: 6px;
+    padding: 8px;
+    border-radius: 10px;
+    border: 1px solid var(--stroke);
+    background: rgba(255,255,255,0.03);
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.live-photo-card:hover {
+    transform: translateY(-1px) scale(1.01);
+    border-color: rgba(122,240,216,0.4);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+}
+.live-photo-card img {
+    max-width: 150px;
+    border-radius: 8px;
+    display: block;
+}
+.live-photo-card small { color: var(--muted); }
+
+/* 回到顶部按钮 */
+.back-to-top {
+    position: fixed;
+    right: 20px;
+    top: 20px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(91,139,255,0.9), rgba(122,240,216,0.85));
+    border: none;
+    color: #fff;
+    font-size: 20px;
+    font-weight: 600;
+    cursor: pointer;
+    z-index: 10000;
+    box-shadow: 0 8px 24px rgba(91,139,255,0.4), 0 4px 12px rgba(0,0,0,0.3);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(8px);
+}
+.back-to-top.show { 
+    display: flex;
+    animation: slideIn 0.3s ease-out;
+}
+.back-to-top:hover { 
+    background: linear-gradient(135deg, rgba(91,139,255,1), rgba(122,240,216,1));
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 12px 32px rgba(91,139,255,0.5), 0 6px 16px rgba(0,0,0,0.4);
+}
+.back-to-top:active {
+    transform: translateY(0) scale(0.98);
+}
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+.back-to-top:hover { background: rgba(255,255,255,0.16); }
+
+.photo-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.72);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.18s ease;
+    z-index: 9999;
+}
+.photo-modal.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+.photo-modal__content { position: relative; background: transparent; border: none; border-radius: 14px; padding: 0; max-width: min(90vw, 1100px); max-height: 90vh; box-shadow: 0 20px 60px rgba(0,0,0,0.45); display: flex; flex-direction: column; gap: 10px; }
+.photo-modal__zoom { background:#0a0f1c; border:1px solid rgba(255,255,255,0.12); border-radius:14px; padding:14px; transform-origin:center center; transition: transform 0.12s ease; }
+.photo-modal__img {
+    max-width: 100%;
+    max-height: 78vh;
+    object-fit: contain;
+    border-radius: 12px;
+    background: #0c1326;
+}
+.photo-modal__caption {
+    color: var(--muted);
+    font-size: 14px;
+}
+.photo-modal__close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: #fff;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    transition: background 0.18s ease, transform 0.18s ease;
+}
+.photo-modal__close:hover {
+    background: rgba(255,255,255,0.16);
+    transform: scale(1.06);
+}
+
+@media (max-width: 768px) {
+    .hero { flex-direction: column; align-items: flex-start; }
+    .toolbar { flex-direction: column; align-items: stretch; }
+    .filter-row {
+        grid-template-columns: auto 1fr;
+        gap: 8px;
+        padding: 12px;
+    }
+    .filter-row .pill { grid-column: 1; }
+    .filter-row > * { grid-column: 2; }
+    button { width: 100%; }
+}
+
+@media (max-width: 480px) {
+    body { padding: 16px 8px 60px; }
+    .page { border-radius: 12px; }
+    .hero { padding: 16px; }
+    .section { padding: 16px 12px; }
+    .filter-row {
+        grid-template-columns: 1fr;
+        gap: 6px;
+        padding: 10px;
+    }
+    .filter-row button, .filter-row select, .filter-row input {
+        height: 40px;
+        font-size: 13px;
+    }
+}
+
+/* 双模式标签页样式 */
+.mode-tabs {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+    border-bottom: 2px solid var(--stroke);
+}
+.mode-tab {
+    padding: 12px 24px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--muted);
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    bottom: -2px;
+}
+.mode-tab:hover {
+    color: #cbd5e1;
+    background: rgba(255,255,255,0.03);
+}
+.mode-tab.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+}
+.mode-content {
+    display: none;
+}
+.mode-content.active {
+    display: block;
+}
+/* 测试数据标签样式 */
+.badge-test {
+    display: inline-block;
+    padding: 2px 8px;
+    margin-left: 8px;
+    background: #ff9800;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 4px;
+}
+    </style>
+</head>
+<body>
+        <div class="page">
+                <div class="hero">
+                        <div>
+                                <h1 class="hero-title">🛣️ 公路巡查系统 · 后台</h1>
+                                <p class="hero-sub">快速查看数据库状态、巡查数据与处理进度。</p>
+                        </div>
+                        <div class="hero-badge">Admin Console</div>
+                </div>
+
+                <!-- 双模式标签页 -->
+                <div class="mode-tabs">
+                    <button class="mode-tab active" onclick="switchMode('inspect')">🔍 检视模式</button>
+                    <button class="mode-tab" onclick="switchMode('maintain')">⚙️ 运维模式</button>
+                </div>
+
+                <!-- 检视模式内容 -->
+                <div id="inspectMode" class="mode-content active">
+                    <section id="dashboardSection" class="section">
+                    <h2>📈 数据概览</h2>
+                    <p class="lead" style="display:flex;align-items:center;gap:12px;">
+                        <span>查看所有数据统计（真实+测试）</span>
+                        <select id="dataTypeFilter" onchange="changeDataTypeFilter()" class="select-premium">
+                        <option value="">全部数据</option>
+                        <option value="real">仅真实数据</option>
+                        <option value="test">仅测试数据</option>
+                        </select>
+                    </p>
+                    <!-- 统计卡片骨架屏 -->
+                    <div id="statsSkeleton" class="stats-skeleton" style="display:none;">
+                        <div class="skeleton-card skeleton-shimmer"></div>
+                        <div class="skeleton-card skeleton-shimmer"></div>
+                        <div class="skeleton-card skeleton-shimmer"></div>
+                        <div class="skeleton-card skeleton-shimmer"></div>
+                        <div class="skeleton-card skeleton-shimmer"></div>
+                        <div class="skeleton-card skeleton-shimmer"></div>
+                    </div>
+                    <div id="dashboardGrid" class="dashboard">
+                        <div class="dash-card">
+                            <p class="dash-title">总记录数</p>
+                            <p class="dash-value" id="stat-total">-</p>
+                        </div>
+                        <div class="dash-card">
+                            <p class="dash-title">待处理</p>
+                            <p class="dash-value" id="stat-pending">-</p>
+                        </div>
+                        <div class="dash-card">
+                            <p class="dash-title">处理中</p>
+                            <p class="dash-value" id="stat-processing">-</p>
+                        </div>
+                        <div class="dash-card">
+                            <p class="dash-title">已修复</p>
+                            <p class="dash-value" id="stat-completed">-</p>
+                        </div>
+                        <div class="dash-card">
+                            <p class="dash-title">近7天新增</p>
+                            <p class="dash-value" id="stat-7">-</p>
+                        </div>
+                        <div class="dash-card">
+                            <p class="dash-title">近30天新增</p>
+                            <p class="dash-value" id="stat-30">-</p>
+                        </div>
+                    </div>
+                    <!-- 图表骨架屏 -->
+                    <div id="chartsSkeleton" class="charts-skeleton" style="display:none;">
+                        <div class="skeleton-chart skeleton-shimmer"></div>
+                        <div class="skeleton-chart skeleton-shimmer"></div>
+                    </div>
+                    <div id="chartsGrid" class="charts">
+                        <div class="chart-box">
+                            <h3 style="margin:0 0 6px 0;">问题类型分布</h3>
+                            <div id="chart-type" style="width:100%;height:280px;display:block;"></div>
+                        </div>
+                        <div class="chart-box">
+                            <h3 style="margin:0 0 6px 0;">严重度分布</h3>
+                            <canvas id="chart-severity" height="160"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- 快捷导航卡片 -->
+                    <div style="margin-top:32px;">
+                        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;">
+                            <!-- 巡查工作台卡片 -->
+                            <div onclick="window.location.href='/patrol.html'" style="cursor:pointer;padding:20px;border-radius:14px;background:linear-gradient(135deg,rgba(91,139,255,0.12),rgba(91,139,255,0.06));border:1px solid rgba(91,139,255,0.25);transition:all 0.3s ease;display:flex;flex-direction:column;gap:10px;">
+                                <div style="font-size:32px;">👷‍♂️</div>
+                                <div style="font-weight:600;font-size:16px;color:#e2e8f0;">进入巡查工作台</div>
+                                <div style="font-size:13px;color:var(--muted);line-height:1.5;">上报新的道路问题、上传检查照片、查看记录状态</div>
+                            </div>
+                            <!-- 地图分析卡片 -->
+                            <div onclick="window.location.href='/map.html'" style="cursor:pointer;padding:20px;border-radius:14px;background:linear-gradient(135deg,rgba(122,240,216,0.12),rgba(122,240,216,0.06));border:1px solid rgba(122,240,216,0.25);transition:all 0.3s ease;display:flex;flex-direction:column;gap:10px;">
+                                <div style="font-size:32px;">🌍</div>
+                                <div style="font-weight:600;font-size:16px;color:#e2e8f0;">世界地图分析</div>
+                                <div style="font-size:13px;color:var(--muted);line-height:1.5;">全球数据可视化、区域统计对比、热力分布分析</div>
+                            </div>
+                        </div>
+                        <style>
+                            @media (hover:hover) {
+                                div[onclick="window.location.href='/patrol.html'"]:hover {
+                                    background:linear-gradient(135deg,rgba(91,139,255,0.18),rgba(91,139,255,0.1));
+                                    border-color:rgba(91,139,255,0.4);
+                                    transform:translateY(-2px);
+                                    box-shadow:0 12px 32px rgba(91,139,255,0.2);
+                                }
+                                div[onclick="window.location.href='/map.html'"]:hover {
+                                    background:linear-gradient(135deg,rgba(122,240,216,0.18),rgba(122,240,216,0.1));
+                                    border-color:rgba(122,240,216,0.4);
+                                    transform:translateY(-2px);
+                                    box-shadow:0 12px 32px rgba(122,240,216,0.2);
+                                }
+                            }
+                        </style>
+                    </div>
+                    </section>
+                </div>
+
+                <!-- 运维模式内容 -->
+                <div id="maintainMode" class="mode-content">
+                    <section class="section">
+                    <h2>⚙️ 数据库运维</h2>
+                    <p class="lead">验证表结构、查看运行状态、或一键重建（含测试数据）。</p>
+                        <div class="toolbar" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;">
+                            <!-- 左侧：数据库维护按钮 -->
+                            <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                                <button class="btn-verify" onclick="runTask('/api/verify/stream')">✅ 数据完整性校验</button>
+                                <button class="btn-status" onclick="runTask('/api/status/stream')">📊 运行状态检查</button>
+                                <button class="btn-reinit" onclick="runSafeReset()">🧹 安全重置</button>
+                            </div>
+                            
+                            <!-- 右侧：测试数据管理 -->
+                            <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+                                <label style="display:flex;align-items:center;gap:6px;color:var(--muted);font-size:13px;">
+                                    <input type="checkbox" id="genPhotos" style="transform:scale(1.1);" /> 同时生成照片
+                                </label>
+                                <button class="btn-status" onclick="promptGenerateFake()">🧪 生成测试数据</button>
+                                <button class="btn-reinit" onclick="cleanTestData()">🗑️ 清理测试数据</button>
+                            </div>
+                        </div>
+                </section>
+
+                <div id="logPanel" class="log-panel" style="display:none; margin: 0 32px 24px;">
+                        <div class="log-line">⏳ 等待任务启动...</div>
+                </div>
+                </section>
+
+                <!-- 审计日志视图 -->
+                <section class="section">
+                    <h2>📝 审计日志</h2>
+                    <p class="lead">查看管理员敏感操作记录（支持筛选与分页）。</p>
+                    <div class="card">
+                        <div class="filter-row">
+                            <span class="pill">📋 筛选</span>
+                            <select id="auditAction" class="select-premium w-select" title="选择操作类型">
+                                <option value="">全部操作</option>
+                                <option value="mark_processing">标记处理中</option>
+                                <option value="mark_completed">标记已完成</option>
+                                <option value="reinit_database">数据库重置</option>
+                                <option value="generate_data">生成测试数据</option>
+                                <option value="clean_test_data">清理测试数据</option>
+                            </select>
+                            <input type="number" id="auditUserId" placeholder="用户ID" title="输入用户ID筛选" />
+                            <input type="date" id="auditStart" class="w-date" title="选择开始日期" />
+                            <input type="date" id="auditEnd" class="w-date" title="选择结束日期" />
+                            <select id="auditQuick" class="select-premium w-quick" onchange="applyAuditQuick()" title="快捷日期范围">
+                                <option value="">📅 快捷</option>
+                                <option value="7">近7天</option>
+                                <option value="30">近30天</option>
+                                <option value="month">本月</option>
+                                <option value="all">全部时间</option>
+                            </select>
+                            <input id="auditKeyword" placeholder="关键词 (资源/详情)" class="w-keyword" title="输入关键词进行搜索" />
+                            <button onclick="loadAudit()" title="执行查询">🔍 查询</button>
+                            <button onclick="resetAuditFilters()" class="btn-reinit" title="重置所有筛选条件">↺ 重置</button>
+                            <button onclick="exportAuditLog()" class="btn-status" title="导出为CSV文件">📥 导出</button>
+                        </div>
+                    </div>
+
+                    <div class="card" style="margin-top:14px; overflow-x:auto;">
+                        <table id="auditTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>用户ID</th>
+                                    <th>操作</th>
+                                    <th>资源</th>
+                                    <th>详情</th>
+                                    <th>时间</th>
+                                </tr>
+                            </thead>
+                            <tbody id="auditTableBody"></tbody>
+                        </table>
+                        <div id="auditPagination" style="display:flex; align-items:center; gap:12px; justify-content:flex-end; flex-wrap:wrap; padding:12px 8px; background:rgba(255,255,255,0.02); border-top:1px solid var(--stroke); margin-top:0;">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <label style="color:var(--muted); font-size:13px;">每页条数：</label>
+                                <select id="auditPageSizeSelect" onchange="changeAuditPageSize()" class="select-premium" style="width:90px;">
+                                    <option value="20">20</option>
+                                    <option value="50" selected>50</option>
+                                    <option value="100">100</option>
+                                    <option value="200">200</option>
+                                </select>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <label style="color:var(--muted); font-size:13px;">跳转页码：</label>
+                                <input id="auditJumpPageInput" type="number" min="1" max="1" placeholder="页码" style="width:60px; padding:6px 8px; font-size:13px;" />
+                                <button class="btn-enter" style="padding:6px 10px; font-size:13px;" onclick="auditJumpToPage()">跳转</button>
+                            </div>
+                            <div style="flex-grow:1;"></div>
+                            <button id="auditBtnPrev" class="btn-enter" style="padding:6px 10px; font-size:13px;" onclick="auditPrevPage()">上一页</button>
+                            <span id="auditPageInfo" style="min-width:150px; text-align:center; font-size:13px;">第 1 / 1 页 · 共 0 条</span>
+                            <button id="auditBtnNext" class="btn-enter" style="padding:6px 10px; font-size:13px;" onclick="auditNextPage()">下一页</button>
+                        </div>
+                    </div>
+                </section>
+                </div>
+
+                <!-- 共享：巡查记录管理（两个模式都可见） -->
+                <section id="recordManagement" class="section">
+                    <h2>📋 巡查记录管理</h2>
+
+                    <div id="live-photos" class="live-photos">
+                        <div class="live-photos__header">
+                            <strong>📸 实时新照片：</strong>
+                            <button id="live-photos-toggle" class="live-photos__toggle" onclick="toggleLivePhotos()">⮟</button>
+                        </div>
+                        <div id="live-photos-body" class="live-photos__body"></div>
+                    </div>
+
+                    <div class="card">
+                        <div class="filter-row">
+                            <span class="pill">🔎 筛选</span>
+                            <select id="statusFilter" class="select-premium w-select" title="按状态筛选记录">
+                                <option value="">全部状态</option>
+                                <option value="pending">🔴 待处理</option>
+                                <option value="processing">🟡 处理中</option>
+                                <option value="completed">🟢 已修复</option>
+                            </select>
+                            <select id="severityFilter" class="select-premium w-select" title="按严重度筛选">
+                                <option value="">全部级别</option>
+                                <option value="1">⭐ 1级</option>
+                                <option value="2">⭐⭐ 2级</option>
+                                <option value="3">⭐⭐⭐ 3级</option>
+                                <option value="4">⭐⭐⭐⭐ 4级</option>
+                                <option value="5">⭐⭐⭐⭐⭐ 5级</option>
+                            </select>
+                            <input type="date" id="startDate" class="w-date" title="选择开始日期" />
+                            <input type="date" id="endDate" class="w-date" title="选择结束日期" />
+                            <select id="recordQuick" class="select-premium w-quick" onchange="applyRecordQuick()" title="快捷日期范围">
+                                <option value="">📅 快捷</option>
+                                <option value="7">近7天</option>
+                                <option value="30">近30天</option>
+                                <option value="month">本月</option>
+                                <option value="all">全部时间</option>
+                            </select>
+                            <input id="keyword" placeholder="关键词 (描述/路段/类型)" class="w-keyword" title="输入关键词进行搜索" />
+                            <button onclick="loadRecords()" title="执行查询">🔍 查询</button>
+                            <button onclick="resetRecordFilters()" class="btn-reinit">↺ 重置</button>
+                            <button onclick="exportExcel()" class="btn-status" title="导出为Excel文件">📥 导出</button>
+                        </div>
+                    </div>
+
+                    <div class="card" style="margin-top:14px; overflow-x:auto;">
+                        <!-- 表格加载骨架屏 -->
+                        <div id="recordsSkeleton" class="skeleton-table" style="display:none;">
+                            <div class="skeleton-header"></div>
+                            <div class="skeleton-row">
+                                <div class="skeleton-cell skeleton-shimmer"></div>
+                                <div class="skeleton-cell skeleton-shimmer"></div>
+                                <div class="skeleton-cell skeleton-shimmer"></div>
+                                <div class="skeleton-cell skeleton-shimmer"></div>
+                                <div class="skeleton-cell skeleton-shimmer"></div>
+                                <div class="skeleton-cell skeleton-shimmer"></div>
+                                <div class="skeleton-cell skeleton-shimmer"></div>
+                                <div class="skeleton-cell skeleton-shimmer"></div>
+                                <div class="skeleton-cell skeleton-shimmer"></div>
+                            </div>
+                            <div class="skeleton-row">
+                                <div class="skeleton-cell skeleton-shimmer"></div>
+                                <div class="skeleton-cell skeleton-shimmer"></div>
+                                <div class="skeleton-cell skeleton-shimmer"></div>
+                                <div class="skeleton-cell skeleton-shimmer"></div>
+                                <div class="skeleton-cell skeleton-shimmer"></div>
+                                <div class="skeleton-cell skeleton-shimmer"></div>
+                                <div class="skeleton-cell skeleton-shimmer"></div>
+                                <div class="skeleton-cell skeleton-shimmer"></div>
+                                <div class="skeleton-cell skeleton-shimmer"></div>
+                            </div>
+                            <div class="skeleton-row">
+                                <div class="skeleton-cell skeleton-shimmer"></div>
+                                <div class="skeleton-cell skeleton-shimmer"></div>
+                                <div class="skeleton-cell skeleton-shimmer"></div>
+                                <div class="skeleton-cell skeleton-shimmer"></div>
+                                <div class="skeleton-cell skeleton-shimmer"></div>
+                                <div class="skeleton-cell skeleton-shimmer"></div>
+                                <div class="skeleton-cell skeleton-shimmer"></div>
+                                <div class="skeleton-cell skeleton-shimmer"></div>
+                                <div class="skeleton-cell skeleton-shimmer"></div>
+                            </div>
+                        </div>
+                        <table id="recordTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>上报人</th>
+                                    <th>路段</th>
+                                    <th>问题类型</th>
+                                    <th>严重度</th>
+                                    <th>GPS定位</th>
+                                    <th>状态</th>
+                                    <th>上报时间</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recordTableBody"></tbody>
+                        </table>
+                        <div id="pagination" style="display:flex; align-items:center; gap:12px; justify-content:flex-end; flex-wrap:wrap; padding:12px 8px; background:rgba(255,255,255,0.02); border-top:1px solid var(--stroke); margin-top:0;">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <label style="color:var(--muted); font-size:13px;">每页条数：</label>
+                                <select id="pageSizeSelect" onchange="changePageSize()" class="select-premium" style="width:90px;">
+                                    <option value="50">50</option>
+                                    <option value="100" selected>100</option>
+                                    <option value="150">150</option>
+                                    <option value="200">200</option>
+                                </select>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <label style="color:var(--muted); font-size:13px;">跳转页码：</label>
+                                <input id="jumpPageInput" type="number" min="1" max="1" placeholder="页码" style="width:60px; padding:6px 8px; font-size:13px;" />
+                                <button class="btn-enter" style="padding:6px 10px; font-size:13px;" onclick="jumpToPage()">跳转</button>
+                            </div>
+                            <div style="flex-grow:1;"></div>
+                            <button id="btnPrev" class="btn-enter" style="padding:6px 10px; font-size:13px;" onclick="prevPage()">上一页</button>
+                            <span id="pageInfo" style="min-width:150px; text-align:center; font-size:13px;">第 1 / 1 页 · 共 0 条</span>
+                            <button id="btnNext" class="btn-enter" style="padding:6px 10px; font-size:13px;" onclick="nextPage()">下一页</button>
+                        </div>
+                    </div>
+                </section>
+        </div>
+
+    <!-- 照片放大预览弹窗 -->
+    <div id="photo-modal" class="photo-modal" aria-hidden="true">
+        <div class="photo-modal__content">
+            <button class="photo-modal__close" aria-label="关闭" onclick="closePhotoModal()">×</button>
+            <div id="photo-modal-zoom" class="photo-modal__zoom">
+                <img id="photo-modal-img" class="photo-modal__img" src="" alt="实时照片预览">
+                <div id="photo-modal-caption" class="photo-modal__caption"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 回到顶部按钮 -->
+    <button id="back-to-top" class="back-to-top" aria-label="回到顶部" title="回到顶部" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+    <script>
+    let eventSource = null;      // 数据库任务 SSE
+    let photoSource = null;      // 照片推送 SSE
+    let reconnectAttempts = 0;
+    const maxReconnectAttempts = 3;
+    let taskCompleted = false;   // 用于追踪任务是否已完成
+    let photoScale = 1;          // 弹窗缩放比例
+    function getAccessToken() {
+        const t = localStorage.getItem('access_token');
+        if (!t) {
+            alert('未检测到管理员登录，请先返回登录获取 token');
+        }
+        return t;
+    }
+
+    // fetch 超时保护，避免长时间无响应（增加到 30s，导出单独设 60s）
+    function fetchWithTimeout(url, options = {}, timeoutMs = 30000) {
+        const controller = new AbortController();
+        const id = setTimeout(() => controller.abort(), timeoutMs);
+        return fetch(url, { ...options, signal: controller.signal })
+            .finally(() => clearTimeout(id));
+    }
+
+    // 友好提示：未登录或权限不足时的页面
+        function showAuthBlock(message = '未授权访问') {
+        document.body.innerHTML = `
+        <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#111;color:#fff;padding:24px;">
+          <div style="max-width:420px;width:100%;background:#1e1e1e;border:1px solid #333;border-radius:12px;padding:24px;box-shadow:0 10px 30px rgba(0,0,0,0.35);">
+            <h2 style="margin:0 0 12px 0;font-weight:600;">🚫 访问受限</h2>
+            <p style="margin:0 0 18px 0;line-height:1.6;color:#ccc;">${message}</p>
+            <button onclick="window.location.href='/patrol.html'" style="width:100%;padding:12px;border:none;border-radius:8px;background:#2f80ed;color:#fff;font-size:15px;cursor:pointer;">去登录管理员账号</button>
+          </div>
+        </div>`;
+    }
+
+    // 统一检查管理员身份（后台验证，不阻塞页面渲染）
+    async function ensureAdmin() {
+        const token = getAccessToken();
+        if (!token) {
+            showAuthBlock('请先登录管理员账号后再访问后台');
+            return false;
+        }
+        try {
+            const res = await fetch('/api/me', { headers: { 'Authorization': `Bearer ${token}` }});
+            if (!res.ok) throw new Error('unauthorized');
+            const user = await res.json();
+            if (user.role !== 'admin') {
+                showAuthBlock('当前账号非管理员，请使用管理员账号登录');
+                return false;
+            }
+            return true;
+        } catch (e) {
+            showAuthBlock('认证已失效，请重新登录管理员账号');
+            return false;
+        }
+    }
+
+    // 后台验证（不阻塞初始化）
+    function checkAdminAsync() {
+        ensureAdmin().catch(err => {
+            console.warn('后台认证失败:', err);
+            showAuthBlock('认证失败，请刷新页面重试');
+        });
+    }
+
+    
+    
+        // 清空实时照片区域（仅清空内容部分）
+        function clearLivePhotos() {
+            const body = document.getElementById('live-photos-body');
+            if (body) body.innerHTML = '';
+        }
+
+    // 收拢/展开“实时新照片”
+    function toggleLivePhotos() {
+        const container = document.getElementById('live-photos');
+        const toggleBtn = document.getElementById('live-photos-toggle');
+        if (!container || !toggleBtn) return;
+        const collapsed = container.classList.toggle('collapsed');
+        toggleBtn.textContent = collapsed ? '⮝' : '⮟';
+    }
+
+    // 滚动时显示/隐藏回到顶部按钮
+    window.addEventListener('scroll', () => {
+        const btn = document.getElementById('back-to-top');
+        if (!btn) return;
+        if (window.scrollY > 200) btn.classList.add('show');
+        else btn.classList.remove('show');
+    });
+    function applyPhotoScale() {
+        const zoom = document.getElementById('photo-modal-zoom');
+        if (!zoom) return;
+        zoom.style.transform = `scale(${photoScale})`;
+    }
+
+    function openPhotoModal(url, caption = '') {
+        const modal = document.getElementById('photo-modal');
+        const img = document.getElementById('photo-modal-img');
+        const cap = document.getElementById('photo-modal-caption');
+        const zoom = document.getElementById('photo-modal-zoom');
+        if (!modal || !img || !zoom) return;
+        img.src = url;
+        img.alt = caption || '实时照片预览';
+        if (cap) cap.textContent = caption;
+        photoScale = 1;
+        applyPhotoScale();
+        modal.classList.add('show');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closePhotoModal() {
+        const modal = document.getElementById('photo-modal');
+        const img = document.getElementById('photo-modal-img');
+        const cap = document.getElementById('photo-modal-caption');
+        const zoom = document.getElementById('photo-modal-zoom');
+        if (!modal) return;
+        modal.classList.remove('show');
+        modal.setAttribute('aria-hidden', 'true');
+        if (img) img.src = '';
+        if (cap) cap.textContent = '';
+        if (zoom) zoom.style.transform = 'scale(1)';
+        document.body.style.overflow = '';
+    }
+
+    // 关闭弹窗：点击遮罩或按 ESC
+    document.addEventListener('click', (e) => {
+        const modal = document.getElementById('photo-modal');
+        if (!modal || !modal.classList.contains('show')) return;
+        if (e.target === modal) closePhotoModal();
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closePhotoModal();
+    });
+
+    // 鼠标滚轮缩放弹窗中的图片
+    document.addEventListener('wheel', (e) => {
+        const modal = document.getElementById('photo-modal');
+        if (!modal || !modal.classList.contains('show')) return;
+        if (!modal.contains(e.target)) return;
+        e.preventDefault();
+        const delta = e.deltaY > 0 ? -0.1 : 0.1;
+        photoScale = Math.min(4, Math.max(0.5, photoScale + delta));
+        applyPhotoScale();
+    }, { passive: false });
+
+    function startPhotoStream() {
+        if (photoSource) photoSource.close();
+        const token = getAccessToken();
+        if (!token) return;
+        const url = `/api/sse/patrol-photo?token=${encodeURIComponent(token)}`;
+        photoSource = new EventSource(url);
+        photoSource.onmessage = function(e) {
+            const payload = JSON.parse(e.data || '{}');
+            if (payload.event === "new_photo") {
+                const { record_id, photo_url } = payload.data || {};
+                if (!record_id || !photo_url) return;
+                const container = document.getElementById("live-photos-body");
+                const card = document.createElement("div");
+                card.className = "live-photo-card";
+                card.innerHTML = `
+                    <small>记录 #${record_id}</small><br>
+                    <img src="${photo_url}" alt="记录 #${record_id} 的照片">
+                `;
+                card.addEventListener('click', () => openPhotoModal(photo_url, `记录 #${record_id}`));
+                // 新照片插入到容器末尾（标签在最前面）
+                container.appendChild(card);
+                
+                // 实时刷新记录列表和统计图表
+                loadRecords();
+                loadStats();
+            }
+        };
+        photoSource.onerror = (event) => {
+            console.error('SSE 照片流连接错误:', event);
+            const container = document.getElementById("live-photos-body");
+            // 避免重复添加错误信息
+            if (!container.querySelector('[data-error]')) {
+                const errorMsg = document.createElement('div');
+                errorMsg.setAttribute('data-error', 'true');
+                errorMsg.style.color = '#e74c3c';
+                errorMsg.style.padding = '10px';
+                errorMsg.style.borderRadius = '4px';
+                errorMsg.style.backgroundColor = '#ffebee';
+                errorMsg.textContent = '⚠️ 实时推送已断开，系统将自动重连...';
+                container.appendChild(errorMsg);
+                
+                // 3秒后自动重连
+                setTimeout(() => {
+                    console.log('[SSE] 自动重连照片流...');
+                    startPhotoStream();
+                }, 3000);
+            }
+        };
+        window.addEventListener('beforeunload', () => photoSource && photoSource.close());
+    }
+
+    // ========================
+    // 模式切换与数据类型筛选
+    // ========================
+    let currentDataType = ''; // 当前数据类型筛选：'' | 'real' | 'test'
+
+    function ensureMaintainModePosition() {
+        const inspect = document.getElementById('inspectMode');
+        const maintain = document.getElementById('maintainMode');
+        if (inspect && maintain && maintain.parentElement === inspect) {
+            // 如果运维模式错误地嵌套在检视模式下，动态移出成为兄弟节点
+            inspect.parentElement.insertBefore(maintain, inspect.nextSibling);
+        }
+    }
+    function switchMode(mode) {
+        // 先确保DOM结构正确
+        ensureMaintainModePosition();
+        // 切换标签页样式
+        document.querySelectorAll('.mode-tab').forEach(tab => tab.classList.remove('active'));
+        event.target.classList.add('active');
+        
+        // 切换内容显示
+        document.querySelectorAll('.mode-content').forEach(content => content.classList.remove('active'));
+        const targetContent = mode === 'inspect' ? 'inspectMode' : 'maintainMode';
+        document.getElementById(targetContent).classList.add('active');
+    }
+
+    function changeDataTypeFilter() {
+        currentDataType = document.getElementById('dataTypeFilter').value;
+        CURRENT_PAGE = 1; // 重置到第一页
+        loadRecords();
+        loadStats();
+    }
+
+    // ========================
+    // 清理测试数据
+    // ========================
+    async function cleanTestData() {
+        const confirmMsg = '⚠️ 确认删除所有测试数据？\n\n此操作将永久删除所有标记为"测试"的记录，不可恢复！\n\n建议先导出备份。';
+        if (!confirm(confirmMsg)) return;
+        
+        const token = getAccessToken();
+        if (!token) return;
+        
+        try {
+            const res = await fetchWithTimeout('/api/admin/clean-test-data', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                alert(`✅ 已删除 ${data.deleted_count} 条测试数据`);
+                await loadRecords();
+                await loadStats();
+            } else {
+                alert('⚠️ 操作失败：' + (data.detail || data.error || '未知错误'));
+            }
+        } catch (e) {
+            alert('❌ 网络错误：' + e.message);
+        }
+    }
+
+    // ========================
+    // 加载状态管理
+    // ========================
+    let isOperating = false;
+    
+    function setButtonsDisabled(disabled) {
+        document.querySelectorAll('.btn-verify, .btn-status, .btn-reinit, .btn-enter').forEach(btn => {
+            btn.disabled = disabled;
+            btn.style.opacity = disabled ? '0.6' : '1';
+            btn.style.cursor = disabled ? 'not-allowed' : 'pointer';
+        });
+        isOperating = disabled;
+    }
+
+    // ========================
+    // 工具函数：安全获取文本
+    // ========================
+    function safeText(str) {
+        return str ? String(str).replace(/</g, '&lt;').replace(/>/g, '&gt;') : '';
+    }
+
+    // ========================
+    // 数据库基本操作：验证、查看、重置
+    // ========================
+    function runTask(url) {
+        if (isOperating) {
+            alert('上一个操作仍在进行中，请稍候...');
+            return;
+        }
+        
+        // 关闭之前的连接（如果存在）
+        if (eventSource) {
+            eventSource.close();
+            reconnectAttempts = 0;
+        }
+
+        // 重置完成状态
+        taskCompleted = false;
+        setButtonsDisabled(true);
+
+        const panel = document.getElementById('logPanel');
+        panel.innerHTML = '<div class="log-line">⏳ 任务启动中...</div>';
+        panel.style.display = 'block';
+
+        // 创建新的 EventSource
+        // 为 SSE 加上 token 查询参数
+        const token = getAccessToken();
+        if (!token) {
+            setButtonsDisabled(false);
+            return;
+        }
+        const fullUrl = token ? `${url}${url.includes('?') ? '&' : '?'}token=${encodeURIComponent(token)}` : url;
+        eventSource = new EventSource(fullUrl);
+
+        let sseStartEpoch = null;
+        function formatElapsed(ms) {
+            if (ms < 1000) return `${ms}ms`;
+            const s = (ms / 1000);
+            return `${s.toFixed(2)}s`;
+        }
+
+        eventSource.onmessage = function(e) {
+            const msg = JSON.parse(e.data);
+            let cls = '';
+            if (msg.event === 'error') cls = 'log-error';
+            else if (msg.event === 'success') cls = 'log-success';
+            else if (msg.event === 'warn') cls = 'log-warn';
+            else if (msg.event === 'info') cls = 'log-info';
+            else if (msg.event === 'complete') cls = 'log-complete';
+
+            // 以第一条事件的服务端时间为起点，显示累计耗时
+            if (sseStartEpoch == null) {
+                sseStartEpoch = msg.ts_epoch_ms || Date.now();
+            }
+            const curTs = msg.ts_epoch_ms || Date.now();
+            const elapsed = Math.max(0, curTs - sseStartEpoch);
+
+            appendLog(`[${msg.time} +${formatElapsed(elapsed)}] ${msg.data}`, cls);
+
+            // 标记任务已完成
+            if (msg.event === 'complete') {
+                taskCompleted = true;
+                setTimeout(() => {
+                    if (eventSource) {
+                        eventSource.close();
+                        eventSource = null;
+                    }
+                    appendLog('[系统] 任务完成，连接已关闭', 'log-info');
+                    setButtonsDisabled(false);
+                    // 重置完成后：重置实时照片标签、恢复照片流，并刷新数据
+                    try {
+                        clearLivePhotos();
+                        startPhotoStream();
+                        // 尝试刷新数据，如果失败则提示可能需要刷新页面
+                        loadRecords().catch(err => {
+                            console.error('[刷新记录失败]', err);
+                            appendLog('[系统] ⚠️ 刷新数据失败，建议刷新页面重新登录', 'log-warn');
+                        });
+                        loadStats().catch(err => {
+                            console.error('[刷新统计失败]', err);
+                        });
+                        appendLog('[系统] 正在恢复实时照片流...', 'log-success');
+                    } catch (e) {
+                        console.error('[重置后刷新异常]', e);
+                                            appendLog('[系统] ⚠️ 部分功能恢复失败，建议刷新页面', 'log-warn');
+                    }
+                }, 500);
+            }
+        };
+
+        eventSource.onopen = function(event) {
+            if (reconnectAttempts > 0) {
+                appendLog('[系统] 🔄 连接已恢复，任务将继续...', 'log-success');
+            }
+            reconnectAttempts = 0;
+        };
+
+        // 错误处理（关键改进）
+        eventSource.onerror = function(event) {
+            // 如果任务已完成，不再处理错误（避免重连干扰）
+            if (taskCompleted) return;
+
+            // 如果连接已被手动关闭，忽略
+            if (eventSource.readyState === EventSource.CLOSED) {
+                console.log('SSE 已关闭，忽略错误');
+                return;
+            }
+
+            reconnectAttempts++;
+            console.warn(`SSE 连接出错，第 ${reconnectAttempts} 次重试...`);
+
+            if (reconnectAttempts >= maxReconnectAttempts) {
+                appendLog('[系统] 网络连接失败，请检查服务状态', 'log-error');
+                eventSource.close();
+                eventSource = null;
+                reconnectAttempts = 0;
+                setButtonsDisabled(false);  // ← 恢复按钮
+            } else {
+                appendLog(
+                    `[系统] 连接中断，正在重试 (${reconnectAttempts}/${maxReconnectAttempts})...`,
+                    'log-warn'
+                );
+            }
+        };
+    }
+
+    function appendLog(message, className = '') {
+        const panel = document.getElementById('logPanel');
+        panel.style.display = 'block';
+        const div = document.createElement('div');
+        div.className = 'log-line ' + className;
+        div.textContent = message;
+        panel.appendChild(div);
+        panel.scrollTop = panel.scrollHeight;
+    }
+
+    window.addEventListener('beforeunload', () => {
+        if (eventSource) {
+            eventSource.close();
+        }
+    });
+
+    // ========================
+    // 统计看板
+    // ========================
+    const charts = {};
+    
+    // 监听 ECharts 全局加载完成
+    let echartsCheckInterval = null;
+    let echartsCheckAttempts = 0;
+    function checkEchartsLoaded() {
+        echartsCheckAttempts++;
+        console.log(`[ECharts检查 #${echartsCheckAttempts}] window.echarts =`, typeof window.echarts);
+        
+        if (window.echarts) {
+            console.log('✓✓✓ ECharts 全局库加载完成，ready!');
+            if (echartsCheckInterval) clearInterval(echartsCheckInterval);
+            // 触发重新加载统计，确保图表被渲染
+            if (window.loadStats) {
+                console.log('🔄 ECharts已就绪，重新加载统计图表...');
+                loadStats();
+            }
+            return true;
+        }
+        
+        // 如果检查次数过多，停止
+        if (echartsCheckAttempts > 200) {
+            console.warn('⏱️ ECharts 加载超时（10秒），仍未就绪，强制加载');
+            if (echartsCheckInterval) clearInterval(echartsCheckInterval);
+            // 仍然尝试加载
+            if (window.loadStats) loadStats();
+            return true;
+        }
+        return false;
+    }
+    
+    // 立即开始检查 ECharts 加载状态
+    console.log('🚀 开始监视 ECharts 加载...');
+    if (!checkEchartsLoaded()) {
+        echartsCheckInterval = setInterval(checkEchartsLoaded, 50);
+    }
+
+    function buildQueryParams() {
+        const params = new URLSearchParams();
+        const status = document.getElementById('statusFilter').value;
+        const severity = document.getElementById('severityFilter').value;
+        const start = document.getElementById('startDate').value;
+        const end = document.getElementById('endDate').value;
+        const keyword = document.getElementById('keyword').value.trim();
+
+        if (status) params.append('status', status);
+        if (severity) params.append('severity', severity);
+        if (start) params.append('start_date', start);
+        if (end) params.append('end_date', end);
+        if (keyword) params.append('keyword', keyword);
+        if (currentDataType) params.append('data_type', currentDataType);
+        return params;
+    }
+
+    function renderCard(id, value) {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value ?? 0;
+    }
+
+    function renderChart(canvasId, labels, data, title) {
+        const el = document.getElementById(canvasId);
+        if (!el) {
+            console.error(`❌ 图表容器不存在: ${canvasId}`);
+            return;
+        }
+        
+        // 检查容器是否有有效的宽度
+        const containerWidth = el.offsetWidth || el.parentElement?.offsetWidth || 0;
+        console.log(`📦 ${canvasId} 容器尺寸:`, { width: containerWidth, height: el.offsetHeight, display: window.getComputedStyle(el).display });
+
+        // 颜色方案（与地图页一致）
+        const palette = ['#5b8bff','#7af0d8','#ff9800','#f54291','#6ee7b7','#ffd166','#a78bfa','#22d3ee','#ef4444','#34d399'];
+
+        // 问题类型分布：使用 ECharts 圆环图，风格与地图页面一致（复用实例，避免闪烁）
+        if (canvasId === 'chart-type') {
+            console.log('🎨 [chart-type] 开始渲染问题类型图表', { canvasId, labels: labels.length, data: data.length, echartsLoaded: !!window.echarts });
+            
+            // 确保 ECharts 已加载
+            if (!window.echarts) {
+                console.warn('⏳ [chart-type] ECharts 尚未加载，100ms 后重试...');
+                setTimeout(() => renderChart(canvasId, labels, data, title), 100);
+                return;
+            }
+            
+            console.log('✓ [chart-type] ECharts 已加载，准备初始化');
+            const seriesData = labels.map((name, i) => ({ name, value: data[i] || 0 }));
+            console.log('📊 [chart-type] 序列数据:', seriesData.slice(0, 3), `...(共${seriesData.length}项)`);
+            
+            try {
+                if (charts[canvasId] && charts[canvasId].setOption && typeof charts[canvasId].setOption === 'function') {
+                    console.log('🔄 [chart-type] 更新现有图表实例');
+                    charts[canvasId].setOption({
+                        series: [{ data: seriesData }]
+                    }, false); // 合并更新，减少重绘
+                } else {
+                    console.log('🆕 [chart-type] 创建新图表实例');
+                    
+                    // 确保容器可见并获取实际宽度
+                    el.style.display = 'block';
+                    el.style.visibility = 'visible';
+                    
+                    // 等待一帧，让浏览器完全布局容器
+                    requestAnimationFrame(() => {
+                        const actualWidth = el.offsetWidth;
+                        const actualHeight = el.offsetHeight;
+                        console.log('📐 [chart-type] 容器实际尺寸:', { width: actualWidth, height: actualHeight });
+                        
+                        if (actualWidth <= 0 || actualHeight <= 0) {
+                            console.error('❌ [chart-type] 容器尺寸无效，延迟初始化');
+                            setTimeout(() => renderChart(canvasId, labels, data, title), 200);
+                            return;
+                        }
+                        
+                        const chart = echarts.init(el, null, { renderer: 'canvas', useDirtyRect: false });
+                        charts[canvasId] = chart;
+                        console.log('✓ [chart-type] echarts.init() 成功');
+                        
+                        const options = {
+                            title: { show: false },
+                            color: palette,
+                            tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
+                            legend: { show: false },
+                            series: [{
+                                type: 'pie',
+                                radius: ['40%','70%'],
+                                data: seriesData,
+                                itemStyle: { borderColor: '#0f172a', borderWidth: 2 },
+                                label: { color: '#cbd5e1', fontSize: 11 }
+                            }]
+                        };
+                        console.log('⚙️ [chart-type] 配置选项:', '问题类型分布');
+                        chart.setOption(options);
+                        chart.resize();
+                        console.log('✅ [chart-type] 图表初始化完成！');
+                    });
+                }
+            } catch (err) {
+                console.error('❌ [chart-type] 图表初始化失败:', err);
+                console.error('错误堆栈:', err.stack);
+            }
+            return;
+        }
+
+        // 其他图表：使用 Chart.js（严重度为折线，优先更新而非销毁）
+        const isLine = canvasId === 'chart-severity';
+        const chartType = isLine ? 'line' : 'bar';
+        const colors = isLine ? 'rgba(122, 240, 216, 0.2)' : '#4f83ff';
+        const borderColors = isLine ? '#7af0d8' : '#4f83ff';
+
+        if (charts[canvasId] && charts[canvasId].config && charts[canvasId].config.type === chartType) {
+            charts[canvasId].data.labels = labels;
+            charts[canvasId].data.datasets[0].data = data;
+            charts[canvasId].update('none'); // 无动画更新，避免闪烁
+        } else {
+            if (charts[canvasId] && charts[canvasId].destroy) charts[canvasId].destroy();
+            charts[canvasId] = new Chart(el, {
+                type: chartType,
+                data: {
+                    labels,
+                    datasets: [{
+                        label: title,
+                        data,
+                        backgroundColor: colors,
+                        borderColor: borderColors,
+                        borderWidth: isLine ? 2.5 : 1,
+                        fill: isLine ? true : false,
+                        tension: isLine ? 0.4 : 0,
+                        pointRadius: isLine ? 4 : 3,
+                        pointBackgroundColor: isLine ? '#7af0d8' : '#4f83ff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: { ticks: { autoSkip: false } },
+                        y: { beginAtZero: true, precision: 0 }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+    }
+
+    async function loadStats() {
+        console.log('📈 [loadStats] 开始加载统计数据，ECharts:', !!window.echarts);
+        const token = getAccessToken();
+        if (!token) {
+            console.warn('⚠️ [loadStats] 没有有效token，停止加载');
+            return;
+        }
+        const params = buildQueryParams();
+        const url = params.toString() ? `/api/admin/stats?${params.toString()}` : '/api/admin/stats';
+        console.log('🌐 [loadStats] 请求URL:', url);
+
+        // 显示骨架屏，隐藏真实内容
+        const dash = document.getElementById('dashboardGrid');
+        const chartsContainer = document.getElementById('chartsGrid');
+        const statsSk = document.getElementById('statsSkeleton');
+        const chartsSk = document.getElementById('chartsSkeleton');
+        if (statsSk) statsSk.style.display = 'grid';
+
+        if (dash) dash.style.display = 'none';
+        if (chartsSk) chartsSk.style.display = 'grid';
+        if (chartsContainer) chartsContainer.style.display = 'none';
+
+        try {
+            const res = await fetchWithTimeout(url, { headers: { 'Authorization': `Bearer ${token}` } });
+            if (!res.ok) {
+                console.warn('统计获取失败', await res.text());
+            } else {
+                const data = await res.json();
+                console.log('📊 后端数据:', data);
+                const status = data.status_breakdown || {};
+                renderCard('stat-total', data.total_records);
+                renderCard('stat-pending', status.pending || 0);
+                renderCard('stat-processing', status.processing || 0);
+                renderCard('stat-completed', status.completed || 0);
+                renderCard('stat-7', data.recent_7_days);
+                renderCard('stat-30', data.recent_30_days);
+
+                const typeLabels = (data.type_breakdown || []).map(i => i.label);
+                const typeData = (data.type_breakdown || []).map(i => i.count);
+                console.log('📈 问题类型标签:', typeLabels);
+                console.log('📊 问题类型数据:', typeData);
+                renderChart('chart-type', typeLabels, typeData, '问题类型');
+
+                const sevLabels = (data.severity_breakdown || []).map(i => `严重度${i.label}`);
+                const sevData = (data.severity_breakdown || []).map(i => i.count);
+                renderChart('chart-severity', sevLabels, sevData, '严重度');
+            }
+        } catch (e) {
+            console.warn('统计获取异常', e);
+        } finally {
+            // 隐藏骨架屏，显示真实内容
+            if (statsSk) statsSk.style.display = 'none';
+            if (dash) dash.style.display = '';
+            if (chartsSk) chartsSk.style.display = 'none';
+            if (chartsContainer) chartsContainer.style.display = '';
+        }
+    }
+
+    // ========================
+    // 加载巡查记录列表
+    // ========================
+    let PAGE_SIZE = 100;
+    let CURRENT_PAGE = 1;
+    let TOTAL_RECORDS = 0;
+
+    async function loadRecords() {
+        const token = getAccessToken();
+        if (!token) return;
+        // 显示骨架屏，清空旧数据
+        const skeleton = document.getElementById('recordsSkeleton');
+        const tbody = document.getElementById('recordTableBody');
+        if (skeleton) skeleton.style.display = 'block';
+        if (tbody) tbody.innerHTML = '';
+        const params = buildQueryParams();
+        params.append('page', String(CURRENT_PAGE));
+        params.append('page_size', String(PAGE_SIZE));
+        const url = `/api/admin/patrol/list?${params.toString()}`;
+
+        try {
+            const res = await fetchWithTimeout(url, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (res.status === 401) {
+                alert('认证过期，请刷新页面重新登录');
+                return;
+            }
+
+            if (!res.ok) {
+                const txt = await res.text();
+                console.error(`API 错误 ${res.status}:`, txt);
+                alert(`❌ 加载记录失败 (${res.status})\n${txt.substring(0, 200)}`);
+                return;
+            }
+
+            const payload = await res.json();
+            const isArray = Array.isArray(payload);
+            const records = isArray ? payload : (payload.records || []);
+            TOTAL_RECORDS = isArray ? records.length : (payload.total ?? records.length ?? 0);
+            if (tbody) tbody.innerHTML = '';
+
+            if (!records || records.length === 0) {
+                if (tbody) tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:32px; color:var(--muted);">
+                    <div style="font-size:48px; margin-bottom:8px;">📋</div>
+                    <div>暂无符合条件的记录</div>
+                </td></tr>`;
+                updatePaginationUI();
+                if (skeleton) skeleton.style.display = 'none';
+                return;
+            }
+
+            records.forEach(rec => {
+                // 状态映射
+                const statusMap = {
+                    'pending': {text: '🔴 待处理', color: '#ef4444', bg: 'rgba(239,68,68,0.15)', border: 'rgba(239,68,68,0.3)'},
+                    'processing': {text: '🟡 处理中', color: '#f59e0b', bg: 'rgba(245,158,11,0.15)', border: 'rgba(245,158,11,0.3)'},
+                    'completed': {text: '🟢 已修复', color: '#10b981', bg: 'rgba(16,185,129,0.15)', border: 'rgba(16,185,129,0.3)'},
+                    'resolved': {text: '✅ 已解决', color: '#10b981', bg: 'rgba(16,185,129,0.15)', border: 'rgba(16,185,129,0.3)'}
+                };
+                const status = statusMap[rec.status] || statusMap['pending'];
+                
+                // GPS信息处理
+                let gpsDisplay = '<span style="color:#64748b;">—</span>';
+                if (rec.latitude && rec.longitude) {
+                    const lat = parseFloat(rec.latitude).toFixed(4);
+                    const lon = parseFloat(rec.longitude).toFixed(4);
+                    const mapUrl = `https://www.google.com/maps?q=${rec.latitude},${rec.longitude}`;
+                    gpsDisplay = `
+                        <div style="font-size:11px; line-height:1.4;">
+                            <div style="color:#64748b;">📍 ${lat}</div>
+                            <div style="color:#64748b;">${lon}</div>
+                            <a href="${mapUrl}" target="_blank" style="color:#60a5fa; text-decoration:none; font-size:10px;">🗺️ 地图</a>
+                        </div>
+                    `;
+                }
+
+                // 操作按钮
+                let actions = '';
+                if (rec.status === 'pending') {
+                    actions = `
+                        <button class="btn-process" onclick="markAsProcessing(${rec.record_id})">▶️ 处理</button>
+                    `;
+                } else if (rec.status === 'processing') {
+                    actions = `
+                        <button class="btn-complete" onclick="showCompleteDialog(${rec.record_id})">✅ 完成</button>
+                    `;
+                }
+
+                const row = `
+                    <tr style="background: rgba(255,255,255,0.01); transition: background 0.2s;" 
+                        onmouseover="this.style.background='rgba(255,255,255,0.04)'" 
+                        onmouseout="this.style.background='rgba(255,255,255,0.01)'">
+                        <td style="padding:10px; font-weight:600; color:#94a3b8;">
+                            #${rec.record_id}
+                            ${rec.data_type === 'test' ? '<span class="badge-test">测试</span>' : ''}
+                        </td>
+                        <td style="padding:10px;">${safeText(rec.reporter)}</td>
+                        <td style="padding:10px; color:#7af0d8;">${safeText(rec.segment_name)}</td>
+                        <td style="padding:10px;">${safeText(rec.problem_type)}</td>
+                        <td style="padding:10px;">
+                            <span style="color:#fbbf24; font-weight:600;">${rec.severity}</span><span style="color:#64748b;">/5</span>
+                        </td>
+                        <td style="padding:10px;">${gpsDisplay}</td>
+                        <td style="padding:10px;">
+                            <span style="display:inline-block; padding:4px 10px; border-radius:6px; font-size:12px; font-weight:500;
+                                         background:${status.bg}; color:${status.color}; border:1px solid ${status.border};">
+                                ${status.text}
+                            </span>
+                        </td>
+                        <td style="padding:10px; font-size:12px; color:#94a3b8;">
+                            ${new Date(rec.upload_time).toLocaleString('zh-CN', {month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit'})}
+                        </td>
+                        <td style="padding:8px;">${actions}</td>
+                    </tr>
+                `;
+                if (tbody) tbody.innerHTML += row;
+            });
+            updatePaginationUI();
+            loadStats();
+            if (skeleton) skeleton.style.display = 'none';
+        } catch (e) {
+            alert('❌ 加载记录失败：' + e.message);
+            const skeleton = document.getElementById('recordsSkeleton');
+            if (skeleton) skeleton.style.display = 'none';
+        }
+    }
+
+    function resetRecordFilters() {
+        const status = document.getElementById('statusFilter');
+        const severity = document.getElementById('severityFilter');
+        const start = document.getElementById('startDate');
+        const end = document.getElementById('endDate');
+        const keyword = document.getElementById('keyword');
+        const recordQuick = document.getElementById('recordQuick');
+        const dataTypeFilter = document.getElementById('dataTypeFilter');
+        
+        if (status) status.value = '';
+        if (severity) severity.value = '';
+        if (keyword) keyword.value = '';
+        if (recordQuick) recordQuick.value = '';
+        
+        // 关键修复：重置数据类型过滤（同时重置变量和dropdown UI）
+        currentDataType = '';
+        if (dataTypeFilter) dataTypeFilter.value = '';
+        // 默认清空日期，展示全部时间范围（避免只显示近7天导致数量偏少）
+        if (start) start.value = '';
+        if (end) end.value = '';
+        CURRENT_PAGE = 1;
+        loadRecords();
+        loadStats();  // 同时更新统计数据
+    }
+
+    function applyRecordQuick() {
+        const sel = document.getElementById('recordQuick');
+        const start = document.getElementById('startDate');
+        const end = document.getElementById('endDate');
+        if (!sel || !start || !end) return;
+        const val = sel.value;
+        const today = new Date();
+        if (val === '7') {
+            const startDate = new Date(today.getTime() - 7*24*60*60*1000);
+            start.value = startDate.toISOString().slice(0,10);
+            end.value = today.toISOString().slice(0,10);
+        } else if (val === '30') {
+            const startDate = new Date(today.getTime() - 30*24*60*60*1000);
+            start.value = startDate.toISOString().slice(0,10);
+            end.value = today.toISOString().slice(0,10);
+        } else if (val === 'month') {
+            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+            start.value = firstDay.toISOString().slice(0,10);
+            end.value = today.toISOString().slice(0,10);
+        } else if (val === 'all') {
+            start.value = '';
+            end.value = '';
+        } else {
+            return;
+        }
+        CURRENT_PAGE = 1;
+        loadRecords();
+    }
+
+    // ========================
+    // 审计日志列表
+    // ========================
+    let AUDIT_PAGE_SIZE = 50;
+    let AUDIT_CURRENT_PAGE = 1;
+    let AUDIT_TOTAL_RECORDS = 0;
+
+    function buildAuditParams() {
+        const params = new URLSearchParams();
+        const action = document.getElementById('auditAction').value;
+        const uid = document.getElementById('auditUserId').value;
+        const start = document.getElementById('auditStart').value;
+        const end = document.getElementById('auditEnd').value;
+        const keyword = document.getElementById('auditKeyword').value.trim();
+        if (action) params.append('action', action);
+        if (uid) params.append('user_id', uid);
+        if (start) params.append('start_date', start);
+        if (end) params.append('end_date', end);
+        if (keyword) params.append('keyword', keyword);
+        return params;
+    }
+
+    async function loadAudit() {
+        const token = getAccessToken();
+        if (!token) return;
+        const params = buildAuditParams();
+        params.append('page', String(AUDIT_CURRENT_PAGE));
+        params.append('page_size', String(AUDIT_PAGE_SIZE));
+        const url = `/api/admin/audit?${params.toString()}`;
+        try {
+            const res = await fetchWithTimeout(url, { headers: { 'Authorization': `Bearer ${token}` } });
+            if (!res.ok) {
+                const txt = await res.text();
+                console.error('审计加载失败', res.status, txt);
+                if (res.status === 401) {
+                    alert('❌ 登录已过期或无权限，请重新登录。');
+                } else if (res.status === 500) {
+                    alert('❌ 服务器查询失败。可能数据库未初始化或审计表缺失，可尝试运行 reset_db.py 或取消 SKIP_DB_INIT 后重启。');
+                } else {
+                    alert(`❌ 加载审计失败 (${res.status})`);
+                }
+                return;
+            }
+            const payload = await res.json();
+            const rows = payload.records || [];
+            AUDIT_TOTAL_RECORDS = payload.total ?? rows.length ?? 0;
+            const tbody = document.getElementById('auditTableBody');
+            if (tbody) tbody.innerHTML = '';
+            if (!rows.length) {
+                if (tbody) tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted);">暂无审计记录（如为首次运行，可能需要初始化数据库或重新登录再试）</td></tr>`;
+                updateAuditPaginationUI();
+                return;
+            }
+            rows.forEach(r => {
+                const row = `
+                    <tr>
+                        <td style="color:#94a3b8; font-weight:600;">#${r.id}</td>
+                        <td>${r.user_id}</td>
+                        <td>${safeText(r.action)}</td>
+                        <td style="color:#7af0d8;">${safeText(r.resource)}</td>
+                        <td>${safeText(r.details || '')}</td>
+                        <td style="font-size:12px; color:#94a3b8;">${new Date(r.timestamp).toLocaleString('zh-CN')}</td>
+                    </tr>`;
+                if (tbody) tbody.innerHTML += row;
+            });
+            updateAuditPaginationUI();
+        } catch (e) {
+            alert('❌ 加载审计失败：' + e.message);
+        }
+    }
+
+    function updateAuditPaginationUI() {
+        const pageInfo = document.getElementById('auditPageInfo');
+        const btnPrev = document.getElementById('auditBtnPrev');
+        const btnNext = document.getElementById('auditBtnNext');
+        const jumpPageInput = document.getElementById('auditJumpPageInput');
+        const totalPages = Math.max(1, Math.ceil(AUDIT_TOTAL_RECORDS / AUDIT_PAGE_SIZE));
+        if (pageInfo) pageInfo.textContent = `第 ${AUDIT_CURRENT_PAGE} / ${totalPages} 页 · 共 ${AUDIT_TOTAL_RECORDS} 条`;
+        if (btnPrev) {
+            btnPrev.disabled = AUDIT_CURRENT_PAGE <= 1;
+            btnPrev.classList.toggle('btn-disabled', btnPrev.disabled);
+        }
+        if (btnNext) {
+            btnNext.disabled = AUDIT_CURRENT_PAGE >= totalPages;
+            btnNext.classList.toggle('btn-disabled', btnNext.disabled);
+        }
+        if (jumpPageInput) {
+            jumpPageInput.max = totalPages;
+            jumpPageInput.placeholder = `1-${totalPages}`;
+        }
+    }
+
+    async function auditNextPage() {
+        const totalPages = Math.max(1, Math.ceil(AUDIT_TOTAL_RECORDS / AUDIT_PAGE_SIZE));
+        if (AUDIT_CURRENT_PAGE < totalPages) {
+            AUDIT_CURRENT_PAGE += 1;
+            await loadAudit();
+        }
+    }
+
+    async function auditPrevPage() {
+        if (AUDIT_CURRENT_PAGE > 1) {
+            AUDIT_CURRENT_PAGE -= 1;
+            await loadAudit();
+        }
+    }
+
+    function changeAuditPageSize() {
+        const newSize = parseInt(document.getElementById('auditPageSizeSelect').value, 10);
+        if (newSize > 0 && newSize <= 200) {
+            AUDIT_PAGE_SIZE = newSize;
+            AUDIT_CURRENT_PAGE = 1;
+            loadAudit();
+        }
+    }
+
+    function auditJumpToPage() {
+        const pageNum = parseInt(document.getElementById('auditJumpPageInput').value, 10);
+        const totalPages = Math.max(1, Math.ceil(AUDIT_TOTAL_RECORDS / AUDIT_PAGE_SIZE));
+        if (isNaN(pageNum) || pageNum < 1 || pageNum > totalPages) {
+            alert(`请输入有效页码 (1-${totalPages})`);
+            return;
+        }
+        AUDIT_CURRENT_PAGE = pageNum;
+        loadAudit();
+    }
+
+    function resetAuditFilters() {
+        const action = document.getElementById('auditAction');
+        const uid = document.getElementById('auditUserId');
+        const start = document.getElementById('auditStart');
+        const end = document.getElementById('auditEnd');
+        const keyword = document.getElementById('auditKeyword');
+        if (action) action.value = '';
+        if (uid) uid.value = '';
+        if (keyword) keyword.value = '';
+        // 默认重置为近7天范围
+        const today = new Date();
+        const endStr = today.toISOString().slice(0,10);
+        const startDate = new Date(today.getTime() - 7*24*60*60*1000);
+        const startStr = startDate.toISOString().slice(0,10);
+        if (start) start.value = startStr;
+        if (end) end.value = endStr;
+        AUDIT_CURRENT_PAGE = 1;
+        loadAudit();
+    }
+
+    function applyAuditQuick() {
+        const sel = document.getElementById('auditQuick');
+        const start = document.getElementById('auditStart');
+        const end = document.getElementById('auditEnd');
+        if (!sel || !start || !end) return;
+        const val = sel.value;
+        const today = new Date();
+        if (val === '7') {
+            const startDate = new Date(today.getTime() - 7*24*60*60*1000);
+            start.value = startDate.toISOString().slice(0,10);
+            end.value = today.toISOString().slice(0,10);
+        } else if (val === '30') {
+            const startDate = new Date(today.getTime() - 30*24*60*60*1000);
+            start.value = startDate.toISOString().slice(0,10);
+            end.value = today.toISOString().slice(0,10);
+        } else if (val === 'month') {
+            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+            start.value = firstDay.toISOString().slice(0,10);
+            end.value = today.toISOString().slice(0,10);
+        } else if (val === 'all') {
+            start.value = '';
+            end.value = '';
+        } else {
+            return;
+        }
+        AUDIT_CURRENT_PAGE = 1;
+        loadAudit();
+    }
+    function updatePaginationUI() {
+        const pageInfo = document.getElementById('pageInfo');
+        const btnPrev = document.getElementById('btnPrev');
+        const btnNext = document.getElementById('btnNext');
+        const jumpPageInput = document.getElementById('jumpPageInput');
+        const totalPages = Math.max(1, Math.ceil(TOTAL_RECORDS / PAGE_SIZE));
+        pageInfo.textContent = `第 ${CURRENT_PAGE} / ${totalPages} 页 · 共 ${TOTAL_RECORDS} 条`;
+        btnPrev.disabled = CURRENT_PAGE <= 1;
+        btnNext.disabled = CURRENT_PAGE >= totalPages;
+        btnPrev.classList.toggle('btn-disabled', btnPrev.disabled);
+        btnNext.classList.toggle('btn-disabled', btnNext.disabled);
+        if (jumpPageInput) {
+            jumpPageInput.max = totalPages;
+            jumpPageInput.placeholder = `1-${totalPages}`;
+        }
+    }
+
+    async function nextPage() {
+        const totalPages = Math.max(1, Math.ceil(TOTAL_RECORDS / PAGE_SIZE));
+        if (CURRENT_PAGE < totalPages) {
+            CURRENT_PAGE += 1;
+            await loadRecords();
+        }
+    }
+
+    async function prevPage() {
+        if (CURRENT_PAGE > 1) {
+            CURRENT_PAGE -= 1;
+            await loadRecords();
+        }
+    }
+
+    function changePageSize() {
+        const newSize = parseInt(document.getElementById('pageSizeSelect').value, 10);
+        if (newSize > 0 && newSize <= 200) {
+            PAGE_SIZE = newSize;
+            CURRENT_PAGE = 1;  // 重置到第一页
+            loadRecords();
+        }
+    }
+
+    function jumpToPage() {
+        const pageNum = parseInt(document.getElementById('jumpPageInput').value, 10);
+        const totalPages = Math.max(1, Math.ceil(TOTAL_RECORDS / PAGE_SIZE));
+        if (isNaN(pageNum) || pageNum < 1 || pageNum > totalPages) {
+            alert(`请输入有效页码 (1-${totalPages})`);
+            return;
+        }
+        CURRENT_PAGE = pageNum;
+        loadRecords();
+    }
+
+    // ========================
+    // 标记为“处理中”
+    // ========================
+    async function markAsProcessing(recordId) {
+        if (!confirm(`确定要将 #${recordId} 标记为“处理中”吗？`)) return;
+
+        const btn = event?.target;
+        if (btn) {
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+        }
+        
+        try {
+            const token = getAccessToken();
+            if (!token) return;
+            const res = await fetchWithTimeout(`/api/patrol/${recordId}/process`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (res.status === 401) {
+                alert('认证过期，请刷新页面');
+                return;
+            }
+            
+            const data = await res.json();
+            if (res.ok && data.success) {
+                alert('✅ 已标记为"处理中"');
+                await loadRecords();
+            } else {
+                alert('⚠️ 操作失败：' + (data.detail || data.error || '未知错误'));
+            }
+        } catch (e) {
+            alert('❌ 网络错误：' + e.message);
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+            }
+        }
+    }
+
+    // ========================
+    // 显示“完成”对话框
+    // ========================
+    function showCompleteDialog(recordId) {
+        const remark = prompt(`请输入 #${recordId} 的处理备注（必填）：`);
+        if (remark === null) return; // 用户取消
+        if (!remark.trim()) {
+            alert('❗ 备注不能为空！');
+            return;
+        }
+        markAsCompleted(recordId, remark.trim());
+    }
+
+    // ========================
+    // 标记为“已修复”
+    // ========================
+    async function markAsCompleted(recordId, remark) {
+        try {
+            const token = getAccessToken();
+            if (!token) return;
+            const res = await fetchWithTimeout(`/api/patrol/${recordId}/complete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ remark })
+            });
+            
+            if (res.status === 401) {
+                alert('认证过期，请刷新页面');
+                return;
+            }
+            
+            const data = await res.json();
+            if (res.ok && data.success) {
+                alert('✅ 已标记为"已修复"');
+                await loadRecords();
+            } else {
+                alert('⚠️ 操作失败：' + (data.detail || data.error || '未知错误'));
+            }
+        } catch (e) {
+            alert('❌ 网络错误：' + e.message);
+        }
+    }
+
+    // ========================
+    // 导出 Excel
+    // ========================
+    function exportExcel() {
+        const token = getAccessToken();
+        if (!token) return;
+        const params = buildQueryParams();
+        let url = '/api/export/excel';
+        if (params.toString()) {
+            url += `?${params.toString()}`;
+        }
+
+        // 使用 fetch 捕获错误并触发下载
+        fetchWithTimeout(url, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        }, 60000).then(async res => {
+            if (!res.ok) {
+                const text = await res.text();
+                alert(`❌ 导出失败 (${res.status})\n${text.substring(0, 200)}`);
+                return;
+            }
+            const blob = await res.blob();
+            const downloadUrl = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = downloadUrl;
+            a.download = '公路巡查记录.xlsx';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(downloadUrl);
+        }).catch(err => {
+            alert('❌ 导出失败：' + err.message);
+        });
+    }
+
+    // ========================
+    // 导出审计日志 CSV
+    // ========================
+    function exportAuditLog() {
+        const token = getAccessToken();
+        if (!token) return;
+        const params = buildAuditParams();
+        let url = '/api/admin/audit/export';
+        if (params.toString()) {
+            url += `?${params.toString()}`;
+        }
+
+        // 使用 fetch 捕获错误并触发下载
+        fetchWithTimeout(url, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        }, 60000).then(async res => {
+            if (!res.ok) {
+                const text = await res.text();
+                alert(`❌ 导出失败 (${res.status})\n${text.substring(0, 200)}`);
+                return;
+            }
+            const blob = await res.blob();
+            const downloadUrl = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = downloadUrl;
+            a.download = res.headers.get('Content-Disposition')?.match(/filename=(.+)/)?.[1] || '审计日志.csv';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(downloadUrl);
+        }).catch(err => {
+            alert('❌ 导出失败：' + err.message);
+        });
+    }
+
+    // 页面加载时初始化（优化：后台验证，不阻塞）
+    document.addEventListener('DOMContentLoaded', () => {
+        // 修正运维模式DOM位置，避免嵌套导致不可见
+        ensureMaintainModePosition();
+        // 1. 立即启动数据流（不依赖认证完成）
+        setTimeout(() => {
+            startPhotoStream();
+            // 默认展示全部时间范围，避免仅近7天导致数量偏少
+            const rs = document.getElementById('startDate');
+            const re = document.getElementById('endDate');
+            const rq = document.getElementById('recordQuick');
+            if (rs) rs.value = '';
+            if (re) re.value = '';
+            if (rq) rq.value = '';
+            loadRecords();
+            loadStats();
+            // 默认设置近7天的审计时间范围（若为空）
+            const s = document.getElementById('auditStart');
+            const e = document.getElementById('auditEnd');
+            if (s && e && !s.value && !e.value) {
+                const today = new Date();
+                const endStr = today.toISOString().slice(0,10);
+                const startDate = new Date(today.getTime() - 7*24*60*60*1000);
+                const startStr = startDate.toISOString().slice(0,10);
+                s.value = startStr;
+                e.value = endStr;
+            }
+            loadAudit();
+        }, 50);
+
+        // 2. 后台异步验证认证（防止不授权用户）
+        setTimeout(() => {
+            checkAdminAsync();
+        }, 300);
+    });
+
+    // ========================
+    // 生成随机测试数据
+    // ========================
+    function promptGenerateFake() {
+        const val = prompt('请输入要生成的测试数据条数 (1-5000):', '200');
+        if (val === null) return;
+        const num = parseInt(val, 10);
+        if (Number.isNaN(num) || num < 1 || num > 5000) {
+            alert('请输入 1-5000 之间的整数');
+            return;
+        }
+        const includePhotos = !!document.getElementById('genPhotos')?.checked;
+        generateFake(num, includePhotos);
+    }
+
+    async function generateFake(count = 50, includePhotos = false) {
+        const token = getAccessToken();
+        if (!token) return;
+        try {
+            const url = `/api/admin/generate?count=${encodeURIComponent(count)}&include_photos=${includePhotos}`;
+            const res = await fetchWithTimeout(url, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            }, 60000);
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                alert('❌ 生成失败：' + (data.error || res.status));
+                return;
+            }
+            const photoMsg = includePhotos ? '，含照片' : '';
+            alert(`✅ 已生成 ${data.inserted} 条测试数据${photoMsg}`);
+            
+            // 关键修复：生成数据后重置UI状态和缓存
+            // 1. 重置数据类型过滤为"全部"
+            currentDataType = '';
+            const dataTypeFilter = document.getElementById('dataTypeFilter');
+            if (dataTypeFilter) dataTypeFilter.value = '';
+            // 1.1 重置日期范围为全部，避免只看到近7天
+            const start = document.getElementById('startDate');
+            const end = document.getElementById('endDate');
+            const recordQuick = document.getElementById('recordQuick');
+            if (start) start.value = '';
+            if (end) end.value = '';
+            if (recordQuick) recordQuick.value = '';
+            CURRENT_PAGE = 1;
+            
+            // 2. 重新加载数据和图表（自动跳过缓存）
+            await loadRecords();
+            await loadStats();
+            
+            // 3. 将记录表滚动到顶部，方便查看最新生成的数据
+            const table = document.getElementById('recordTable');
+            if (table) table.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } catch (e) {
+            alert('❌ 网络错误：' + e.message);
+        }
+    }
+
+    // ========================
+    // 安全重置（完整重置）
+    // ========================
+    async function runSafeReset() {
+        if (!confirm('确认执行安全重置？该操作会清空并重建表结构与测试数据。')) return;
+        clearLivePhotos();  // 清空SSE照片区域
+        await runTask('/api/reinit/stream?step=all');
+        
+        // 重置完成后，清除缓存并重新加载所有数据
+        setTimeout(async () => {
+            console.log('[SafeReset] 重置完成，清除缓存并刷新UI...');
+            currentDataType = '';  // 清除数据类型过滤
+            const dataTypeFilter = document.getElementById('dataTypeFilter');
+            if (dataTypeFilter) dataTypeFilter.value = '';
+            
+            // 调用后端清除统计缓存
+            const token = getAccessToken();
+            if (token) {
+                try {
+                    await fetch('/api/admin/clean-test-data', {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                } catch (e) {
+                    console.warn('[SafeReset] 清除缓存失败:', e);
+                }
+            }
+            
+            // 强制刷新UI
+            CURRENT_PAGE = 1;
+            await loadRecords();
+            await loadStats();
+            console.log('[SafeReset] UI刷新完成');
+        }, 2000);  // 等待2秒确保重置完全完成
+    }
+</script>
+
+<!-- AI 助手浮窗 -->
+{% include 'ai-assistant.html' %}
+
+</body>
+</html>

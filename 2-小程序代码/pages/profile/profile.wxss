@@ -1,0 +1,134 @@
+/* pages/profile/profile.wxss */
+
+.profile-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60rpx 32rpx;
+  margin-bottom: 24rpx;
+}
+
+.avatar {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 50%;
+  border: 4rpx solid var(--accent-primary);
+  margin-bottom: 24rpx;
+}
+
+.nickname {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 16rpx;
+}
+
+.role-badge {
+  font-size: 24rpx;
+}
+
+.user-meta {
+  margin-top: 12rpx;
+  text-align: center;
+}
+
+.meta-item {
+  font-size: 24rpx;
+  color: var(--text-muted);
+}
+
+.info-section {
+  margin-bottom: 24rpx;
+  padding: 24rpx;
+  background: var(--glass);
+  border: 1px solid var(--stroke);
+  border-radius: var(--radius);
+}
+
+.info-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 16rpx;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16rpx 0;
+  border-bottom: 1px solid var(--stroke);
+}
+
+.info-item:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  font-size: 26rpx;
+  color: var(--text-muted);
+}
+
+.info-value {
+  font-size: 24rpx;
+  color: var(--text-primary);
+  flex: 1;
+  text-align: right;
+  margin: 0 12rpx;
+}
+
+.copy-hint {
+  font-size: 22rpx;
+  color: var(--accent-primary);
+}
+
+.menu-section {
+  margin-bottom: 48rpx;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  padding: 32rpx;
+  margin-bottom: 16rpx;
+  transition: transform 0.2s ease;
+}
+
+.menu-item:active {
+  transform: scale(0.98);
+}
+
+.menu-icon {
+  font-size: 48rpx;
+  width: 64rpx;
+  text-align: center;
+}
+
+.menu-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.menu-title {
+  font-size: 28rpx;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.menu-desc {
+  font-size: 24rpx;
+  color: var(--text-muted);
+}
+
+.menu-arrow {
+  font-size: 48rpx;
+  color: var(--text-muted);
+  font-weight: 300;
+}
+
+.logout-section {
+  padding-top: 24rpx;
+}

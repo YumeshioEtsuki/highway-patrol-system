@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据库性能监控仪表板</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        .status-indicator {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        .status-healthy { background: #10b981; }
+        .status-warning { background: #f59e0b; }
+        .status-error { background: #ef4444; }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .metric-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .metric-card h3 {
+            color: #666;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            letter-spacing: 0.5px;
+        }
+
+        .metric-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .metric-unit {
+            color: #999;
+            font-size: 14px;
+        }
+
+        .metric-change {
+            font-size: 12px;
+            margin-top: 8px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .metric-change.up {
+            color: #10b981;
+            background: #ecfdf5;
+        }
+
+        .metric-change.down {
+            color: #ef4444;
+            background: #fef2f2;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-container h3 {
+            color: #333;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 300px;
+        }
+
+        .slow-queries-section,
+        .recommendations-section,
+        .index-health-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .slow-queries-section h2,
+        .recommendations-section h2,
+        .index-health-section h2 {
+            color: #333;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .query-item {
+            background: #f9fafb;
+            padding: 15px;
+            border-left: 4px solid #667eea;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+
+        .query-item .query-text {
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 12px;
+            color: #666;
+            background: white;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            margin: 10px 0;
+            border: 1px solid #e5e7eb;
+        }
+
+        .query-item .query-meta {
+            display: flex;
+            gap: 20px;
+            font-size: 13px;
+            color: #999;
+        }
+
+        .recommendation-item {
+            background: #f9fafb;
+            padding: 15px;
+            border-left: 4px solid #10b981;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+
+        .recommendation-item.high {
+            border-left-color: #ef4444;
+        }
+
+        .recommendation-item.medium {
+            border-left-color: #f59e0b;
+        }
+
+        .recommendation-item.low {
+            border-left-color: #3b82f6;
+        }
+
+        .recommendation-priority {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .recommendation-priority.high {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .recommendation-priority.medium {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .recommendation-priority.low {
+            background: #dbeafe;
+            color: #1e3a8a;
+        }
+
+        .index-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .index-table th {
+            background: #f3f4f6;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #374151;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .index-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;
+            color: #666;
+        }
+
+        .index-table tr:hover {
+            background: #f9fafb;
+        }
+
+        .health-score {
+            font-size: 24px;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .button:hover {
+            background: #5568d3;
+        }
+
+        .button.secondary {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        .button.secondary:hover {
+            background: #d1d5db;
+        }
+
+        .button.danger {
+            background: #ef4444;
+        }
+
+        .button.danger:hover {
+            background: #dc2626;
+        }
+
+        @media (max-width: 768px) {
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div>
+                <h1>
+                    <span class="status-indicator" id="statusIndicator"></span>
+                    数据库性能监控仪表板
+                </h1>
+                <p id="statusText" style="color: #666; margin-top: 5px; font-size: 14px;"></p>
+            </div>
+            <div>
+                <button class="button" onclick="refreshData()">刷新数据</button>
+                <button class="button secondary" onclick="generateRecommendations()" style="margin-left: 10px;">生成建议</button>
+            </div>
+        </header>
+
+        <!-- 实时指标卡片 -->
+        <div class="metrics-grid" id="metricsGrid">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>加载指标中...</p>
+            </div>
+        </div>
+
+        <!-- 性能趋势图表 -->
+        <div class="charts-grid">
+            <div class="chart-container">
+                <h3>查询速率趋势</h3>
+                <div class="chart-wrapper">
+                    <canvas id="queriesChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h3>平均查询时间趋势</h3>
+                <div class="chart-wrapper">
+                    <canvas id="latencyChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h3>缓存命中率趋势</h3>
+                <div class="chart-wrapper">
+                    <canvas id="cacheChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h3>活跃连接数趋势</h3>
+                <div class="chart-wrapper">
+                    <canvas id="connectionsChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- 慢查询分析 -->
+        <div class="slow-queries-section">
+            <h2>最近的慢查询 (Top 5)</h2>
+            <div id="slowQueriesList">
+                <div class="no-data">暂无数据</div>
+            </div>
+        </div>
+
+        <!-- 索引健康 -->
+        <div class="index-health-section">
+            <h2>索引健康状态</h2>
+            <div id="indexHealthContent">
+                <div class="no-data">加载中...</div>
+            </div>
+        </div>
+
+        <!-- 优化建议 -->
+        <div class="recommendations-section">
+            <h2>优化建议</h2>
+            <div id="recommendationsList">
+                <div class="no-data">暂无建议</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/monitor-dashboard.js"></script>
+</body>
+</html>

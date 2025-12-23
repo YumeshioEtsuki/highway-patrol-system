@@ -1,0 +1,139 @@
+/* pages/patrol/detail/detail.wxss */
+
+.loading {
+  text-align: center;
+  padding: 100rpx 0;
+  color: var(--text-muted);
+  font-size: 28rpx;
+}
+
+.status-banner {
+  margin: -24rpx -24rpx 24rpx;
+  padding: 32rpx;
+  text-align: center;
+}
+
+.status-text {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: white;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24rpx;
+}
+
+.info-item {
+  margin-bottom: 32rpx;
+}
+
+.info-item:last-child {
+  margin-bottom: 0;
+}
+
+.info-label {
+  display: block;
+  font-size: 24rpx;
+  color: var(--text-muted);
+  margin-bottom: 12rpx;
+}
+
+.info-value {
+  display: block;
+  font-size: 28rpx;
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+.severity-display {
+  display: flex;
+  gap: 8rpx;
+}
+
+.star {
+  font-size: 32rpx;
+  color: var(--text-muted);
+}
+
+.star.active {
+  color: #f59e0b;
+}
+
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16rpx;
+}
+
+.photo-item {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 16rpx;
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 32rpx;
+}
+
+.timeline-item {
+  display: flex;
+  gap: 24rpx;
+  position: relative;
+}
+
+.timeline-item:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 9rpx;
+  top: 32rpx;
+  bottom: -32rpx;
+  width: 2rpx;
+  background: var(--border-color);
+}
+
+.timeline-dot {
+  width: 20rpx;
+  height: 20rpx;
+  border-radius: 50%;
+  background: var(--border-color);
+  margin-top: 8rpx;
+  flex-shrink: 0;
+}
+
+.timeline-dot.active {
+  background: var(--accent-primary);
+}
+
+.timeline-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.timeline-label {
+  font-size: 24rpx;
+  color: var(--text-muted);
+}
+
+.timeline-value {
+  font-size: 26rpx;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+.timeline-time {
+  font-size: 22rpx;
+  color: var(--text-muted);
+  margin-top: 4rpx;
+}
+
+.action-section {
+  margin-top: 48rpx;
+  padding-bottom: 40rpx;
+}

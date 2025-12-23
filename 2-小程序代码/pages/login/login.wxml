@@ -1,0 +1,52 @@
+<!-- pages/login/login.wxml -->
+<view class="login-container">
+  <!-- 背景装饰 -->
+  <view class="bg-decoration">
+    <view class="circle circle-1"></view>
+    <view class="circle circle-2"></view>
+  </view>
+
+  <!-- Logo和标题 -->
+  <view class="logo-section">
+    <view class="logo-icon">🛣️</view>
+    <text class="app-name">公路巡查系统</text>
+    <text class="app-desc">Highway Patrol System</text>
+  </view>
+
+  <!-- 角色选择 -->
+  <view class="role-selector">
+    <view class="role-item {{roleType === 'patrol' ? 'active' : ''}}" bindtap="selectRole" data-role="patrol">
+      <view class="role-icon">👷</view>
+      <text class="role-name">巡查员</text>
+    </view>
+    <view class="role-item {{roleType === 'admin' ? 'active' : ''}}" bindtap="selectRole" data-role="admin">
+      <view class="role-icon">👔</view>
+      <text class="role-name">管理员</text>
+    </view>
+  </view>
+
+  <!-- 登录按钮 -->
+  <button class="login-btn" bindtap="handleLogin" disabled="{{isLogging}}">
+    <text wx:if="{{!isLogging}}">微信一键登录</text>
+    <text wx:else>登录中...</text>
+  </button>
+
+  <!-- 辅助操作 -->
+  <view class="aux-ops">
+    <button class="aux-btn" bindtap="gotoRegister">完善资料/注册</button>
+    <button class="aux-btn danger" bindtap="clearCache">清除缓存并重登</button>
+  </view>
+
+  <!-- 提示信息 -->
+  <view class="tips">
+    <text class="tip-text">登录即表示同意</text>
+    <text class="tip-link">《用户协议》</text>
+    <text class="tip-text">和</text>
+    <text class="tip-link">《隐私政策》</text>
+  </view>
+
+  <!-- 版本信息 -->
+  <view class="version">
+    <text class="version-text">v1.0.0 © 2025 公路巡查系统</text>
+  </view>
+</view>

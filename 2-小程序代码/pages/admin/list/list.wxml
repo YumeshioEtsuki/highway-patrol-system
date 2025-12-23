@@ -1,0 +1,72 @@
+<!-- pages/admin/list/list.wxml -->
+<view class="container">
+  <!-- 顶部统计 -->
+  <view class="stats-card glass-card">
+    <view class="stat-item">
+      <text class="stat-number text-warning">{{pendingCount}}</text>
+      <text class="stat-label">待审核</text>
+    </view>
+    <view class="stat-divider"></view>
+    <view class="stat-item">
+      <text class="stat-number text-accent">{{processingCount}}</text>
+      <text class="stat-label">处理中</text>
+    </view>
+    <view class="stat-divider"></view>
+    <view class="stat-item">
+      <text class="stat-number text-success">{{completedCount}}</text>
+      <text class="stat-label">已完成</text>
+    </view>
+  </view>
+
+  <!-- 筛选栏 -->
+  <view class="filter-bar">
+    <view class="filter-item {{filterStatus === '' ? 'active' : ''}}" bindtap="onFilterChange" data-status="">全部</view>
+    <view class="filter-item {{filterStatus === 'pending' ? 'active' : ''}}" bindtap="onFilterChange" data-status="pending">待处理</view>
+    <view class="filter-item {{filterStatus === 'processing' ? 'active' : ''}}" bindtap="onFilterChange" data-status="processing">处理中</view>
+    <view class="filter-item {{filterStatus === 'completed' ? 'active' : ''}}" bindtap="onFilterChange" data-status="completed">已完成</view>
+  </view>
+
+  <!-- 记录列表 -->
+  <view class="record-list">
+    <block wx:if="{{recordList.length > 0}}">
+      <view class="record-item card" wx:for="{{recordList}}" wx:key="id" bindtap="goToDetail" data-id="{{item.id}}">
+        <view class="status-indicator" style="background: {{item.statusColor}}"></view>
+        
+        <view class="record-content">
+          <view class="record-header">
+            <view class="record-type badge badge-primary">{{item.problemTypeText}}</view>
+            <view class="record-status badge" style="color: {{item.statusColor}}; border-color: {{item.statusColor}}">{{item.statusText}}</view>
+          </view>
+
+          <view class="record-desc">{{item.problem_desc}}</view>
+          
+          <view class="record-location">
+            <text class="icon">📍</text>
+            <text class="location-text">{{item.location_desc}}</text>
+          </view>
+
+          <view class="record-footer">
+            <view class="severity">
+              <text class="severity-label">严重：</text>
+              <view class="severity-stars">
+                <text class="star {{index < item.severity ? 'active' : ''}}" wx:for="{{5}}" wx:key="index">★</text>
+              </view>
+            </view>
+            <view class="record-time">{{item.timeText}}</view>
+          </view>
+        </view>
+
+        <view class="record-thumb" wx:if="{{item.thumbnail}}">
+          <image src="{{item.thumbnail}}" mode="aspectFill"></image>
+        </view>
+      </view>
+    </block>
+
+    <view class="empty" wx:if="{{!loading && recordList.length === 0}}">
+      <view class="empty-icon">📋</view>
+      <view class="empty-text">暂无待处理记录</view>
+    </view>
+
+    <view class="loading" wx:if="{{loading}}">加载中...</view>
+  </view>
+</view>

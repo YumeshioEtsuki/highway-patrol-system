@@ -1,0 +1,72 @@
+<!-- pages/profile/profile.wxml -->
+<view class="container">
+  <!-- 用户信息卡片 -->
+  <view class="profile-card glass-card">
+    <image class="avatar" src="{{userInfo.avatar || '/images/default-avatar.png'}}" mode="aspectFill"></image>
+    <text class="nickname">{{userInfo.nickname || userInfo.username || '未登录'}}</text>
+    <view class="role-badge badge" wx:if="{{userRole}}">
+      {{userRole === 'admin' ? '管理员' : '巡查员'}}
+    </view>
+    <view class="user-meta" wx:if="{{userInfo.username}}">
+      <text class="meta-item">账号: {{userInfo.username}}</text>
+    </view>
+  </view>
+
+  <!-- 系统信息 -->
+  <view class="info-section">
+    <view class="info-title">系统信息</view>
+    <view class="info-item" bindtap="copyText" data-text="{{baseUrl}}">
+      <text class="info-label">后端地址</text>
+      <text class="info-value">{{baseUrl}}</text>
+      <text class="copy-hint">点击复制</text>
+    </view>
+    <view class="info-item">
+      <text class="info-label">版本号</text>
+      <text class="info-value">v1.0.0</text>
+    </view>
+  </view>
+
+  <!-- 功能列表 -->
+  <view class="menu-section">
+    <view class="menu-item card" bindtap="switchRole">
+      <view class="menu-icon">🔄</view>
+      <view class="menu-content">
+        <text class="menu-title">切换角色</text>
+        <text class="menu-desc">当前：{{userRole === 'admin' ? '管理员' : '巡查员'}}</text>
+      </view>
+      <text class="menu-arrow">›</text>
+    </view>
+
+    <view class="menu-item card" bindtap="showHelp">
+      <view class="menu-icon">❓</view>
+      <view class="menu-content">
+        <text class="menu-title">使用帮助</text>
+        <text class="menu-desc">查看功能说明</text>
+      </view>
+      <text class="menu-arrow">›</text>
+    </view>
+
+    <view class="menu-item card" bindtap="clearCache">
+      <view class="menu-icon">🗑️</view>
+      <view class="menu-content">
+        <text class="menu-title">清除缓存</text>
+        <text class="menu-desc">清理本地数据</text>
+      </view>
+      <text class="menu-arrow">›</text>
+    </view>
+
+    <view class="menu-item card" bindtap="showAbout">
+      <view class="menu-icon">ℹ️</view>
+      <view class="menu-content">
+        <text class="menu-title">关于系统</text>
+        <text class="menu-desc">v1.0.0</text>
+      </view>
+      <text class="menu-arrow">›</text>
+    </view>
+  </view>
+
+  <!-- 退出登录 -->
+  <view class="logout-section">
+    <button class="btn btn-danger" bindtap="handleLogout">退出登录</button>
+  </view>
+</view>

@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>公路巡查系统 - 巡查员</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- 性能优化：预连接字体 CDN -->
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+    <!-- 异步加载字体避免阻塞渲染 -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"></noscript>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --panel: rgba(255,255,255,0.02);
+            --stroke: rgba(255,255,255,0.08);
+            --muted: #94a3b8;
+            --primary: #5b8bff;
+            --accent: #7af0d8;
+            --radius: 14px;
+            --shadow: 0 20px 60px rgba(0,0,0,0.35);
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: "Space Grotesk", "Microsoft YaHei", sans-serif;
+            margin: 0;
+            min-height: 100vh;
+            background: radial-gradient(120% 120% at 20% 20%, rgba(91,139,255,0.25), transparent 45%),
+                        radial-gradient(100% 140% at 80% 10%, rgba(122,240,216,0.18), transparent 50%),
+                        #050914;
+            color: #f4f6fb;
+            padding: 26px 18px 60px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            flex-direction: column;
+            width: 100%;
+        }
+        .shell {
+            width: 100%;
+            max-width: 960px;
+            margin: 0 auto;
+            background: var(--panel);
+            border: 1px solid var(--stroke);
+            border-radius: 18px;
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+        }
+        .hero {
+            padding: 22px 26px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            background: linear-gradient(120deg, rgba(91,139,255,0.16), rgba(122,240,216,0.12));
+            border-bottom: 1px solid var(--stroke);
+        }
+        .hero h1 { margin: 0; font-size: 24px; letter-spacing: 0.3px; }
+        .hero small { color: var(--muted); }
+        .card {
+            padding: 24px;
+            border-bottom: 1px solid var(--stroke);
+        }
+        h2 { margin: 0 0 12px 0; letter-spacing: 0.2px; }
+        .form-group { margin-bottom: 12px; }
+        label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 14px; }
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border-radius: var(--radius);
+            border: 1px solid var(--stroke);
+            background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+            color: #e2e8f0;
+            appearance: none;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 6px 18px rgba(0,0,0,0.25);
+            color-scheme: dark;
+            transition: all 0.2s ease;
+        }
+        select:focus {
+            border-color: #5b8bff;
+            box-shadow: inset 0 1px 0 rgba(91,139,255,0.2), 0 0 12px rgba(91,139,255,0.3);
+            background: linear-gradient(145deg, rgba(91,139,255,0.08), rgba(91,139,255,0.04));
+        }
+        select option {
+            background: #0a1020;
+            color: #e2e8f0;
+            padding: 4px 8px;
+        }
+        select option:checked {
+            background: linear-gradient(#5b8bff, #4a68ff) !important;
+            color: #e8f0ff !important;
+            font-weight: 600;
+        }
+        select option:hover {
+            background: linear-gradient(#5b8bff, #4a68ff) !important;
+            color: #ffffff !important;
+        }
+        /* 选中后整体外观高亮 */
+        select.has-value {
+            background: linear-gradient(145deg, rgba(91,139,255,0.12), rgba(91,139,255,0.06));
+            border-color: #5b8bff;
+            box-shadow: inset 0 1px 0 rgba(91,139,255,0.2), 0 0 10px rgba(91,139,255,0.25);
+            color: #e8f0ff;
+        }
+        input::placeholder, textarea::placeholder { color: #8fa0b8; }
+        input[type="date"]::-webkit-calendar-picker-indicator, input[type="file"]::-webkit-file-upload-button {
+            filter: invert(0.85);
+            opacity: 0.85;
+        }
+
+        .btn {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            background: linear-gradient(135deg, #5b8bff, #4a68ff);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            font-size: 16px;
+            cursor: pointer;
+            text-align: center;
+            box-shadow: 0 12px 30px rgba(75,115,255,0.25);
+            transition: all 0.2s ease;
+        }
+        .btn:hover { transform: translateY(-1px) scale(1.01); box-shadow: 0 16px 38px rgba(75,115,255,0.35); }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--stroke);
+            color: #e2e8f0;
+            box-shadow: none;
+        }
+        .btn-outline:hover { background: rgba(255,255,255,0.05); }
+        .tabs {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 1rem;
+        }
+        .tab-btn {
+            padding: 10px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--stroke);
+            border-radius: 10px;
+            color: #e2e8f0;
+            cursor: pointer;
+            transition: all 0.18s ease;
+        }
+        .tab-btn.active { background: linear-gradient(135deg, #5b8bff, #4a68ff); border-color: rgba(255,255,255,0.2); box-shadow: 0 10px 26px rgba(75,115,255,0.25); }
+        .hidden { display: none; }
+        .alert {
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid var(--stroke);
+        }
+        .alert-error { background: rgba(255,99,132,0.08); color: #fca5a5; }
+        .alert-success { background: rgba(34,197,94,0.08); color: #86efac; }
+        .footer {
+            padding: 18px 24px 28px;
+            color: var(--muted);
+            font-size: 13px;
+            text-align: center;
+        }
+        a.inline-link { color: #9fd6ff; text-decoration: none; }
+        a.inline-link:hover { text-decoration: underline; }
+
+        /* 回到顶部按钮 */
+        .back-to-top {
+            position: fixed;
+            right: 20px;
+            top: 20px;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, rgba(91,139,255,0.9), rgba(122,240,216,0.85));
+            border: none;
+            color: #fff;
+            font-size: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            z-index: 10000;
+            box-shadow: 0 8px 24px rgba(91,139,255,0.4), 0 4px 12px rgba(0,0,0,0.3);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(8px);
+        }
+        .back-to-top.show { 
+            display: flex;
+            animation: slideIn 0.3s ease-out;
+        }
+        .back-to-top:hover { 
+            background: linear-gradient(135deg, rgba(91,139,255,1), rgba(122,240,216,1));
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 12px 32px rgba(91,139,255,0.5), 0 6px 16px rgba(0,0,0,0.4);
+        }
+        .back-to-top:active {
+            transform: translateY(0) scale(0.98);
+        }
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="shell">
+        <div class="hero">
+            <div>
+                <h1>🛣️ 公路巡查系统</h1>
+                <small>登录、上报、查看巡查记录</small>
+            </div>
+            <a class="inline-link" href="/">返回首页</a>
+        </div>
+
+        <div id="auth-section" class="card">
+            <div class="tabs">
+                <button class="tab-btn active" onclick="showTab('login')">登录</button>
+                <button class="tab-btn" onclick="showTab('register')">注册</button>
+                <button class="tab-btn" onclick="showTab('change-pwd')">修改密码</button>
+            </div>
+
+            <!-- 登录表单 -->
+            <div id="login-form">
+                <div id="login-message" class="hidden"></div>
+                <div class="form-group">
+                    <label for="login-username">用户名</label>
+                    <input type="text" id="login-username" placeholder="请输入用户名">
+                </div>
+                <div class="form-group">
+                    <label for="login-password">密码</label>
+                    <input type="password" id="login-password" placeholder="请输入密码">
+                </div>
+                <button class="btn" onclick="handleLogin()">登录</button>
+            </div>
+
+            <!-- 注册表单 -->
+            <div id="register-form" class="hidden">
+                <div id="register-message" class="hidden"></div>
+                <div class="form-group">
+                    <label for="reg-username">用户名（唯一）</label>
+                    <input type="text" id="reg-username" placeholder="用于登录">
+                </div>
+                <div class="form-group">
+                    <label for="reg-password">密码</label>
+                    <input type="password" id="reg-password" placeholder="≥8位，含字母和数字">
+                </div>
+                <div class="form-group">
+                    <label for="reg-real-name">真实姓名</label>
+                    <input type="text" id="reg-real-name" placeholder="必填">
+                </div>
+                <div class="form-group">
+                    <label for="reg-phone">手机号（可选）</label>
+                    <input type="text" id="reg-phone" placeholder="用于联系">
+                </div>
+                <button class="btn" onclick="handleRegister()">注册</button>
+            </div>
+
+            <!-- 修改密码表单 -->
+            <div id="change-pwd-form" class="hidden">
+                <div id="change-pwd-message" class="hidden"></div>
+                <div class="form-group">
+                    <label for="change-username">用户名</label>
+                    <input type="text" id="change-username" placeholder="请输入用户名">
+                </div>
+                <div class="form-group">
+                    <label for="old-password">原密码</label>
+                    <input type="password" id="old-password" placeholder="请输入原密码">
+                </div>
+                <div class="form-group">
+                    <label for="new-password">新密码</label>
+                    <input type="password" id="new-password" placeholder="≥8位，含字母和数字">
+                </div>
+                <button class="btn" onclick="handleChangePassword()">修改密码</button>
+            </div>
+        </div>
+
+        <div id="patrol-section" class="card hidden">
+            <h2>👤 欢迎，<span id="welcome-name"></span>！</h2>
+            <div style="margin-top: 8px; display:flex; gap:10px; flex-wrap:wrap;">
+                <button class="btn btn-outline" style="flex:1 1 180px;" onclick="logout()">退出登录</button>
+                <a id="admin-btn" href="/admin.html" class="btn btn-outline" style="flex:1 1 180px; text-decoration:none; align-items:center; display:none; justify-content:center;">📊 管理员页面</a>
+            </div>
+
+            <h2>➕ 新建巡查记录</h2>
+            <div id="patrol-message" class="hidden"></div>
+            <div class="form-group">
+                <label for="road-segment">路段 <span style="color: var(--accent); font-size:12px;">(支持搜索)</span></label>
+                <input type="text" id="segment-search" placeholder="🔍 输入路段名称或编号快速筛选..." style="margin-bottom:8px;">
+                <select id="road-segment" size="1" style="height:auto; max-height:200px; overflow-y:auto;">
+                    <option value="">-- 加载中 --</option>
+                </select>
+                <small style="color: var(--muted); font-size:11px; margin-top:4px; display:block;">💡 提示：输入关键字可快速过滤，地区已自动分组显示</small>
+            </div>
+            <div class="form-group">
+                <label for="issue-type">问题类型</label>
+                <select id="issue-type">
+                    <option value="">-- 加载中 --</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="description">描述</label>
+                <textarea id="description" rows="3" placeholder="请描述发现的问题"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="severity">严重程度 (1-5)</label>
+                <input type="number" id="severity" min="1" max="5" value="3">
+            </div>
+            <div class="form-group">
+                <label>GPS定位 <span style="color: var(--accent); font-size:12px;">(自动获取)</span></label>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <input type="text" id="latitude" placeholder="纬度" readonly style="flex:1;">
+                    <input type="text" id="longitude" placeholder="经度" readonly style="flex:1;">
+                    <button type="button" class="btn" onclick="getLocation()" style="width:auto; padding:12px 20px; white-space:nowrap;">📍 获取位置</button>
+                </div>
+                <small id="location-status" style="color: var(--muted); font-size:12px; margin-top:4px; display:block;">点击按钮自动获取当前GPS坐标</small>
+            </div>
+            <div class="form-group">
+                <label for="photo">上传照片 <span style="color: #f59e0b; font-size:12px;">(支持多张)</span></label>
+                <input type="file" id="photo" accept="image/*" multiple>
+                <div id="photo-preview" style="margin-top:8px; display:flex; flex-wrap:wrap; gap:8px;"></div>
+            </div>
+            <button class="btn" onclick="submitPatrolRecord()" id="submit-btn">提交记录</button>
+
+            <h2>📋 我的巡查记录</h2>
+            <button class="btn btn-outline" onclick="loadPatrolRecords()">刷新列表</button>
+            <div id="records-list" style="margin-top: 10px; text-align: left;">
+                <!-- 动态加载 -->
+            </div>
+        </div>
+
+        <div class="footer">
+            © 2025 公路巡查系统 | 基于 FastAPI + MySQL
+        </div>
+    </div>
+
+    <script>
+        // ========== 认证管理 ==========
+        const TOKEN_EXPIRE_TIME = 3600000; // 1小时（毫秒）
+        
+        function ensureTokenValid() {
+            const token = localStorage.getItem('access_token');
+            const expires = localStorage.getItem('token_expires');
+            
+            if (!token || !expires) return false;
+            if (Date.now() > parseInt(expires)) {
+                logout();
+                alert('登录已过期，请重新登录');
+                return false;
+            }
+            return true;
+        }
+        
+        function setTokenWithExpire(token) {
+            localStorage.setItem('access_token', token);
+            localStorage.setItem('token_expires', Date.now() + TOKEN_EXPIRE_TIME);
+        }
+        
+        // ========== UI 控制 ==========
+        function showTab(tabName) {
+            const tabs = ['login', 'register', 'change-pwd'];
+            tabs.forEach(name => {
+                document.getElementById(name + '-form').classList.add('hidden');
+                document.querySelector(`.tab-btn:nth-child(${tabs.indexOf(name)+1})`).classList.remove('active');
+            });
+            document.getElementById(tabName + '-form').classList.remove('hidden');
+            if (event && event.target) event.target.classList.add('active');
+        }
+
+        function showMessage(elId, msg, isError = false) {
+            const el = document.getElementById(elId);
+            el.textContent = msg;
+            el.className = `alert ${isError ? 'alert-error' : 'alert-success'} hidden`;
+            el.classList.remove('hidden');
+            setTimeout(() => el.classList.add('hidden'), 5000);
+        }
+
+        // 认证辅助：统一附带 JWT
+        function getAuthHeaders() {
+            const token = localStorage.getItem('access_token');
+            return token ? { 'Authorization': `Bearer ${token}` } : {};
+        }
+
+        async function authFetch(url, options = {}) {
+            if (!ensureTokenValid()) return null;
+            const headers = {
+                ...(options.headers || {}),
+                ...getAuthHeaders()
+            };
+            const res = await fetch(url, { ...options, headers });
+            
+            // 处理认证失败
+            if (res.status === 401) {
+                logout();
+                alert('认证失败，请重新登录');
+                return null;
+            }
+            
+            return res;
+        }
+
+        // ========== API 调用 ==========
+        async function handleLogin() {
+            const username = document.getElementById('login-username').value.trim();
+            const password = document.getElementById('login-password').value;
+            
+            if (!username || !password) {
+                showMessage('login-message', '请输入用户名和密码', true);
+                return;
+            }
+            
+            if (username.length < 3 || password.length < 6) {
+                showMessage('login-message', '用户名和密码长度不符合要求', true);
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({username, password})
+                });
+                const data = await res.json();
+                if (res.ok && data.access_token) {
+                    setTokenWithExpire(data.access_token);
+                    showMessage('login-message', '登录成功！');
+                    const user = data.user || {};
+                    document.getElementById('welcome-name').textContent = user.real_name || username;
+                    document.getElementById('auth-section').classList.add('hidden');
+                    document.getElementById('patrol-section').classList.remove('hidden');
+                    
+                    // 检查用户角色，如果是管理员则显示管理员按钮
+                    if (user.role === 'admin') {
+                        document.getElementById('admin-btn').style.display = 'inline-flex';
+                    } else {
+                        document.getElementById('admin-btn').style.display = 'none';
+                    }
+                    
+                    await loadRoadSegments();
+                    await loadIssueTypes();
+                    await loadPatrolRecords();
+                } else {
+                    showMessage('login-message', data.error || data.detail || '登录失败', true);
+                }
+            } catch (e) {
+                showMessage('login-message', `网络错误: ${e.message}`, true);
+                console.error(e);
+            }
+        }
+
+        async function handleRegister() {
+            const username = document.getElementById('reg-username').value.trim();
+            const password = document.getElementById('reg-password').value;
+            const realName = document.getElementById('reg-real-name').value.trim();
+            const phone = document.getElementById('reg-phone').value.trim();
+
+            if (!username || !password || !realName) {
+                showMessage('register-message', '请填写必填项', true);
+                return;
+            }
+
+            // 前端简单校验密码复杂度
+            if (password.length < 8 || !/[a-zA-Z]/.test(password) || !/\d/.test(password)) {
+                showMessage('register-message', '密码必须至少8位，且包含字母和数字', true);
+                return;
+            }
+
+            const res = await fetch('/api/register', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({username, password, real_name: realName, phone: phone || null})
+            });
+            const data = await res.json();
+            if (res.ok) {
+                showMessage('register-message', '注册成功！请登录。');
+                showTab('login');
+            } else {
+                showMessage('register-message', data.error || '注册失败', true);
+            }
+        }
+
+        async function handleChangePassword() {
+            const username = document.getElementById('change-username').value.trim();
+            const oldPwd = document.getElementById('old-password').value;
+            const newPwd = document.getElementById('new-password').value;
+            if (!username || !oldPwd || !newPwd) {
+                showMessage('change-pwd-message', '请填写所有字段', true);
+                return;
+            }
+            if (newPwd.length < 8 || !/[a-zA-Z]/.test(newPwd) || !/\d/.test(newPwd)) {
+                showMessage('change-pwd-message', '新密码必须至少8位，且包含字母和数字', true);
+                return;
+            }
+
+            const res = await fetch('/api/change-password', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({username: username, old_password: oldPwd, new_password: newPwd})
+            });
+            const data = await res.json();
+            if (res.ok) {
+                showMessage('change-pwd-message', '密码修改成功！');
+                document.getElementById('change-username').value = '';
+                document.getElementById('old-password').value = '';
+                document.getElementById('new-password').value = '';
+            } else {
+                showMessage('change-pwd-message', data.error || '修改失败', true);
+            }
+        }
+
+        function logout() {
+            fetch('/api/logout', {method: 'POST'}).finally(() => {
+                localStorage.removeItem('access_token');
+                location.reload();
+            });
+        }
+
+        // ========== 巡查功能（保留你原有逻辑） ==========
+        let allSegments = []; // 存储所有路段数据供搜索使用
+
+        function setupAutoCollapseSelect(selectEl, expandedSize = 8) {
+            if (!selectEl) return;
+            selectEl.size = 1; // 默认收起
+            selectEl.addEventListener('focus', () => {
+                selectEl.size = expandedSize;
+            });
+            selectEl.addEventListener('blur', () => {
+                selectEl.size = 1;
+            });
+            selectEl.addEventListener('change', () => {
+                selectEl.size = 1;
+                // 延迟 blur 以避免部分浏览器阻止收起
+                setTimeout(() => selectEl.blur(), 0);
+            });
+        }
+        
+        async function loadRoadSegments() {
+            try {
+                const res = await authFetch('/api/road-segments');
+                const payload = await res.json();
+                allSegments = payload.data || payload || [];
+                
+                // 如果后端没有数据，使用静态示例路段
+                if (allSegments.length === 0) {
+                    allSegments = [
+                        { segment_id: 101, segment_name: 'G1京哈高速-北京段', region: '华北' },
+                        { segment_id: 102, segment_name: 'G2京沪高速-天津段', region: '华北' },
+                        { segment_id: 103, segment_name: 'G3京台高速-河北段', region: '华北' },
+                        { segment_id: 201, segment_name: 'G4京港澳高速-湖北段', region: '华中' },
+                        { segment_id: 202, segment_name: 'G5京昆高速-河南段', region: '华中' },
+                        { segment_id: 203, segment_name: 'G6京藏高速-陕西段', region: '西北' },
+                        { segment_id: 301, segment_name: 'G7京新高速-新疆段', region: '西北' },
+                        { segment_id: 302, segment_name: 'G15沈海高速-山东段', region: '华东' },
+                        { segment_id: 303, segment_name: 'G20青银高速-山西段', region: '华北' },
+                        { segment_id: 401, segment_name: 'G30连霍高速-甘肃段', region: '西北' },
+                        { segment_id: 402, segment_name: 'G40沪陕高速-安徽段', region: '华东' },
+                        { segment_id: 403, segment_name: 'G50沪渝高速-湖南段', region: '华中' },
+                        { segment_id: 501, segment_name: 'G55二广高速-广东段', region: '华南' },
+                        { segment_id: 502, segment_name: 'G60沪昆高速-贵州段', region: '西南' },
+                        { segment_id: 503, segment_name: 'G65包茂高速-重庆段', region: '西南' },
+                        { segment_id: 601, segment_name: 'G75兰海高速-广西段', region: '华南' },
+                        { segment_id: 602, segment_name: 'G85渝昆高速-云南段', region: '西南' },
+                        { segment_id: 603, segment_name: 'G318国道-四川段', region: '西南' },
+                        { segment_id: 604, segment_name: 'G318国道-西藏段', region: '西南' },
+                        { segment_id: 701, segment_name: 'S1京承高速-北京段', region: '华北' },
+                        { segment_id: 702, segment_name: 'S2机场高速-上海段', region: '华东' }
+                    ];
+                }
+                
+                renderSegments(allSegments);
+                setupAutoCollapseSelect(document.getElementById('road-segment'), 8);
+                setupSegmentSearch();
+            } catch (e) {
+                console.error("Failed to load road segments", e);
+                document.getElementById('road-segment').innerHTML = '<option value="">⚠️ 加载失败，请刷新重试</option>';
+            }
+        }
+        
+        function renderSegments(segments, searchTerm = '') {
+            const select = document.getElementById('road-segment');
+            select.innerHTML = '<option value="">-- 请选择路段 --</option>';
+            
+            // 按地区分组
+            const regionGroups = {};
+            segments.forEach(seg => {
+                const region = seg.region || '其他地区';
+                if (!regionGroups[region]) regionGroups[region] = [];
+                regionGroups[region].push(seg);
+            });
+            
+            // 渲染分组
+            const regionOrder = ['华北', '华东', '华中', '华南', '西北', '西南', '东北', '其他地区'];
+            regionOrder.forEach(region => {
+                if (!regionGroups[region] || regionGroups[region].length === 0) return;
+                
+                const optgroup = document.createElement('optgroup');
+                optgroup.label = `📍 ${region}地区`;
+                
+                regionGroups[region].forEach(seg => {
+                    const segName = seg.segment_name || seg.name || `路段${seg.segment_id}`;
+                    // 如果有搜索词，高亮匹配
+                    if (!searchTerm || segName.toLowerCase().includes(searchTerm.toLowerCase())) {
+                        const opt = document.createElement('option');
+                        opt.value = seg.segment_id;
+                        opt.textContent = segName;
+                        opt.dataset.region = region;
+                        optgroup.appendChild(opt);
+                    }
+                });
+                
+                if (optgroup.children.length > 0) {
+                    select.appendChild(optgroup);
+                }
+            });
+            
+            // 如果搜索后没有结果
+            if (select.children.length === 1) {
+                select.innerHTML = '<option value="">🔍 未找到匹配的路段</option>';
+            }
+        }
+        
+        function setupSegmentSearch() {
+            const searchInput = document.getElementById('segment-search');
+            const selectElement = document.getElementById('road-segment');
+            if (!searchInput) return;
+            
+            // 选择下拉表选中事件 - 显示反馈
+            selectElement.addEventListener('change', (e) => {
+                if (e.target.value) {
+                    selectElement.classList.add('has-value');
+                }
+                if (!e.target.value) {
+                    selectElement.classList.remove('has-value');
+                }
+                // 选中后收起下拉
+                selectElement.blur();
+            });
+            
+            searchInput.addEventListener('input', (e) => {
+                const searchTerm = e.target.value.trim();
+                if (searchTerm === '') {
+                    renderSegments(allSegments);
+                } else {
+                    const filtered = allSegments.filter(seg => {
+                        const name = (seg.segment_name || seg.name || '').toLowerCase();
+                        const id = String(seg.segment_id || '');
+                        const term = searchTerm.toLowerCase();
+                        return name.includes(term) || id.includes(term);
+                    });
+                    renderSegments(filtered, searchTerm);
+                }
+            });
+            
+            // 清空搜索框时恢复完整列表
+            searchInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    searchInput.value = '';
+                    renderSegments(allSegments);
+                }
+            });
+        }
+
+        async function loadIssueTypes() {
+            const select = document.getElementById('issue-type');
+            const fallback = [
+                { id: 1, name: '🛣️ 路面破损（裂缝/坑洼）' },
+                { id: 2, name: '🚧 护栏损坏（缺失/变形）' },
+                { id: 3, name: '🪧 标志标线（缺失/模糊）' },
+                { id: 4, name: '💧 排水问题（积水/堵塞）' },
+                { id: 5, name: '🌳 路域环境（杂草/垃圾）' },
+                { id: 6, name: '🌉 桥梁隧道（裂缝/渗漏）' },
+                { id: 7, name: '🚥 交通设施（信号灯/监控）' },
+                { id: 8, name: '💡 照明系统（路灯损坏）' },
+                { id: 9, name: '⛰️ 边坡塌方（落石/滑坡）' },
+                { id: 10, name: '🚗 交通事故（车辆故障）' },
+                { id: 11, name: '🚚 违规占道（违停/摆摊）' },
+                { id: 12, name: '❄️ 冰雪灾害（结冰/积雪）' },
+                { id: 13, name: '🌀 自然灾害（水毁/风灾）' },
+                { id: 14, name: '🏗️ 施工隐患（材料/围挡）' },
+                { id: 15, name: '📋 其他问题' }
+            ];
+            try {
+                const res = await authFetch('/api/issue-types');
+                let types = [];
+                if (res && res.ok) {
+                    const payload = await res.json();
+                    types = payload.data || payload || [];
+                }
+                // 如果后台没有提供类型或为空，使用静态枚举作为回退
+                if (!Array.isArray(types) || types.length === 0) {
+                    select.innerHTML = '<option value="">请选择问题类型</option>';
+                    for (const t of fallback) {
+                        const opt = document.createElement('option');
+                        opt.value = t.id;
+                        opt.textContent = t.name;
+                        select.appendChild(opt);
+                    }
+                } else {
+                    select.innerHTML = '<option value="">请选择问题类型</option>';
+                    types.forEach(type => {
+                        const opt = document.createElement('option');
+                        opt.value = type.type_id;
+                        opt.textContent = type.type_name || type.name || `问题${type.type_id}`;
+                        select.appendChild(opt);
+                    });
+                }
+            } catch (e) {
+                console.error('Failed to load issue types', e);
+                // 网络异常也使用静态枚举
+                select.innerHTML = '<option value="">请选择问题类型</option>';
+                for (const t of fallback) {
+                    const opt = document.createElement('option');
+                    opt.value = t.id;
+                    opt.textContent = t.name;
+                    select.appendChild(opt);
+                }
+            }
+            // 选中后高亮外观并收起下拉
+            select.addEventListener('change', (e) => {
+                if (e.target.value) {
+                    select.classList.add('has-value');
+                } else {
+                    select.classList.remove('has-value');
+                }
+                // 收起下拉
+                select.blur();
+            });
+
+            setupAutoCollapseSelect(select, 10);
+        }
+
+        // ========== GPS 定位功能 ==========
+        function getLocation() {
+            const statusEl = document.getElementById('location-status');
+            const latEl = document.getElementById('latitude');
+            const lonEl = document.getElementById('longitude');
+            
+            if (!navigator.geolocation) {
+                statusEl.textContent = '❌ 您的浏览器不支持GPS定位';
+                statusEl.style.color = '#fca5a5';
+                return;
+            }
+            
+            statusEl.textContent = '⏳ 正在获取位置...';
+            statusEl.style.color = '#fbbf24';
+            
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const lat = position.coords.latitude.toFixed(6);
+                    const lon = position.coords.longitude.toFixed(6);
+                    latEl.value = lat;
+                    lonEl.value = lon;
+                    const accuracy = position.coords.accuracy.toFixed(0);
+                    statusEl.textContent = `✅ 定位成功！精度: ±${accuracy}米（建议精度 ≤ 5米。若偏差较大，请确保：1. 使用HTTPS；2. 室外环境；3. 设备GPS芯片完好）`;
+                    statusEl.style.color = '#86efac';
+                },
+                (error) => {
+                    let errorMsg = '定位失败';
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            errorMsg = '❌ 用户拒绝了定位请求，请在浏览器设置中允许定位权限';
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            errorMsg = '❌ 位置信息不可用（可能需要：1. 开启GPS/定位服务；2. 联网使用IP定位；3. 使用HTTPS）';
+                            break;
+                        case error.TIMEOUT:
+                            errorMsg = '❌ 获取位置超时，请重试或移动到室外';
+                            break;
+                    }
+                    statusEl.textContent = errorMsg;
+                    statusEl.style.color = '#fca5a5';
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 15000,  // 增加至15秒
+                    maximumAge: 0
+                }
+            );
+        }
+        
+        // ========== 照片预览功能 ==========
+        document.addEventListener('DOMContentLoaded', () => {
+            const photoInput = document.getElementById('photo');
+            if (photoInput) {
+                photoInput.addEventListener('change', (e) => {
+                    const previewContainer = document.getElementById('photo-preview');
+                    previewContainer.innerHTML = '';
+                    
+                    const files = Array.from(e.target.files);
+                    if (files.length === 0) return;
+                    
+                    files.forEach((file, idx) => {
+                        if (file.type.startsWith('image/')) {
+                            const reader = new FileReader();
+                            reader.onload = (ev) => {
+                                const img = document.createElement('img');
+                                img.src = ev.target.result;
+                                img.style.cssText = 'width:80px; height:80px; object-fit:cover; border-radius:8px; border:2px solid var(--stroke);';
+                                img.title = file.name;
+                                previewContainer.appendChild(img);
+                            };
+                            reader.readAsDataURL(file);
+                        }
+                    });
+                });
+            }
+        });
+
+        async function submitPatrolRecord() {
+            const segment = document.getElementById('road-segment').value;
+            const issueType = document.getElementById('issue-type').value;
+            const desc = document.getElementById('description').value.trim();
+            const severity = document.getElementById('severity').value;
+            const photoInput = document.getElementById('photo');
+            const latitude = document.getElementById('latitude').value;
+            const longitude = document.getElementById('longitude').value;
+
+            // 表单验证
+            if (!segment || !issueType || !desc) {
+                showMessage('patrol-message', '⚠️ 请填写完整的巡查信息', true);
+                return;
+            }
+            
+            if (!latitude || !longitude) {
+                const confirm = window.confirm('⚠️ 未获取GPS定位，是否继续提交？');
+                if (!confirm) return;
+            }
+
+            // 禁用提交按钮防止重复提交
+            const submitBtn = document.getElementById('submit-btn');
+            const originalText = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = '⏳ 提交中...';
+            submitBtn.style.opacity = '0.6';
+
+            const formData = new FormData();
+            formData.append('segment_id', segment);
+            formData.append('issue_type_id', issueType);
+            formData.append('description', desc);
+            formData.append('severity', severity);
+            if (latitude) formData.append('latitude', latitude);
+            if (longitude) formData.append('longitude', longitude);
+            
+            // 支持多照片上传
+            const files = Array.from(photoInput.files);
+            files.forEach(file => {
+                formData.append('photo', file);
+            });
+
+            // 调试：打印 FormData 内容
+            console.log('[DEBUG] FormData 内容:');
+            for (let [key, value] of formData.entries()) {
+                if (value instanceof File) {
+                    console.log(`  ${key}: File(${value.name}, ${value.size} bytes)`);
+                } else {
+                    console.log(`  ${key}: ${value}`);
+                }
+            }
+            console.log(`[DEBUG] 总共 ${files.length} 个照片`);
+
+            try {
+                const res = await authFetch('/api/patrol', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {} // 让浏览器自动设置 multipart 边界
+                });
+                
+                console.log('[DEBUG] 响应状态:', res?.status);
+                let data = {};
+                if (res) {
+                    const text = await res.text();
+                    console.log('[DEBUG] 响应体:', text);
+                    try {
+                        data = JSON.parse(text);
+                    } catch (e) {
+                        data = {detail: text};
+                    }
+                }
+                
+                if (res && res.ok) {
+                    showMessage('patrol-message', '✅ 巡查记录提交成功！');
+                    // 清空表单
+                    document.getElementById('description').value = '';
+                    document.getElementById('photo').value = '';
+                    document.getElementById('latitude').value = '';
+                    document.getElementById('longitude').value = '';
+                    document.getElementById('photo-preview').innerHTML = '';
+                    document.getElementById('location-status').textContent = '点击按钮自动获取当前GPS坐标';
+                    document.getElementById('location-status').style.color = 'var(--muted)';
+                    await loadPatrolRecords();
+                } else {
+                    showMessage('patrol-message', `❌ 提交失败: ${data.detail || '未知错误'}`, true);
+                }
+            } catch (e) {
+                showMessage('patrol-message', `❌ 网络异常: ${e.message}`, true);
+            } finally {
+                // 恢复提交按钮
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+                submitBtn.style.opacity = '1';
+            }
+        }
+
+        async function loadPatrolRecords() {
+            try {
+                const res = await authFetch('/api/patrol');
+                const payload = await (res ? res.json() : Promise.resolve([]));
+                // 兼容多种返回结构：数组 / {records: []} / {data: []}
+                let records = Array.isArray(payload)
+                    ? payload
+                    : (payload.records || payload.data || []);
+
+                const container = document.getElementById('records-list');
+                if (!Array.isArray(records)) {
+                    // 非数组则给出友好提示并退出
+                    container.innerHTML = `
+                        <div style="padding:24px; text-align:center; color:#fca5a5;">
+                            ❌ 返回数据格式不正确（预期为数组）。
+                        </div>`;
+                    return;
+                }
+
+                if (records.length === 0) {
+                    container.innerHTML = `
+                        <div style="padding:32px; text-align:center; color:var(--muted);">
+                            <div style="font-size:48px; margin-bottom:12px;">📋</div>
+                            <p>暂无巡查记录</p>
+                            <small>提交第一条巡查记录开始工作</small>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // 状态映射
+                const statusMap = {
+                    'pending': {label: '待处理', color: '#fbbf24', icon: '⏳'},
+                    'processing': {label: '处理中', color: '#60a5fa', icon: '🔄'},
+                    'resolved': {label: '已解决', color: '#86efac', icon: '✅'},
+                    'completed': {label: '已修复', color: '#86efac', icon: '✅'}
+                };
+                
+                container.innerHTML = records.map(r => {
+                    const status = statusMap[r.status] || statusMap['pending'];
+                    const hasGPS = r.latitude && r.longitude;
+                    return `
+                        <div style="padding: 16px; border-bottom: 1px solid var(--stroke); background: rgba(255,255,255,0.01); margin-bottom:8px; border-radius:8px;" id="record-${r.record_id}">
+                            <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:8px;">
+                                <strong style="color: var(--primary); font-size:15px;">${r.segment_name || '未知路段'}</strong>
+                                <span style="background: ${status.color}22; color: ${status.color}; padding: 4px 10px; border-radius: 6px; font-size: 12px; border: 1px solid ${status.color}44;">
+                                    ${status.icon} ${status.label}
+                                </span>
+                            </div>
+                            <div style="color: var(--accent); font-size:13px; margin-bottom:6px;">
+                                🏷️ ${r.issue_type_name || r.problem_type || '其他问题'}
+                            </div>
+                            <div style="color: #cbd5e1; margin-bottom:8px; line-height:1.5;">
+                                ${r.description}
+                            </div>
+                            <div style="display:flex; gap:16px; flex-wrap:wrap; font-size:12px; color: var(--muted); margin-bottom:8px;">
+                                <span>⚠️ 严重度: ${r.severity}/5</span>
+                                <span>🕐 ${new Date(r.upload_time || r.created_at).toLocaleString('zh-CN')}</span>
+                                ${hasGPS ? `<span>📍 GPS: ${parseFloat(r.latitude).toFixed(6)}, ${parseFloat(r.longitude).toFixed(6)}</span>` : ''}
+                            </div>
+                            <div id="photos-${r.record_id}" style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;"></div>
+                        </div>
+                    `;
+                }).join('');
+                
+                // 获取每条记录的照片
+                for (let r of records) {
+                    try {
+                        const photoRes = await authFetch(`/api/patrol/${r.record_id}`);
+                        if (!photoRes.ok) continue;
+                        const detail = await photoRes.json();
+                        if (detail.photos && Array.isArray(detail.photos)) {
+                            const photosDiv = document.getElementById(`photos-${r.record_id}`);
+                            photosDiv.innerHTML = detail.photos.map(p => {
+                                const photoUrl = `/photos/${p.file_name}`;
+                                return `<div style="position:relative; width:60px; height:60px; border-radius:4px; overflow:hidden; border:1px solid var(--stroke); cursor:pointer;" title="${p.file_name}" onclick="alert('照片: ${p.file_name}')"><img src="${photoUrl}" style="width:100%; height:100%; object-fit:cover;"></div>`;
+                            }).join('');
+                        }
+                    } catch (e) {
+                        console.log(`加载照片失败 (record ${r.record_id}):`, e);
+                    }
+                }
+            } catch (e) {
+                document.getElementById('records-list').innerHTML = `
+                    <div style="padding:24px; text-align:center; color:#fca5a5;">
+                        ❌ 加载失败: ${e.message}
+                    </div>
+                `;
+            }
+        }
+
+        // 滚动时显示/隐藏回到顶部按钮
+        window.addEventListener('scroll', () => {
+            const btn = document.getElementById('back-to-top');
+            if (!btn) return;
+            if (window.scrollY > 200) btn.classList.add('show');
+            else btn.classList.remove('show');
+        });
+
+        // 页面加载时检查是否已登录（可选）
+        window.addEventListener('DOMContentLoaded', async () => {
+            // 添加Enter键支持
+            const loginForm = document.getElementById('login-form');
+            const registerForm = document.getElementById('register-form');
+            const changePwdForm = document.getElementById('change-pwd-form');
+            
+            loginForm && loginForm.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') { e.preventDefault(); handleLogin(); }
+            });
+            registerForm && registerForm.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') { e.preventDefault(); handleRegister(); }
+            });
+            changePwdForm && changePwdForm.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') { e.preventDefault(); handleChangePassword(); }
+            });
+
+            try {
+                const token = localStorage.getItem('access_token');
+                if (!token) return;
+
+                const res = await authFetch('/api/me');
+                if (!res.ok) return;
+                const data = await res.json();
+                document.getElementById('welcome-name').textContent = data.real_name || data.username;
+                document.getElementById('auth-section').classList.add('hidden');
+                document.getElementById('patrol-section').classList.remove('hidden');
+                
+                // 如果是管理员，显示管理员页面按钮
+                if (data.role === 'admin') {
+                    document.getElementById('admin-btn').style.display = 'inline-flex';
+                } else {
+                    // 如果不是管理员，确保隐藏管理员按钮
+                    document.getElementById('admin-btn').style.display = 'none';
+                }
+                
+                loadRoadSegments();
+                loadIssueTypes();
+                loadPatrolRecords();
+                
+                // 连接 SSE 实时照片流（如果是管理员）
+                if (data.role === 'admin') {
+                    connectSSEPhotos(token);
+                }
+            } catch (e) {
+                console.log("Not logged in or session expired");
+            }
+        });
+        
+        // SSE 实时照片连接
+        function connectSSEPhotos(token) {
+            try {
+                const sse = new EventSource(`/api/sse/patrol-photo?token=${encodeURIComponent(token)}`);
+                
+                sse.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        if (data.event === 'new_photo') {
+                            const photoData = data.data;
+                            const recordDiv = document.getElementById(`record-${photoData.record_id}`);
+                            if (recordDiv) {
+                                // 刷新该记录的照片
+                                loadPhotosForRecord(photoData.record_id);
+                                console.log(`📸 实时新照片: Record ${photoData.record_id}, Photo ${photoData.photo_id}`);
+                            }
+                        }
+                    } catch (e) {
+                        console.log("SSE 事件解析失败:", e);
+                    }
+                };
+                
+                sse.onerror = () => {
+                    console.log("⚠️ SSE 连接失败");
+                    sse.close();
+                };
+                
+                console.log("✅ SSE 连接已建立");
+            } catch (e) {
+                console.log("⚠️ SSE 不支持或连接失败:", e);
+            }
+        }
+        
+        // 加载单个记录的照片
+        async function loadPhotosForRecord(recordId) {
+            try {
+                const token = localStorage.getItem('access_token');
+                const res = await fetch(`/api/patrol/${recordId}`, {
+                    headers: {'Authorization': `Bearer ${token}`}
+                });
+                if (!res.ok) return;
+                const detail = await res.json();
+                if (detail.photos && Array.isArray(detail.photos)) {
+                    const photosDiv = document.getElementById(`photos-${recordId}`);
+                    if (photosDiv) {
+                        photosDiv.innerHTML = detail.photos.map(p => {
+                            const photoUrl = `/photos/${p.file_name}`;
+                            return `<div style="position:relative; width:60px; height:60px; border-radius:4px; overflow:hidden; border:1px solid var(--stroke); cursor:pointer;" title="${p.file_name}" onclick="alert('照片: ${p.file_name}')"><img src="${photoUrl}" style="width:100%; height:100%; object-fit:cover;"></div>`;
+                        }).join('');
+                    }
+                }
+            } catch (e) {
+                console.log(`加载照片失败 (record ${recordId}):`, e);
+            }
+        }
+    </script>
+
+    <!-- 回到顶部按钮 -->
+    <button id="back-to-top" class="back-to-top" aria-label="回到顶部" title="回到顶部" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+    <!-- AI 助手浮窗 -->
+    {% include 'ai-assistant.html' %}
+</body>
+</html>

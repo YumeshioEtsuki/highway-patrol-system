@@ -1,0 +1,2 @@
+/* pages/admin/list/list.wxss */
+@import "../../patrol/list/list.wxss";

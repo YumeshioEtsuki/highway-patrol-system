@@ -1,0 +1,87 @@
+<!-- pages/patrol/create/create.wxml -->
+<view class="container">
+  <form bindsubmit="onSubmit">
+    <!-- 位置信息 -->
+    <view class="section card">
+      <view class="section-title">📍 位置信息</view>
+      
+      <view class="form-item">
+        <view class="form-label">GPS坐标</view>
+        <view class="location-info">
+          <text class="location-text">{{location ? location.address : '未获取'}}</text>
+          <button class="btn-location" type="button" bindtap="getLocation">
+            {{location ? '重新定位' : '获取定位'}}
+          </button>
+        </view>
+      </view>
+
+      <view class="form-item">
+        <view class="form-label">位置描述 *</view>
+        <input class="form-input" name="location_desc" placeholder="如：国道G107 36公里处" value="{{formData.location_desc}}" />
+      </view>
+    </view>
+
+    <!-- 问题信息 -->
+    <view class="section card">
+      <view class="section-title">⚠️ 问题信息</view>
+
+      <view class="form-item">
+        <view class="form-label">问题类型 *</view>
+        <picker mode="selector" range="{{problemTypes}}" range-key="label" value="{{problemTypeIndex}}" bindchange="onProblemTypeChange">
+          <view class="picker-display">
+            {{problemTypes[problemTypeIndex].label}}
+            <text class="picker-arrow">›</text>
+          </view>
+        </picker>
+      </view>
+
+      <view class="form-item">
+        <view class="form-label">问题描述 *</view>
+        <textarea class="form-textarea" name="problem_desc" placeholder="请详细描述发现的问题..." value="{{formData.problem_desc}}" maxlength="500" />
+      </view>
+
+      <view class="form-item">
+        <view class="form-label">严重程度 *</view>
+        <view class="severity-selector">
+          <view class="severity-item {{formData.severity === item ? 'active' : ''}}" 
+                wx:for="{{severityLevels}}" 
+                wx:key="*this" 
+                bindtap="onSeverityChange" 
+                data-level="{{item}}">
+            <text class="severity-star">★</text>
+            <text class="severity-text">{{item}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 照片上传 -->
+    <view class="section card">
+      <view class="section-title">📷 现场照片</view>
+      
+      <view class="photo-grid">
+        <!-- 已上传照片 -->
+        <view class="photo-item" wx:for="{{photos}}" wx:key="index">
+          <image src="{{item}}" mode="aspectFill"></image>
+          <view class="photo-delete" bindtap="deletePhoto" data-index="{{index}}">×</view>
+        </view>
+        
+        <!-- 添加按钮 -->
+        <view class="photo-add" wx:if="{{photos.length < 9}}" bindtap="choosePhoto">
+          <text class="add-icon">+</text>
+          <text class="add-text">添加照片</text>
+        </view>
+      </view>
+      
+      <view class="photo-tip">最多上传9张照片</view>
+    </view>
+
+    <!-- 提交按钮 -->
+    <view class="submit-section">
+      <button class="btn btn-secondary" type="button" bindtap="onCancel">取消</button>
+      <button class="btn btn-primary" form-type="submit" disabled="{{submitting}}">
+        {{submitting ? '提交中...' : '提交记录'}}
+      </button>
+    </view>
+  </form>
+</view>

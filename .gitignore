@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Environments
+.venv/
+venv/
+ENV/
+.env.local
+.env.*.local
+
+# IDE & Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Local configs & secrets
+.env
+1-后端代码/.env
+1-后端代码/.env.local
+
+# Debug & test scripts
+.debug/
+1-后端代码/diagnose_connection.py
+1-后端代码/generate_test_records.py
+1-后端代码/init_db_fresh.py
+
+# Project-specific ignores
+1-后端代码/photos/**
+!1-后端代码/photos/.gitkeep
+1-后端代码/logs/
+
+# OS
+.DS_Store
+*.log
+
+# Python caches & coverage
+.pytest_cache/
+.mypy_cache/
+.coverage
+coverage.xml
+
+# Miniprogram / Node
+2-小程序代码/node_modules/
+node_modules/

@@ -1,0 +1,264 @@
+/* app.wxss - 全局深色主题样式 */
+
+/* ========== 全局变量 ========== */
+page {
+  --bg-primary: #0f1419;
+  --bg-secondary: #1a2332;
+  --bg-tertiary: #202b3d;
+  --border-color: rgba(255, 255, 255, 0.08);
+  --text-primary: #e8edf5;
+  --text-secondary: #9aa4b5;
+  --text-muted: #6b7a8f;
+  --accent-primary: #c084fc;
+  --accent-secondary: #a855f7;
+  --accent-gradient: linear-gradient(135deg, #d8b4fe, #c084fc);
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --card-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+}
+
+/* ========== 基础样式 ========== */
+page {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-family);
+  font-size: 28rpx;
+  line-height: 1.6;
+}
+
+/* ========== 容器 ========== */
+.container {
+  min-height: 100vh;
+  padding: 24rpx;
+  box-sizing: border-box;
+}
+
+.card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 24rpx;
+  padding: 32rpx;
+  margin-bottom: 24rpx;
+  box-shadow: var(--card-shadow);
+}
+
+.glass-card {
+  background: rgba(26, 35, 50, 0.85);
+  backdrop-filter: blur(20rpx);
+  border: 1px solid var(--border-color);
+  border-radius: 24rpx;
+  padding: 32rpx;
+  margin-bottom: 24rpx;
+  box-shadow: var(--card-shadow);
+}
+
+/* ========== 按钮 ========== */
+.btn {
+  border-radius: 16rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+  padding: 24rpx 48rpx;
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #d8b4fe, #c084fc);
+  color: #1a0b2e;
+  box-shadow: 0 8px 20rpx rgba(192, 132, 252, 0.35);
+}
+
+.btn-primary:active {
+  opacity: 0.85;
+  transform: scale(0.98);
+}
+
+.btn-secondary {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.btn-secondary:active {
+  background: var(--bg-secondary);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--accent-primary);
+  border: 1px solid var(--accent-primary);
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: white;
+}
+
+/* ========== 文本 ========== */
+.text-primary {
+  color: var(--text-primary);
+}
+
+.text-secondary {
+  color: var(--text-secondary);
+}
+
+.text-muted {
+  color: var(--text-muted);
+}
+
+.text-accent {
+  color: var(--accent-primary);
+}
+
+.text-success {
+  color: var(--success);
+}
+
+.text-warning {
+  color: var(--warning);
+}
+
+.text-danger {
+  color: var(--danger);
+}
+
+/* ========== 标签/徽章 ========== */
+.badge {
+  display: inline-block;
+  padding: 8rpx 16rpx;
+  border-radius: 8rpx;
+  font-size: 24rpx;
+  font-weight: 500;
+}
+
+.badge-primary {
+  background: rgba(192, 132, 252, 0.15);
+  color: var(--accent-primary);
+  border: 1px solid rgba(192, 132, 252, 0.3);
+}
+
+.badge-success {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--success);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.badge-warning {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--warning);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.badge-danger {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--danger);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* ========== 表单 ========== */
+.form-item {
+  margin-bottom: 32rpx;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 16rpx;
+  color: var(--text-secondary);
+  font-size: 26rpx;
+  font-weight: 500;
+}
+
+.form-input, .form-textarea {
+  width: 100%;
+  padding: 24rpx;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 16rpx;
+  color: var(--text-primary);
+  font-size: 28rpx;
+  box-sizing: border-box;
+}
+
+.form-input:focus, .form-textarea:focus {
+  border-color: var(--accent-primary);
+  background: var(--bg-secondary);
+}
+
+.form-textarea {
+  min-height: 200rpx;
+}
+
+/* ========== 分割线 ========== */
+.divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 32rpx 0;
+}
+
+/* ========== 加载/空状态 ========== */
+.loading {
+  text-align: center;
+  padding: 80rpx 0;
+  color: var(--text-muted);
+}
+
+.empty {
+  text-align: center;
+  padding: 120rpx 0;
+}
+
+.empty-icon {
+  font-size: 120rpx;
+  color: var(--text-muted);
+  margin-bottom: 24rpx;
+}
+
+.empty-text {
+  color: var(--text-muted);
+  font-size: 26rpx;
+}
+
+/* ========== 工具类 ========== */
+.flex {
+  display: flex;
+}
+
+.flex-column {
+  flex-direction: column;
+}
+
+.flex-between {
+  justify-content: space-between;
+}
+
+.flex-center {
+  justify-content: center;
+  align-items: center;
+}
+
+.flex-1 {
+  flex: 1;
+}
+
+.mt-8 { margin-top: 16rpx; }
+.mt-16 { margin-top: 32rpx; }
+.mt-24 { margin-top: 48rpx; }
+
+.mb-8 { margin-bottom: 16rpx; }
+.mb-16 { margin-bottom: 32rpx; }
+.mb-24 { margin-bottom: 48rpx; }
+
+.text-center {
+  text-align: center;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.bold {
+  font-weight: 600;
+}

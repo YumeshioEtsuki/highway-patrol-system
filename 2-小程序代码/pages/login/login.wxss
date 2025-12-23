@@ -1,0 +1,261 @@
+/* pages/login/login.wxss */
+.login-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f1419 0%, #1a2332 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60rpx 40rpx;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 背景装饰 */
+.bg-decoration {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  opacity: 0.15;
+}
+
+.circle {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(192, 132, 252, 0.3), transparent);
+  animation: float 20s infinite ease-in-out;
+}
+
+.circle-1 {
+  width: 400rpx;
+  height: 400rpx;
+  top: -100rpx;
+  right: -100rpx;
+  animation-delay: 0s;
+}
+
+.circle-2 {
+  width: 300rpx;
+  height: 300rpx;
+  bottom: -50rpx;
+  left: -80rpx;
+  animation-delay: 5s;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-30rpx) scale(1.05);
+  }
+}
+
+/* Logo区域 */
+.logo-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 100rpx;
+  z-index: 1;
+}
+
+.logo-icon {
+  font-size: 160rpx;
+  margin-bottom: 32rpx;
+  animation: fadeInDown 0.8s ease;
+}
+
+.app-name {
+  font-size: 48rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 16rpx;
+  letter-spacing: 2rpx;
+  animation: fadeInUp 0.8s ease 0.2s both;
+}
+
+.app-desc {
+  font-size: 24rpx;
+  color: var(--text-muted);
+  letter-spacing: 4rpx;
+  animation: fadeInUp 0.8s ease 0.3s both;
+}
+
+/* 角色选择 */
+.role-selector {
+  display: flex;
+  gap: 32rpx;
+  margin-bottom: 80rpx;
+  z-index: 1;
+  animation: fadeInUp 0.8s ease 0.4s both;
+}
+
+.role-item {
+  width: 260rpx;
+  padding: 48rpx 32rpx;
+  background: rgba(26, 35, 50, 0.6);
+  backdrop-filter: blur(20rpx);
+  border: 2rpx solid var(--border-color);
+  border-radius: 24rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16rpx;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.role-item.active {
+  background: linear-gradient(135deg, rgba(216, 180, 254, 0.15), rgba(192, 132, 252, 0.15));
+  border-color: var(--accent-primary);
+  box-shadow: 0 8rpx 24rpx rgba(192, 132, 252, 0.25);
+  transform: translateY(-8rpx);
+}
+
+.role-icon {
+  font-size: 80rpx;
+  margin-bottom: 8rpx;
+}
+
+.role-name {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.role-item.active .role-name {
+  color: var(--accent-primary);
+}
+
+/* 登录按钮 */
+.login-btn {
+  width: 100%;
+  height: 96rpx;
+  background: linear-gradient(135deg, #d8b4fe, #c084fc);
+  color: #1a0b2e;
+  font-size: 32rpx;
+  font-weight: 700;
+  border-radius: 48rpx;
+  border: none;
+  box-shadow: 0 12rpx 32rpx rgba(192, 132, 252, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 48rpx;
+  z-index: 1;
+  animation: fadeInUp 0.8s ease 0.5s both;
+  transition: all 0.3s ease;
+}
+
+.login-btn:active {
+  transform: scale(0.98);
+  box-shadow: 0 8rpx 24rpx rgba(192, 132, 252, 0.35);
+}
+
+.login-btn[disabled] {
+  opacity: 0.6;
+  transform: none;
+}
+
+/* 提示信息 */
+.tips {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 60rpx;
+  z-index: 1;
+  animation: fadeIn 1s ease 0.6s both;
+}
+
+.tip-text {
+  font-size: 24rpx;
+  color: var(--text-muted);
+}
+
+.tip-link {
+  font-size: 24rpx;
+  color: var(--accent-primary);
+  margin: 0 4rpx;
+}
+
+/* 版本信息 */
+.version {
+  position: absolute;
+  bottom: 40rpx;
+  z-index: 1;
+  animation: fadeIn 1s ease 0.7s both;
+}
+
+.version-text {
+  font-size: 22rpx;
+  color: var(--text-muted);
+  letter-spacing: 1rpx;
+}
+
+/* 辅助操作按钮 */
+.aux-ops {
+  width: 100%;
+  display: flex;
+  gap: 16rpx;
+  margin-top: 24rpx;
+  z-index: 1;
+  animation: fadeInUp 0.8s ease 0.65s both;
+}
+
+.aux-btn {
+  flex: 1;
+  height: 84rpx;
+  line-height: 84rpx;
+  border-radius: 42rpx;
+  background: #334155;
+  color: #e2e8f0;
+  border: none;
+  font-size: 28rpx;
+  text-align: center;
+}
+
+.aux-btn.danger {
+  background: #dc2626;
+  color: #fff;
+}
+
+.aux-btn::after {
+  border: none;
+}
+
+/* 动画 */
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-40rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(40rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
