@@ -25,23 +25,58 @@ REM 检查环境配置
 REM ===============================
 echo [0/5] 检查环境配置...
 
-if not exist ".env" (
+REM 统一到项目根目录，避免从 system32 等目录运行导致找不到 .env
+cd /d "%~dp0.."
+
+if "%SECURE_MODE%"=="1" (
+    echo [INFO] 安全模式已启用：跳过 .env 文件读取，改为使用系统环境变量
+) else (
+    if not exist ".env" (
+        echo.
+        echo [错误] 未检测到 .env 配置文件！
+        echo.
+        echo 请先运行配置向导：
+        echo    bin\setup_password.bat
+        echo.
+        echo 或手动创建：
+        echo    copy .env.example .env
+        echo    然后编辑 .env 设置 DATABASE_PASSWORD
+        echo.
+        pause
+        exit /b 1
+    )
+
+    echo [OK] .env 配置文件已存在
     echo.
-    echo [错误] 未检测到 .env 配置文件！
-    echo.
-    echo 请先运行配置向导：
-    echo    bin\setup_password.bat
-    echo.
-    echo 或手动创建：
-    echo    copy .env.example .env
-    echo    然后编辑 .env 设置 DATABASE_PASSWORD
-    echo.
-    pause
-    exit /b 1
 )
 
-echo [OK] .env 配置文件已存在
-echo.
+REM 同步检查后端目录下的 .env（后端实际读取此文件）
+if "%SECURE_MODE%"=="1" (
+    if "%DB_PASSWORD%"=="" if "%DATABASE_PASSWORD%"=="" (
+        echo [错误] 安全模式下未检测到 DB_PASSWORD 或 DATABASE_PASSWORD 环境变量！
+        echo 请在当前会话或系统中设置其中一个变量后再启动。
+        echo 例如：
+        echo   set DB_PASSWORD=your_password
+        echo 或:
+        echo   set DATABASE_PASSWORD=your_password
+        pause
+        exit /b 1
+    )
+) else (
+    if not exist "1-后端代码\.env" (
+        echo [错误] 未检测到 1-后端代码\.env 配置文件！
+        echo.
+        echo 请先运行配置向导：
+        echo    bin\setup_password.bat
+        echo.
+        echo 或手动创建：
+        echo    copy 1-后端代码\.env.example 1-后端代码\.env
+        echo    然后编辑 1-后端代码\.env 设置 DATABASE_PASSWORD
+        echo.
+        pause
+        exit /b 1
+    )
+)
 
 REM ===============================
 REM 检查 Redis 是否已安装

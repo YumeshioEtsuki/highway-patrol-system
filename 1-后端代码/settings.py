@@ -2,8 +2,12 @@
 
 import os
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import Field, AliasChoices
 from pathlib import Path
 from typing import Set, Optional
+
+
+SECURE_MODE = str(os.getenv("SECURE_MODE", "0")).strip().lower() in {"1", "true", "yes"}
 
 
 class Settings(BaseSettings):
@@ -13,15 +17,25 @@ class Settings(BaseSettings):
     DATABASE_HOST: str = "localhost"
     DATABASE_PORT: int = 3306
     DATABASE_USER: str = "root"
-    DATABASE_PASSWORD: Optional[str] = None
+    DATABASE_PASSWORD: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices('DATABASE_PASSWORD', 'DB_PASSWORD')
+    )
     DATABASE_NAME: str = "road_patrol_db"
     
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        # 优先从 DB_PASSWORD 环境变量读取（向后兼容 DATABASE_PASSWORD）
-        env_pwd = os.getenv("DB_PASSWORD")
-        if env_pwd:
-            self.DATABASE_PASSWORD = env_pwd
+        # 兼容 Redis 密码别名（REDIS_PASS）
+        redis_pass = os.getenv("REDIS_PASS")
+        if redis_pass:
+            self.REDIS_PASSWORD = redis_pass
+        # 兼容 Celery 环境变量别名
+        broker_url = os.getenv("BROKER_URL")
+        if broker_url:
+            self.CELERY_BROKER_URL = broker_url
+        result_backend = os.getenv("RESULT_BACKEND")
+        if result_backend:
+            self.CELERY_RESULT_BACKEND = result_backend
         # 验证必填的敏感配置
         if not self.DATABASE_PASSWORD:
             raise ValueError(
@@ -78,10 +92,11 @@ class Settings(BaseSettings):
     SKIP_DB_INIT: bool = False
     
     model_config = SettingsConfigDict(
-        # 统一 .env 路径为后端目录下的 .env（无论工作目录在哪都能正确加载）
-        env_file=str(Path(__file__).resolve().parent.parent / ".env"),
+        # 统一 .env 路径为后端目录下的 .env；当启用 SECURE_MODE 时禁用 .env 读取
+        env_file=(None if SECURE_MODE else str(Path(__file__).resolve().parent / ".env")),
         env_file_encoding="utf-8",
-        case_sensitive=True
+        case_sensitive=True,
+        extra="ignore"  # 忽略 .env 中的额外字段，提升兼容性
     )
 
 

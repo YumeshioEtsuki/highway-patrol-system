@@ -2,6 +2,7 @@
 
 import os
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import Field, AliasChoices
 from pathlib import Path
 from typing import Set, Optional
 
@@ -13,7 +14,10 @@ class Settings(BaseSettings):
     DATABASE_HOST: str = "localhost"
     DATABASE_PORT: int = 3306
     DATABASE_USER: str = "root"
-    DATABASE_PASSWORD: str = "REDACTED"
+    DATABASE_PASSWORD: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices('DATABASE_PASSWORD', 'DB_PASSWORD')
+    )
     DATABASE_NAME: str = "road_patrol_db"
     
     # 向后兼容的别名
@@ -66,7 +70,8 @@ class Settings(BaseSettings):
         # 统一 .env 路径为后端目录下的 .env（无论工作目录在哪都能正确加载）
         env_file=str(Path(__file__).resolve().parent.parent / ".env"),
         env_file_encoding="utf-8",
-        case_sensitive=True
+        case_sensitive=True,
+        extra="ignore"  # 忽略 .env 中的额外字段（如旧键），提升兼容性
     )
 
 

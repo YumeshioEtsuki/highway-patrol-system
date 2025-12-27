@@ -29,6 +29,28 @@
 # ⚠️ Redis 和 Celery 不启动（异步功能降级）
 ```
 
+### 安全模式（SECURE_MODE）
+
+**在生产/CI环境，建议启用安全模式：不读取任何 `.env` 文件，仅使用系统环境变量。**
+
+```bash
+# 启用安全模式并设置数据库密码（两者其一即可）
+set SECURE_MODE=1
+set DB_PASSWORD=your_password
+rem 或：set DATABASE_PASSWORD=your_password
+
+# 启动（任选其一）
+.\bin\startup_full.bat
+.\bin\startup.bat
+```
+
+关闭安全模式回到 `.env` 模式：
+
+```bash
+set SECURE_MODE=0
+.\bin\startup_full.bat
+```
+
 ### 停止所有服务
 
 ```bash

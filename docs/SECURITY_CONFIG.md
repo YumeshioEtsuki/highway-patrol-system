@@ -86,6 +86,33 @@ services:
 
 ---
 
+## 🔒 安全模式（SECURE_MODE）
+
+在生产/CI 环境，建议启用安全模式：不读取任何 `.env` 文件，仅使用系统环境变量。
+
+```bat
+set SECURE_MODE=1
+set DB_PASSWORD=your_password
+rem 也可使用：set DATABASE_PASSWORD=your_password
+rem 可选：Redis/Celery 别名支持
+rem   set REDIS_PASS=your_redis_password
+rem   set BROKER_URL=redis://localhost:6379/1
+rem   set RESULT_BACKEND=redis://localhost:6379/2
+
+.\bin\startup_full.bat
+rem 或
+.\bin\startup.bat
+```
+
+关闭安全模式，恢复 `.env` 模式：
+
+```bat
+set SECURE_MODE=0
+.\bin\startup_full.bat
+```
+
+---
+
 ## ⚠️ 安全注意事项
 
 ### ❌ 禁止行为
@@ -143,6 +170,22 @@ Copy-Item .env.example .env
 ```powershell
 # 查看当前环境变量
 $env:DATABASE_PASSWORD
+
+### 问题4: Celery/Redis 连接配置
+
+**环境变量说明：**
+- 支持 `CELERY_BROKER_URL` 与别名 `BROKER_URL`
+- 支持 `CELERY_RESULT_BACKEND` 与别名 `RESULT_BACKEND`
+- 支持 `REDIS_PASSWORD` 与别名 `REDIS_PASS`
+
+**示例（安全模式）**
+```bat
+set SECURE_MODE=1
+set BROKER_URL=redis://localhost:6379/1
+set RESULT_BACKEND=redis://localhost:6379/2
+set REDIS_PASS=your_redis_password
+.\bin\startup_full.bat
+```
 ```
 
 ---
