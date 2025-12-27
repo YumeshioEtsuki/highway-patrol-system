@@ -37,6 +37,8 @@ Thumbs.db
 1-后端代码/photos/**
 !1-后端代码/photos/.gitkeep
 1-后端代码/logs/
+photos/**
+!photos/.gitkeep
 
 # OS
 .DS_Store
