@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token if csrf_token is defined else '' }}">
+    <title>任务中心 - 公路巡查系统</title>
+    <link rel="stylesheet" href="/static/css/common.css">
+    <style>
+        /* Tasks 页面特有样式，复用 common.css 中的 CSS 变量 */
+
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            font-family: "Space Grotesk", "Microsoft YaHei", sans-serif;
+            background: radial-gradient(120% 120% at 20% 20%, rgba(91,139,255,0.25), transparent 45%),
+                        radial-gradient(100% 140% at 80% 10%, rgba(122,240,216,0.18), transparent 50%),
+                        #050914;
+            background-attachment: fixed;
+            color: #f4f6fb;
+            padding: 32px 18px 80px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* 页头 */
+        .page-header {
+            background: linear-gradient(120deg, rgba(91,139,255,0.18), rgba(122,240,216,0.14));
+            padding: 28px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid var(--stroke);
+            border-radius: 18px;
+            margin-bottom: 32px;
+            backdrop-filter: blur(10px);
+        }
+
+        .page-header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .back-link {
+            padding: 10px 18px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, rgba(91,139,255,0.2), rgba(91,139,255,0.1));
+            color: #7c9fff;
+            font-weight: 600;
+            text-decoration: none;
+            border: 1px solid rgba(91,139,255,0.3);
+            transition: all 0.25s;
+        }
+
+        .back-link:hover {
+            transform: translateY(-2px);
+            background: linear-gradient(135deg, rgba(91,139,255,0.3), rgba(91,139,255,0.2));
+            border-color: rgba(91,139,255,0.5);
+        }
+
+        .user-badge {
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: rgba(122,240,216,0.16);
+            color: #9ff6e2;
+            font-weight: 600;
+            border: 1px solid rgba(122,240,216,0.3);
+            font-size: 14px;
+        }
+
+        /* 主容器 */
+        .main-content {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        /* 侧边栏 - 任务类别 */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .taREDACTEDcategory {
+            background: linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+            border: 1px solid var(--stroke);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .taREDACTEDcategory-header {
+            padding: 16px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.25s;
+            user-select: none;
+        }
+
+        .taREDACTEDcategory-header:hover {
+            background: rgba(91,139,255,0.08);
+        }
+
+        .taREDACTEDcategory-header.active {
+            background: linear-gradient(135deg, rgba(91,139,255,0.12), rgba(122,240,216,0.08));
+        }
+
+        .taREDACTEDcategory-icon {
+            font-size: 20px;
+        }
+
+        .taREDACTEDcategory-title {
+            flex: 1;
+            font-weight: 600;
+            color: #e2e8f0;
+        }
+
+        .taREDACTEDcategory-toggle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            transform: rotate(0deg);
+            transition: transform 0.25s;
+            color: var(--muted);
+        }
+
+        .taREDACTEDcategory-header.active .taREDACTEDcategory-toggle {
+            transform: rotate(180deg);
+        }
+
+        .taREDACTEDcategory-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.25s;
+        }
+
+        .taREDACTEDcategory-body.active {
+            max-height: 500px;
+        }
+
+        .category-tasks {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 0 16px 16px;
+        }
+
+        .category-taREDACTEDbtn {
+            padding: 12px;
+            border: 1px solid rgba(91,139,255,0.2);
+            border-radius: 8px;
+            background: rgba(91,139,255,0.08);
+            color: #a5b4fc;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.25s;
+        }
+
+        .category-taREDACTEDbtn:hover {
+            background: rgba(91,139,255,0.16);
+            border-color: rgba(91,139,255,0.4);
+        }
+
+        /* 右侧内容区 */
+        .content-area {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* 表单卡片 */
+        .form-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+            border: 1px solid var(--stroke);
+            border-radius: 16px;
+            padding: 32px;
+            display: none;
+        }
+
+        .form-card.active {
+            display: block;
+            animation: slideIn 0.25s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .form-card h2 {
+            font-size: 20px;
+            margin-bottom: 24px;
+            color: #f1f5f9;
+        }
+
+        /* 表单组 */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #cbd5e1;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--stroke);
+            border-radius: 10px;
+            font-size: 15px;
+            font-family: inherit;
+            background: rgba(255,255,255,0.05);
+            color: #f4f6fb;
+            transition: all 0.25s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: rgba(255,255,255,0.08);
+            box-shadow: 0 0 0 3px rgba(91,139,255,0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .form-helper {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 6px;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.25s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            flex: 1;
+            background: linear-gradient(135deg, #5b8bff, #4a68ff);
+            color: #fff;
+            box-shadow: 0 8px 24px rgba(91,115,255,0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(91,115,255,0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: #cbd5e1;
+            border: 1px solid var(--stroke);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.15);
+        }
+
+        .btn-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            padding: 0;
+            border-radius: 8px;
+        }
+
+        /* 任务列表 */
+        .tasks-section {
+            background: linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+            border: 1px solid var(--stroke);
+            border-radius: 16px;
+            padding: 24px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #f1f5f9;
+        }
+
+        .refresh-btn {
+            padding: 10px 16px;
+            background: linear-gradient(135deg, #1fc9a1, #13b58d);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s;
+        }
+
+        .refresh-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(31,201,161,0.3);
+        }
+
+        .tasks-list {
+            display: grid;
+            gap: 12px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .taREDACTEDcard {
+            background: linear-gradient(135deg, rgba(91,139,255,0.08), rgba(122,240,216,0.04));
+            border: 1px solid rgba(91,139,255,0.2);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            transition: all 0.25s;
+        }
+
+        .taREDACTEDcard:hover {
+            background: linear-gradient(135deg, rgba(91,139,255,0.12), rgba(122,240,216,0.08));
+            border-color: rgba(91,139,255,0.4);
+        }
+
+        .taREDACTEDinfo {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .taREDACTEDname {
+            font-weight: 600;
+            color: #e2e8f0;
+            margin-bottom: 4px;
+        }
+
+        .taREDACTEDid {
+            font-size: 12px;
+            color: var(--muted);
+            font-family: 'Courier New', monospace;
+        }
+
+        .taREDACTEDmeta {
+            font-size: 13px;
+            color: var(--muted);
+            margin-top: 6px;
+        }
+
+        .taREDACTEDstatus {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .taREDACTEDstatus.pending {
+            background: rgba(251,191,36,0.2);
+            color: #fbbf24;
+        }
+
+        .taREDACTEDstatus.running {
+            background: rgba(59,130,246,0.2);
+            color: #60a5fa;
+        }
+
+        .taREDACTEDstatus.success {
+            background: rgba(34,197,94,0.2);
+            color: #4ade80;
+        }
+
+        .taREDACTEDstatus.failed {
+            background: rgba(239,68,68,0.2);
+            color: #f87171;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--muted);
+            font-size: 15px;
+        }
+
+        /* 通知 */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            z-index: 2000;
+            display: none;
+            max-width: 400px;
+            border: 1px solid;
+            animation: slideInRight 0.3s ease-out;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .notification.success {
+            background: linear-gradient(135deg, rgba(34,197,94,0.95), rgba(22,163,74,0.95));
+            color: #fff;
+            border-color: rgba(34,197,94,0.5);
+        }
+
+        .notification.error {
+            background: linear-gradient(135deg, rgba(239,68,68,0.95), rgba(220,38,38,0.95));
+            color: #fff;
+            border-color: rgba(239,68,68,0.5);
+        }
+
+        .notification.info {
+            background: linear-gradient(135deg, rgba(59,130,246,0.95), rgba(37,99,235,0.95));
+            color: #fff;
+            border-color: rgba(59,130,246,0.5);
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .page-header {
+                flex-direction: column;
+                gap: 16px;
+                text-align: center;
+            }
+
+            .header-right {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .form-actions {
+                flex-direction: column;
+            }
+
+            .btn-primary, .btn-secondary {
+                width: 100%;
+            }
+        }
+
+        /* 加载状态 */
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            margin-left: 8px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* 辅助类 */
+        .hidden {
+            display: none !important;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .mt-4 {
+            margin-top: 16px;
+        }
+
+        .mt-8 {
+            margin-top: 32px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 页头 -->
+        <div class="page-header">
+            <h1>⚡ 任务中心</h1>
+            <div class="header-right">
+                <span class="user-badge" id="userBadge">加载中...</span>
+                <a href="/admin.html" class="back-link">← 返回管理后台</a>
+            </div>
+        </div>
+
+        <!-- 主容器 -->
+        <div class="main-content">
+            <!-- 侧边栏：任务类别 -->
+            <aside class="sidebar" id="taskCategories"></aside>
+
+            <!-- 右侧：表单 + 任务列表 -->
+            <div class="content-area">
+                <!-- 动态表单区 -->
+                <div id="formContainer"></div>
+
+                <!-- 任务列表 -->
+                <div class="tasks-section">
+                    <div class="section-header">
+                        <h2 class="section-title">📋 执行队列</h2>
+                        <button class="refresh-btn" onclick="refreshTasks()">🔄 刷新</button>
+                    </div>
+                    <div class="tasks-list" id="tasksList">
+                        <div class="empty-state">暂无任务</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 通知 -->
+    <div id="notification" class="notification"></div>
+
+    <!-- 通用工具库 -->
+    <script src="/static/js/common.js"></script>
+    <!-- 业务脚本 -->
+    <script src="/static/js/tasks.js"></script>
+
+    <!-- 通用脚本：自动为有值的下拉表添加样式 -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const selects = document.querySelectorAll('select');
+            selects.forEach(select => {
+                // 初始化检查
+                if (select.value && select.value !== '') {
+                    select.classList.add('has-value');
+                }
+                // 监听变化
+                select.addEventListener('change', function() {
+                    if (this.value && this.value !== '') {
+                        this.classList.add('has-value');
+                    } else {
+                        this.classList.remove('has-value');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

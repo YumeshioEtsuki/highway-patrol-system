@@ -9,8 +9,8 @@ Celery 应用配置和初始化
 """
 
 from celery import Celery
-from utils.config import settings
-from utils.logger import setup_logger
+from settings import settings
+from core.logger import setup_logger
 
 logger = setup_logger(__name__)
 
@@ -20,10 +20,10 @@ celery_app = Celery(
     broker=settings.CELERY_BROKER_URL,
     backend=settings.CELERY_RESULT_BACKEND,
     include=[
-        "tasks.photo_tasks",      # 照片处理任务
-        "tasks.ai_tasks",         # AI 质量检查任务
-        "tasks.report_tasks",     # 报告导出任务
-        "tasks.maintenance_tasks" # 维护任务
+        "workers.photo.tasks",
+        "workers.ai.tasks",
+        "workers.report.tasks",
+        "workers.maintenance.tasks"
     ]
 )
 
@@ -58,10 +58,10 @@ celery_app.conf.update(
     
     # 任务路由（不同队列）
     task_routes={
-        "tasks.photo_tasks.*": {"queue": "photo"},
-        "tasks.ai_tasks.*": {"queue": "ai"},
-        "tasks.report_tasks.*": {"queue": "report"},
-        "tasks.maintenance_tasks.*": {"queue": "maintenance"},
+        "workers.photo.tasks.*": {"queue": "photo"},
+        "workers.ai.tasks.*": {"queue": "ai"},
+        "workers.report.tasks.*": {"queue": "report"},
+        "workers.maintenance.tasks.*": {"queue": "maintenance"},
     },
     
     # 任务优先级
@@ -71,30 +71,44 @@ celery_app.conf.update(
 
 # 定期任务配置（Celery Beat）
 celery_app.conf.beat_schedule = {
+    # 每分钟扫描订阅并生成报表
+    "send-scheduled-reports": {
+        "task": "workers.report.tasks.send_scheduled_reports",
+        "schedule": 60.0,
+        "options": {"queue": "report"}
+    },
+
+    # 每小时清理过期报表记录
+    "cleanup-expired-reports": {
+        "task": "workers.report.tasks.cleanup_expired_reports",
+        "schedule": 3600.0,
+        "options": {"queue": "report"}
+    },
+
     # 每天凌晨 3 点清理过期缓存
     "cleanup-expired-cache": {
-        "task": "tasks.maintenance_tasks.cleanup_expired_cache",
+        "task": "workers.maintenance.tasks.cleanup_expired_cache",
         "schedule": 3600.0 * 24,  # 24 小时
         "options": {"queue": "maintenance"}
     },
     
     # 每小时检查任务健康状态
     "health-check": {
-        "task": "tasks.maintenance_tasks.health_check",
+        "task": "workers.maintenance.tasks.health_check",
         "schedule": 3600.0,  # 1 小时
         "options": {"queue": "maintenance"}
     },
     
     # 每分钟收集一次性能指标
     "collect-performance-metrics": {
-        "task": "tasks.maintenance_tasks.collect_performance_metrics",
+        "task": "workers.maintenance.tasks.collect_performance_metrics",
         "schedule": 60.0,  # 1 分钟
         "options": {"queue": "maintenance"}
     },
     
     # 每 6 小时生成一次优化建议
     "generate-optimization-recommendations": {
-        "task": "tasks.maintenance_tasks.generate_optimization_recommendations",
+        "task": "workers.maintenance.tasks.generate_optimization_recommendations",
         "schedule": 3600.0 * 6,  # 6 小时
         "options": {"queue": "maintenance"}
     },

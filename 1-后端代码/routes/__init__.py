@@ -1,1 +1,1 @@
-# routes/__init__.py
+"""API 路由集合"""

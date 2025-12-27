@@ -12,7 +12,7 @@
   <style>
     :root{--bg:#0f172a;--panel:rgba(255,255,255,0.02);--stroke:rgba(255,255,255,0.08);--muted:#94a3b8;--primary:#5b8bff;--accent:#7af0d8;--radius:18px;--shadow:0 20px 60px rgba(0,0,0,0.35);} 
     *{box-sizing:border-box}
-    body{font-family:"Space Grotesk","Microsoft YaHei",sans-serif;margin:0;min-height:100vh;background:radial-gradient(120% 120% at 20% 20%, rgba(91,139,255,0.25), transparent 45%),radial-gradient(100% 140% at 80% 10%, rgba(122,240,216,0.18), transparent 50%),#050914;color:#f4f6fb;padding:26px 18px}
+    body{font-family:"Space Grotesk","Microsoft YaHei",sans-serif;margin:0;min-height:100vh;background:radial-gradient(120% 120% at 20% 20%, rgba(91,139,255,0.25), transparent 45%),radial-gradient(100% 140% at 80% 10%, rgba(122,240,216,0.18), transparent 50%),#050914;background-attachment:fixed;color:#f4f6fb;padding:26px 18px}
     .page{max-width:1200px;margin:0 auto;background:var(--panel);border:1px solid var(--stroke);border-radius:18px;box-shadow:var(--shadow);backdrop-filter:blur(10px);overflow:hidden}
     .hero{padding:22px 26px;background:linear-gradient(120deg, rgba(91,139,255,0.16), rgba(122,240,216,0.12));border-bottom:1px solid var(--stroke);display:flex;justify-content:space-between;align-items:center}
     .hero h1{margin:0;font-size:24px}
@@ -851,7 +851,7 @@
         title:{text:'问题类型分布', left:'left', textStyle:{color:'#cbd5e1', fontSize:14}},
         tooltip:{trigger:'item', formatter:'{b}: {c} ({d}%)'},
         series:[{type:'pie', radius:['40%','70%'], data:(stats.type_breakdown||[]).map(i=>({name:i.label, value:i.count})),
-          itemStyle:{borderColor:'#0f172a', borderWidth:2},
+          itemStyle:{borderColor:'transparent', borderWidth:0},
           label:{color:'#cbd5e1', fontSize:11}}]
       };
       charts.pie.setOption(pieOpt);

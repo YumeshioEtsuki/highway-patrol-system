@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>公路巡查系统 - 管理面板</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/css/common.css">
     <!-- 性能优化：预连接 CDN 减少 DNS 查询和握手延迟 -->
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
@@ -35,6 +36,7 @@ body {
     background: radial-gradient(120% 120% at 20% 20%, rgba(91,139,255,0.25), transparent 45%),
                 radial-gradient(100% 140% at 80% 10%, rgba(122,240,216,0.18), transparent 50%),
                 #050914;
+    background-attachment: fixed;
     color: #f4f6fb;
     padding: 32px 18px 80px;
 }
@@ -66,6 +68,61 @@ body {
     color: #9ff6e2;
     font-weight: 600;
     border: 1px solid rgba(122,240,216,0.3);
+}
+.taREDACTEDcenter-link {
+    padding: 10px 18px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, rgba(240,165,0,0.2), rgba(255,122,0,0.15));
+    color: #ffb84d;
+    font-weight: 600;
+    font-size: 15px;
+    text-decoration: none;
+    border: 1px solid rgba(240,165,0,0.3);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 4px 12px rgba(240,165,0,0.2);
+}
+.taREDACTEDcenter-link:hover {
+    transform: translateY(-2px);
+    background: linear-gradient(135deg, rgba(240,165,0,0.3), rgba(255,122,0,0.25));
+    border-color: rgba(240,165,0,0.5);
+    box-shadow: 0 8px 20px rgba(240,165,0,0.3);
+}
+
+/* 顶部导航变体配色：巡查/地图/监控 */
+.taREDACTEDcenter-link.link-patrol {
+    background: linear-gradient(135deg, rgba(91,139,255,0.24), rgba(91,139,255,0.18));
+    color: #a7c4ff;
+    border-color: rgba(91,139,255,0.35);
+    box-shadow: 0 4px 12px rgba(91,139,255,0.22);
+}
+.taREDACTEDcenter-link.link-patrol:hover {
+    background: linear-gradient(135deg, rgba(91,139,255,0.36), rgba(91,139,255,0.28));
+    border-color: rgba(91,139,255,0.55);
+}
+
+.taREDACTEDcenter-link.link-map {
+    background: linear-gradient(135deg, rgba(122,240,216,0.24), rgba(122,240,216,0.18));
+    color: #9ff6e2;
+    border-color: rgba(122,240,216,0.35);
+    box-shadow: 0 4px 12px rgba(122,240,216,0.22);
+}
+.taREDACTEDcenter-link.link-map:hover {
+    background: linear-gradient(135deg, rgba(122,240,216,0.36), rgba(122,240,216,0.28));
+    border-color: rgba(122,240,216,0.55);
+}
+
+.taREDACTEDcenter-link.link-monitor {
+    background: linear-gradient(135deg, rgba(139,92,246,0.24), rgba(139,92,246,0.18));
+    color: #cdb8ff;
+    border-color: rgba(139,92,246,0.35);
+    box-shadow: 0 4px 12px rgba(139,92,246,0.22);
+}
+.taREDACTEDcenter-link.link-monitor:hover {
+    background: linear-gradient(135deg, rgba(139,92,246,0.36), rgba(139,92,246,0.28));
+    border-color: rgba(139,92,246,0.55);
 }
 
 .section {
@@ -452,19 +509,51 @@ tbody tr:hover { background: rgba(91,139,255,0.08); }
     border: 1px solid var(--stroke);
     background: rgba(255,255,255,0.03);
     cursor: pointer;
-    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    transition: all 0.3s ease;
+    vertical-align: top;
+}
+.live-photo-card.collapsed {
+    width: auto;
+    padding: 10px 16px;
+}
+.live-photo-card:not(.collapsed) {
+    width: 166px;
 }
 .live-photo-card:hover {
-    transform: translateY(-1px) scale(1.01);
-    border-color: rgba(122,240,216,0.4);
+    transform: translateY(-1px) scale(1.02);
+    border-color: rgba(122,240,216,0.6);
     box-shadow: 0 10px 30px rgba(0,0,0,0.25);
 }
-.live-photo-card img {
+.live-photo-card .photo-id-label {
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 500;
+    user-select: none;
+    display: inline-block;
+    padding: 4px 0;
+}
+.live-photo-card.collapsed .photo-id-label::after {
+    content: ' ▸';
+    color: rgba(122,240,216,0.8);
+}
+.live-photo-card:not(.collapsed) .photo-id-label {
+    display: block;
+    margin-bottom: 8px;
+}
+.live-photo-card:not(.collapsed) .photo-id-label::after {
+    content: ' ▾';
+    color: rgba(122,240,216,0.8);
+}
+.live-photo-card .photo-thumbnail {
     max-width: 150px;
     border-radius: 8px;
     display: block;
+    transition: opacity 0.3s ease;
+    cursor: zoom-in;
 }
-.live-photo-card small { color: var(--muted); }
+.live-photo-card .photo-thumbnail:hover {
+    opacity: 0.85;
+}
 
 /* 回到顶部按钮 */
 .back-to-top {
@@ -567,6 +656,7 @@ tbody tr:hover { background: rgba(91,139,255,0.08); }
 
 @media (max-width: 768px) {
     .hero { flex-direction: column; align-items: flex-start; }
+    .hero > div:last-child { width: 100%; }
     .toolbar { flex-direction: column; align-items: stretch; }
     .filter-row {
         grid-template-columns: auto 1fr;
@@ -576,6 +666,14 @@ tbody tr:hover { background: rgba(91,139,255,0.08); }
     .filter-row .pill { grid-column: 1; }
     .filter-row > * { grid-column: 2; }
     button { width: 100%; }
+    
+    /* 修复移动端导航链接换行与间距 */
+    .taREDACTEDcenter-link {
+        font-size: 13px;
+        padding: 8px 12px;
+        min-width: 90px;
+        text-align: center;
+    }
 }
 
 @media (max-width: 480px) {
@@ -628,6 +726,111 @@ tbody tr:hover { background: rgba(91,139,255,0.08); }
 .mode-content.active {
     display: block;
 }
+
+/* 导航链接活动状态 */
+.nav-link {
+    position: relative;
+    transition: all 0.3s ease;
+}
+.nav-link .nav-icon {
+    display: inline-block;
+    transition: transform 0.3s ease;
+}
+.nav-link:hover .nav-icon {
+    transform: scale(1.15);
+}
+.nav-link.active {
+    background: linear-gradient(135deg, rgba(91,139,255,0.35), rgba(91,139,255,0.2)) !important;
+    border-color: rgba(91,139,255,0.5) !important;
+    box-shadow: 0 6px 24px rgba(91,139,255,0.3), inset 0 1px 0 rgba(255,255,255,0.15);
+}
+
+/* 新导航按钮样式 */
+.nav-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.25s ease;
+    border: 1px solid rgba(255,255,255,0.08);
+    position: relative;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.nav-btn .nav-icon {
+    font-size: 16px;
+    transition: transform 0.3s ease;
+}
+
+.nav-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    border-color: rgba(255,255,255,0.15);
+}
+
+.nav-btn:hover .nav-icon {
+    transform: scale(1.2) rotate(5deg);
+}
+
+/* 渐变按钮 - 与背景自然融合 */
+.nav-btn-gradient {
+    background: linear-gradient(135deg, var(--gradient-start, rgba(91,139,255,0.25)), var(--gradient-end, rgba(91,139,255,0.12)));
+    color: rgba(255,255,255,0.9);
+    backdrop-filter: blur(8px);
+}
+
+.nav-btn-gradient:hover {
+    background: linear-gradient(135deg, 
+        color-mix(in srgb, var(--gradient-start, rgba(91,139,255,0.25)) 120%, white), 
+        color-mix(in srgb, var(--gradient-end, rgba(91,139,255,0.12)) 120%, white));
+    box-shadow: 0 8px 24px rgba(91,139,255,0.3);
+}
+
+/* API文档 - 红色 */
+.nav-btn-docs {
+    background: linear-gradient(135deg, rgba(239,68,68,0.25), rgba(220,38,38,0.15));
+    color: #fca5a5;
+    border-color: rgba(239,68,68,0.3);
+}
+
+.nav-btn-docs:hover {
+    background: linear-gradient(135deg, rgba(239,68,68,0.35), rgba(220,38,38,0.25));
+}
+
+/* 活动状态增强 - 明显的选中效果 */
+.nav-btn.active,
+.nav-btn-gradient.active {
+    background: linear-gradient(135deg, 
+        color-mix(in srgb, var(--gradient-start, rgba(91,139,255,0.45)) 150%, white), 
+        color-mix(in srgb, var(--gradient-end, rgba(91,139,255,0.25)) 150%, white)) !important;
+    box-shadow: 0 0 0 3px rgba(91,139,255,0.3), 
+                inset 0 1px 0 rgba(255,255,255,0.25),
+                0 8px 24px rgba(91,139,255,0.4) !important;
+    border-color: rgba(91,139,255,0.8) !important;
+    transform: translateY(-1px);
+}
+
+/* 流动动画 */
+.nav-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.nav-btn:hover::before {
+    left: 100%;
+}
+
 /* 测试数据标签样式 */
 .badge-test {
     display: inline-block;
@@ -645,10 +848,32 @@ tbody tr:hover { background: rgba(91,139,255,0.08); }
         <div class="page">
                 <div class="hero">
                         <div>
-                                <h1 class="hero-title">🛣️ 公路巡查系统 · 后台</h1>
-                                <p class="hero-sub">快速查看数据库状态、巡查数据与处理进度。</p>
+                                <h1 class="hero-title">🛣️ 公路巡查系统 · 管理控制台</h1>
+                                <p class="hero-sub">全方位监控巡查数据、性能指标及任务调度。</p>
                         </div>
-                        <div class="hero-badge">Admin Console</div>
+                        <div class="nav-links-container" style="display: flex; align-items: center; gap: 8px; flex-wrap: nowrap;">
+                                <a href="/tasks.html" class="nav-btn nav-btn-gradient nav-link" data-page="tasks" title="异步任务管理（包含报表导出）" style="--gradient-start: rgba(59, 130, 246, 0.45); --gradient-end: rgba(37, 99, 235, 0.25);">
+                                        <span class="nav-icon">⚡</span> <span>任务管理</span>
+                                </a>
+                                <a href="/monitor" class="nav-btn nav-btn-gradient nav-link" data-page="monitor" title="数据库性能监控" style="--gradient-start: rgba(14, 165, 233, 0.45); --gradient-end: rgba(6, 182, 212, 0.25);">
+                                        <span class="nav-icon">📈</span> <span>性能监控</span>
+                                </a>
+                                <a href="/patrol.html" class="nav-btn nav-btn-gradient nav-link" data-page="patrol" title="巡查工作台" style="--gradient-start: rgba(251, 146, 60, 0.45); --gradient-end: rgba(249, 115, 22, 0.25);">
+                                        <span class="nav-icon">👷</span> <span>巡查工台</span>
+                                </a>
+                                <a href="/map.html" class="nav-btn nav-btn-gradient nav-link" data-page="map" title="地图分析与可视化" style="--gradient-start: rgba(16, 185, 129, 0.45); --gradient-end: rgba(5, 150, 105, 0.25);">
+                                        <span class="nav-icon">🌍</span> <span>地图分析</span>
+                                </a>
+                                <!-- 仅超级管理员可见 API 文档 -->
+                                {% if request.state.user and request.state.user.get('role') == 'superuser' %}
+                                <a href="/docs" target="_blank" rel="noopener noreferrer" 
+                                   class="nav-btn nav-btn-docs" 
+                                   title="FastAPI 交互式 API 文档（仅超级管理员）">
+                                        <span class="nav-icon">📘</span> <span>API 文档</span>
+                                </a>
+                                {% endif %}
+                                <div class="hero-badge" style="margin-left: 8px;">Admin Console</div>
+                        </div>
                 </div>
 
                 <!-- 双模式标签页 -->
@@ -720,39 +945,7 @@ tbody tr:hover { background: rgba(91,139,255,0.08); }
                         </div>
                     </div>
                     
-                    <!-- 快捷导航卡片 -->
-                    <div style="margin-top:32px;">
-                        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;">
-                            <!-- 巡查工作台卡片 -->
-                            <div onclick="window.location.href='/patrol.html'" style="cursor:pointer;padding:20px;border-radius:14px;background:linear-gradient(135deg,rgba(91,139,255,0.12),rgba(91,139,255,0.06));border:1px solid rgba(91,139,255,0.25);transition:all 0.3s ease;display:flex;flex-direction:column;gap:10px;">
-                                <div style="font-size:32px;">👷‍♂️</div>
-                                <div style="font-weight:600;font-size:16px;color:#e2e8f0;">进入巡查工作台</div>
-                                <div style="font-size:13px;color:var(--muted);line-height:1.5;">上报新的道路问题、上传检查照片、查看记录状态</div>
-                            </div>
-                            <!-- 地图分析卡片 -->
-                            <div onclick="window.location.href='/map.html'" style="cursor:pointer;padding:20px;border-radius:14px;background:linear-gradient(135deg,rgba(122,240,216,0.12),rgba(122,240,216,0.06));border:1px solid rgba(122,240,216,0.25);transition:all 0.3s ease;display:flex;flex-direction:column;gap:10px;">
-                                <div style="font-size:32px;">🌍</div>
-                                <div style="font-weight:600;font-size:16px;color:#e2e8f0;">世界地图分析</div>
-                                <div style="font-size:13px;color:var(--muted);line-height:1.5;">全球数据可视化、区域统计对比、热力分布分析</div>
-                            </div>
-                        </div>
-                        <style>
-                            @media (hover:hover) {
-                                div[onclick="window.location.href='/patrol.html'"]:hover {
-                                    background:linear-gradient(135deg,rgba(91,139,255,0.18),rgba(91,139,255,0.1));
-                                    border-color:rgba(91,139,255,0.4);
-                                    transform:translateY(-2px);
-                                    box-shadow:0 12px 32px rgba(91,139,255,0.2);
-                                }
-                                div[onclick="window.location.href='/map.html'"]:hover {
-                                    background:linear-gradient(135deg,rgba(122,240,216,0.18),rgba(122,240,216,0.1));
-                                    border-color:rgba(122,240,216,0.4);
-                                    transform:translateY(-2px);
-                                    box-shadow:0 12px 32px rgba(122,240,216,0.2);
-                                }
-                            }
-                        </style>
-                    </div>
+                    <!-- 快捷导航卡片已移除，统一为顶部标签按钮 -->
                     </section>
                 </div>
 
@@ -815,6 +1008,11 @@ tbody tr:hover { background: rgba(91,139,255,0.08); }
                             <button onclick="resetAuditFilters()" class="btn-reinit" title="重置所有筛选条件">↺ 重置</button>
                             <button onclick="exportAuditLog()" class="btn-status" title="导出为CSV文件">📥 导出</button>
                         </div>
+                    </div>
+
+                    <!-- 实时进度条（生成数据任务时显示） -->
+                    <div style="margin: 14px 0; padding:16px; background:rgba(91,139,255,0.05); border-radius:8px; border-left:3px solid #5b8bff; display:none;" id="taskProgressBarContainer">
+                        <div id="taskProgressBar"></div>
                     </div>
 
                     <div class="card" style="margin-top:14px; overflow-x:auto;">
@@ -1138,6 +1336,30 @@ tbody tr:hover { background: rgba(91,139,255,0.08); }
         applyPhotoScale();
     }, { passive: false });
 
+    // ========================
+    // 防抖：降低F12轮询频率
+    // ========================
+    let lastStatsRefresh = 0;  // 最后一次统计刷新时间
+    let lastRecordsRefresh = 0;  // 最后一次记录刷新时间
+    const statsRefreshInterval = 2000;  // 统计：最少间隔2秒才刷新
+    const recordsRefreshInterval = 1000;  // 记录：最少间隔1秒才刷新
+    
+    function debouncedLoadStats() {
+        const now = Date.now();
+        if (now - lastStatsRefresh >= statsRefreshInterval) {
+            lastStatsRefresh = now;
+            loadStats();
+        }
+    }
+    
+    function debouncedLoadRecords() {
+        const now = Date.now();
+        if (now - lastRecordsRefresh >= recordsRefreshInterval) {
+            lastRecordsRefresh = now;
+            loadRecords();
+        }
+    }
+
     function startPhotoStream() {
         if (photoSource) photoSource.close();
         const token = getAccessToken();
@@ -1150,19 +1372,56 @@ tbody tr:hover { background: rgba(91,139,255,0.08); }
                 const { record_id, photo_url } = payload.data || {};
                 if (!record_id || !photo_url) return;
                 const container = document.getElementById("live-photos-body");
+                
+                // 限制最多显示20张照片
+                const maxPhotos = 20;
+                const existingPhotos = container.querySelectorAll('.live-photo-card');
+                if (existingPhotos.length >= maxPhotos) {
+                    // 移除最旧的照片（第一张）
+                    container.removeChild(existingPhotos[0]);
+                }
+                
                 const card = document.createElement("div");
-                card.className = "live-photo-card";
+                card.className = "live-photo-card collapsed";
+                card.setAttribute('data-photo-url', photo_url);
                 card.innerHTML = `
-                    <small>记录 #${record_id}</small><br>
-                    <img src="${photo_url}" alt="记录 #${record_id} 的照片">
+                    <div class="photo-id-label">记录 #${record_id}</div>
+                    <img class="photo-thumbnail" style="display:none" src="${photo_url}" alt="记录 #${record_id} 的照片">
                 `;
-                card.addEventListener('click', () => openPhotoModal(photo_url, `记录 #${record_id}`));
+                
+                // 点击ID标签展开/折叠图片（阻止冒泡防止自动收拢）
+                const label = card.querySelector('.photo-id-label');
+                if (label) {
+                    label.addEventListener('click', (e) => {
+                        e.stopPropagation();  // 阻止冒泡
+                        const isCollapsed = card.classList.toggle('collapsed');
+                        const img = card.querySelector('.photo-thumbnail');
+                        if (isCollapsed) {
+                            img.style.display = 'none';
+                        } else {
+                            img.style.display = 'block';
+                        }
+                    });
+                }
+                
+                // 图片单击打开大图（展开状态下可点击，不需要双击）
+                const img = card.querySelector('.photo-thumbnail');
+                if (img) {
+                    img.addEventListener('click', (e) => {
+                        e.stopPropagation();  // 阻止冒泡，防止触发卡片的toggle
+                        // 只有当图片展开时才能点击放大
+                        if (!card.classList.contains('collapsed')) {
+                            openPhotoModal(photo_url, `记录 #${record_id}`);
+                        }
+                    });
+                }
+                
                 // 新照片插入到容器末尾（标签在最前面）
                 container.appendChild(card);
                 
-                // 实时刷新记录列表和统计图表
-                loadRecords();
-                loadStats();
+                // 实时刷新记录列表和统计图表（使用防抖降低频率）
+                debouncedLoadRecords();
+                debouncedLoadStats();
             }
         };
         photoSource.onerror = (event) => {
@@ -1185,6 +1444,14 @@ tbody tr:hover { background: rgba(91,139,255,0.08); }
                     startPhotoStream();
                 }, 3000);
             }
+            // 尝试延迟重连，避免持续报错
+            setTimeout(() => {
+                try {
+                    startPhotoStream();
+                } catch (err) {
+                    console.warn('[照片流重连失败]', err);
+                }
+            }, 2000);
         };
         window.addEventListener('beforeunload', () => photoSource && photoSource.close());
     }
@@ -1240,8 +1507,15 @@ tbody tr:hover { background: rgba(91,139,255,0.08); }
             const data = await res.json();
             if (res.ok && data.success) {
                 alert(`✅ 已删除 ${data.deleted_count} 条测试数据`);
+                // 清除数据后立即重置数据类型筛选为全部并刷新
+                currentDataType = '';
+                const dataTypeFilter = document.getElementById('dataTypeFilter');
+                if (dataTypeFilter) dataTypeFilter.value = '';
+                CURRENT_PAGE = 1;
                 await loadRecords();
                 await loadStats();
+                // 实时刷新审计日志
+                if (typeof loadAudit === 'function') loadAudit();
             } else {
                 alert('⚠️ 操作失败：' + (data.detail || data.error || '未知错误'));
             }
@@ -1291,8 +1565,10 @@ tbody tr:hover { background: rgba(91,139,255,0.08); }
         setButtonsDisabled(true);
 
         const panel = document.getElementById('logPanel');
+        const progressContainer = document.getElementById('taskProgressBarContainer');
         panel.innerHTML = '<div class="log-line">⏳ 任务启动中...</div>';
         panel.style.display = 'block';
+        if (progressContainer) progressContainer.style.display = 'block';  // 显示进度条容器
 
         // 创建新的 EventSource
         // 为 SSE 加上 token 查询参数
@@ -1305,10 +1581,31 @@ tbody tr:hover { background: rgba(91,139,255,0.08); }
         eventSource = new EventSource(fullUrl);
 
         let sseStartEpoch = null;
+        let lastAuditRefresh = 0;  // 用于限流审计日志刷新
+        let currentProgress = 0;  // 当前进度百分比
+        let currentProgressText = '';  // 当前进度文本
+        
         function formatElapsed(ms) {
             if (ms < 1000) return `${ms}ms`;
             const s = (ms / 1000);
             return `${s.toFixed(2)}s`;
+        }
+
+        // 实时进度条显示
+        function updateProgressBar(percentage, text) {
+            currentProgress = percentage;
+            currentProgressText = text;
+            const progressBar = document.getElementById('taskProgressBar');
+            if (!progressBar) return;
+            
+            progressBar.innerHTML = `
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div style="flex:1; height:8px; background:#1a2332; border-radius:4px; overflow:hidden;">
+                        <div style="height:100%; background:linear-gradient(90deg, #5b8bff, #7af0d8); width:${percentage}%; transition:width 0.3s ease;"></div>
+                    </div>
+                    <span style="color:#7af0d8; font-weight:600; min-width:80px;">${percentage}% ${text}</span>
+                </div>
+            `;
         }
 
         eventSource.onmessage = function(e) {
@@ -1327,7 +1624,25 @@ tbody tr:hover { background: rgba(91,139,255,0.08); }
             const curTs = msg.ts_epoch_ms || Date.now();
             const elapsed = Math.max(0, curTs - sseStartEpoch);
 
+            // 检测进度信息（格式：📊 进度 30% (30/100)）
+            const progressMatch = msg.data.match(/进度\s+(\d+)%\s*\((\d+)\/(\d+)\)/);
+            if (progressMatch) {
+                const percentage = parseInt(progressMatch[1], 10);
+                const current = parseInt(progressMatch[2], 10);
+                const total = parseInt(progressMatch[3], 10);
+                updateProgressBar(percentage, `${current}/${total}`);
+            }
+
             appendLog(`[${msg.time} +${formatElapsed(elapsed)}] ${msg.data}`, cls);
+
+            // 每秒左右刷新一次审计日志，不必每条消息都刷新
+            const now = Date.now();
+            if (now - lastAuditRefresh > 1000) {
+                if (typeof loadAudit === 'function') {
+                    loadAudit().catch(err => console.warn('[实时审计刷新] 失败:', err));
+                }
+                lastAuditRefresh = now;
+            }
 
             // 标记任务已完成
             if (msg.event === 'complete') {
@@ -1339,11 +1654,11 @@ tbody tr:hover { background: rgba(91,139,255,0.08); }
                     }
                     appendLog('[系统] 任务完成，连接已关闭', 'log-info');
                     setButtonsDisabled(false);
-                    // 重置完成后：重置实时照片标签、恢复照片流，并刷新数据
+                    // 重置完成后：恢复照片流，刷新数据
                     try {
-                        clearLivePhotos();
+                        // 重要：不要clearLivePhotos，直接重启照片流即可
                         startPhotoStream();
-                        // 尝试刷新数据，如果失败则提示可能需要刷新页面
+                        // 尝试刷新数据、统计，如果失败则提示可能需要刷新页面
                         loadRecords().catch(err => {
                             console.error('[刷新记录失败]', err);
                             appendLog('[系统] ⚠️ 刷新数据失败，建议刷新页面重新登录', 'log-warn');
@@ -1351,7 +1666,14 @@ tbody tr:hover { background: rgba(91,139,255,0.08); }
                         loadStats().catch(err => {
                             console.error('[刷新统计失败]', err);
                         });
-                        appendLog('[系统] 正在恢复实时照片流...', 'log-success');
+                        // 最后刷新一次审计日志确保最新数据，重置分页到第1页
+                        if (typeof loadAudit === 'function') {
+                            AUDIT_CURRENT_PAGE = 1;
+                            loadAudit().catch(err => {
+                                console.error('[最终审计刷新失败]', err);
+                            });
+                        }
+                        appendLog('[系统] 照片流已恢复', 'log-success');
                     } catch (e) {
                         console.error('[重置后刷新异常]', e);
                                             appendLog('[系统] ⚠️ 部分功能恢复失败，建议刷新页面', 'log-warn');
@@ -1459,13 +1781,31 @@ tbody tr:hover { background: rgba(91,139,255,0.08); }
         const start = document.getElementById('startDate').value;
         const end = document.getElementById('endDate').value;
         const keyword = document.getElementById('keyword').value.trim();
-
+        
+        console.log('🔨 [buildQueryParams] 原始值:', {status, severity, start, end, keyword, currentDataType});
+        
         if (status) params.append('status', status);
         if (severity) params.append('severity', severity);
-        if (start) params.append('start_date', start);
-        if (end) params.append('end_date', end);
+        // 如果选择了“全部时间”，则不传 start_date/end_date
+        const allTimeSelected = document.getElementById('quickFilter')?.value === 'all';
+        if (!allTimeSelected) {
+            if (start) params.append('start_date', start);
+            if (end) params.append('end_date', end);
+        }
         if (keyword) params.append('keyword', keyword);
-        if (currentDataType) params.append('data_type', currentDataType);
+        // 只有当明确选择了'real'或'test'时才发送data_type参数，选择"全部数据"("")不发送
+        if (currentDataType === 'real' || currentDataType === 'test') {
+            params.append('data_type', currentDataType);
+            console.log('📤 [buildQueryParams] 发送data_type:', currentDataType);
+        } else {
+            console.log('📭 [buildQueryParams] 不发送data_type，currentDataType:', currentDataType);
+        }
+        
+        // 当日期都为空时（即选择"全部时间"），添加时间戳以绕过缓存
+        if (!start && !end) {
+            params.append('_t', Date.now().toString());
+            console.log('⏰ 绕过缓存：添加时间戳参数');
+        }
         return params;
     }
 
@@ -1542,7 +1882,7 @@ tbody tr:hover { background: rgba(91,139,255,0.08); }
                                 radius: ['40%','70%'],
                                 data: seriesData,
                                 itemStyle: { borderColor: '#0f172a', borderWidth: 2 },
-                                label: { color: '#cbd5e1', fontSize: 11 }
+                                label: { color: '#cbd5e1', fontSize: 14 }
                             }]
                         };
                         console.log('⚙️ [chart-type] 配置选项:', '问题类型分布');
@@ -1599,6 +1939,11 @@ tbody tr:hover { background: rgba(91,139,255,0.08); }
     }
 
     async function loadStats() {
+        // 任务进行中时暂停统计轮询，避免占用网络和阻塞按钮
+        if (isOperating) {
+            console.log('⏸️ [loadStats] 任务进行中，暂不刷新统计');
+            return;
+        }
         console.log('📈 [loadStats] 开始加载统计数据，ECharts:', !!window.echarts);
         const token = getAccessToken();
         if (!token) {
@@ -1675,6 +2020,11 @@ tbody tr:hover { background: rgba(91,139,255,0.08); }
         params.append('page', String(CURRENT_PAGE));
         params.append('page_size', String(PAGE_SIZE));
         const url = `/api/admin/patrol/list?${params.toString()}`;
+        
+        // 🔍 调试日志
+        console.log('🔍 [loadRecords] currentDataType:', currentDataType);
+        console.log('🔍 [loadRecords] 构建的参数:', Array.from(params.entries()));
+        console.log('🔍 [loadRecords] 完整URL:', url);
 
         try {
             const res = await fetchWithTimeout(url, {
@@ -1694,12 +2044,31 @@ tbody tr:hover { background: rgba(91,139,255,0.08); }
             }
 
             const payload = await res.json();
+            console.log('📦 收到响应:', { 
+                isArray: Array.isArray(payload), 
+                hasRecords: !!payload.records,
+                recordsLength: payload.records?.length,
+                total: payload.total,
+                page: payload.page,
+                page_size: payload.page_size,
+                actualRecordsType: typeof payload.records
+            });
+            
             const isArray = Array.isArray(payload);
             const records = isArray ? payload : (payload.records || []);
             TOTAL_RECORDS = isArray ? records.length : (payload.total ?? records.length ?? 0);
+            
+            console.log('📊 解析后:', {
+                recordsCount: records.length,
+                totalRecords: TOTAL_RECORDS,
+                recordsIsArray: Array.isArray(records),
+                firstRecordId: records[0]?.record_id
+            });
+            
             if (tbody) tbody.innerHTML = '';
 
             if (!records || records.length === 0) {
+                console.warn('⚠️ 记录数组为空');
                 if (tbody) tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:32px; color:var(--muted);">
                     <div style="font-size:48px; margin-bottom:8px;">📋</div>
                     <div>暂无符合条件的记录</div>
@@ -1814,28 +2183,39 @@ tbody tr:hover { background: rgba(91,139,255,0.08); }
         const sel = document.getElementById('recordQuick');
         const start = document.getElementById('startDate');
         const end = document.getElementById('endDate');
+        const dataTypeFilter = document.getElementById('dataTypeFilter');
         if (!sel || !start || !end) return;
         const val = sel.value;
+        console.log('🔍 applyRecordQuick 触发，值：', val);
         const today = new Date();
         if (val === '7') {
             const startDate = new Date(today.getTime() - 7*24*60*60*1000);
             start.value = startDate.toISOString().slice(0,10);
             end.value = today.toISOString().slice(0,10);
+            console.log('设置近7天：', start.value, '到', end.value);
         } else if (val === '30') {
             const startDate = new Date(today.getTime() - 30*24*60*60*1000);
             start.value = startDate.toISOString().slice(0,10);
             end.value = today.toISOString().slice(0,10);
+            console.log('设置近30天：', start.value, '到', end.value);
         } else if (val === 'month') {
             const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
             start.value = firstDay.toISOString().slice(0,10);
             end.value = today.toISOString().slice(0,10);
+            console.log('设置本月：', start.value, '到', end.value);
         } else if (val === 'all') {
             start.value = '';
             end.value = '';
+            // 选择全部时间时也清空数据类型过滤，防止之前选择 real/test 导致无数据
+            currentDataType = '';
+            if (dataTypeFilter) dataTypeFilter.value = '';
+            console.log('✅ 设置全部时间（清空日期和数据类型）');
         } else {
+            console.log('❌ 无效的快捷选项值：', val);
             return;
         }
         CURRENT_PAGE = 1;
+        console.log('📊 调用 loadRecords()，页码重置为 1');
         loadRecords();
     }
 
@@ -2095,6 +2475,8 @@ tbody tr:hover { background: rgba(91,139,255,0.08); }
             if (res.ok && data.success) {
                 alert('✅ 已标记为"处理中"');
                 await loadRecords();
+                // 实时刷新审计日志
+                if (typeof loadAudit === 'function') loadAudit();
             } else {
                 alert('⚠️ 操作失败：' + (data.detail || data.error || '未知错误'));
             }
@@ -2146,6 +2528,8 @@ tbody tr:hover { background: rgba(91,139,255,0.08); }
             if (res.ok && data.success) {
                 alert('✅ 已标记为"已修复"');
                 await loadRecords();
+                // 实时刷新审计日志
+                if (typeof loadAudit === 'function') loadAudit();
             } else {
                 alert('⚠️ 操作失败：' + (data.detail || data.error || '未知错误'));
             }
@@ -2244,17 +2628,13 @@ tbody tr:hover { background: rgba(91,139,255,0.08); }
             if (rq) rq.value = '';
             loadRecords();
             loadStats();
-            // 默认设置近7天的审计时间范围（若为空）
+            // 默认清空审计时间筛选，避免“近7天”看不到最新记录
             const s = document.getElementById('auditStart');
             const e = document.getElementById('auditEnd');
-            if (s && e && !s.value && !e.value) {
-                const today = new Date();
-                const endStr = today.toISOString().slice(0,10);
-                const startDate = new Date(today.getTime() - 7*24*60*60*1000);
-                const startStr = startDate.toISOString().slice(0,10);
-                s.value = startStr;
-                e.value = endStr;
-            }
+            const aq = document.getElementById('auditQuick');
+            if (s) s.value = '';
+            if (e) e.value = '';
+            if (aq) aq.value = '';
             loadAudit();
         }, 50);
 
@@ -2282,26 +2662,36 @@ tbody tr:hover { background: rgba(91,139,255,0.08); }
     async function generateFake(count = 50, includePhotos = false) {
         const token = getAccessToken();
         if (!token) return;
-        try {
-            const url = `/api/admin/generate?count=${encodeURIComponent(count)}&include_photos=${includePhotos}`;
-            const res = await fetchWithTimeout(url, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` }
-            }, 60000);
-            const data = await res.json();
-            if (!res.ok || !data.success) {
-                alert('❌ 生成失败：' + (data.error || res.status));
-                return;
-            }
-            const photoMsg = includePhotos ? '，含照片' : '';
-            alert(`✅ 已生成 ${data.inserted} 条测试数据${photoMsg}`);
+        
+        // 使用SSE流式API实时显示进度
+        const useStream = count >= 50 || includePhotos;  // 大批量或带图片时使用流式
+        
+        if (useStream) {
+            // 流式生成（实时进度）
+            // 保持实时照片流，不清空，避免影响“实时新照片”展示
             
-            // 关键修复：生成数据后重置UI状态和缓存
-            // 1. 重置数据类型过滤为"全部"
+            // 立即调用loadAudit，确保"开始生成"记录在审计面板显示
+            if (typeof loadAudit === 'function') {
+                // 重置审计筛选为全部时间，防止默认近7天过滤掉当天数据
+                const as = document.getElementById('auditStart');
+                const ae = document.getElementById('auditEnd');
+                const aq = document.getElementById('auditQuick');
+                if (as) as.value = '';
+                if (ae) ae.value = '';
+                if (aq) aq.value = '';
+                // 重置分页到第1页，确保看到最新操作
+                AUDIT_CURRENT_PAGE = 1;
+                loadAudit().catch(err => console.warn('[GenerateFake] 初始审计加载失败:', err));
+            }
+            
+            const url = `/api/admin/generate/stream?count=${encodeURIComponent(count)}&include_photos=${includePhotos}`;
+            await runTask(url);  // 使用现有的SSE处理函数
+            
+            // 生成完成后重置UI状态
             currentDataType = '';
             const dataTypeFilter = document.getElementById('dataTypeFilter');
             if (dataTypeFilter) dataTypeFilter.value = '';
-            // 1.1 重置日期范围为全部，避免只看到近7天
+            
             const start = document.getElementById('startDate');
             const end = document.getElementById('endDate');
             const recordQuick = document.getElementById('recordQuick');
@@ -2310,15 +2700,52 @@ tbody tr:hover { background: rgba(91,139,255,0.08); }
             if (recordQuick) recordQuick.value = '';
             CURRENT_PAGE = 1;
             
-            // 2. 重新加载数据和图表（自动跳过缓存）
             await loadRecords();
             await loadStats();
+            // 滚动到日志面板而不是记录表
+            const logPanel = document.getElementById('logPanel');
+            if (logPanel) logPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
             
-            // 3. 将记录表滚动到顶部，方便查看最新生成的数据
-            const table = document.getElementById('recordTable');
-            if (table) table.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        } catch (e) {
-            alert('❌ 网络错误：' + e.message);
+        } else {
+            // 小批量使用同步API（快速响应）
+            try {
+                const url = `/api/admin/generate?count=${encodeURIComponent(count)}&include_photos=${includePhotos}`;
+                const res = await fetchWithTimeout(url, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                }, 60000);
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    alert('❌ 生成失败：' + (data.error || res.status));
+                    return;
+                }
+                const photoMsg = includePhotos ? '，含照片' : '';
+                alert(`✅ 已生成 ${data.inserted} 条测试数据${photoMsg}`);
+                
+                // 重置UI状态
+                currentDataType = '';
+                const dataTypeFilter = document.getElementById('dataTypeFilter');
+                if (dataTypeFilter) dataTypeFilter.value = '';
+                
+                const start = document.getElementById('startDate');
+                const end = document.getElementById('endDate');
+                const recordQuick = document.getElementById('recordQuick');
+                if (start) start.value = '';
+                if (end) end.value = '';
+                if (recordQuick) recordQuick.value = '';
+                CURRENT_PAGE = 1;
+                
+                await loadRecords();
+                await loadStats();
+                
+                const table = document.getElementById('recordTable');
+                if (table) table.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                
+                // 刷新审计日志
+                if (typeof loadAudit === 'function') loadAudit();
+            } catch (e) {
+                alert('❌ 网络错误：' + e.message);
+            }
         }
     }
 
@@ -2357,6 +2784,18 @@ tbody tr:hover { background: rgba(91,139,255,0.08); }
             console.log('[SafeReset] UI刷新完成');
         }, 2000);  // 等待2秒确保重置完全完成
     }
+
+    // 导航链接活动状态检测
+    (function highlightCurrentNav() {
+        const currentPath = window.location.pathname;
+        const navLinks = document.querySelectorAll('.nav-link');
+        navLinks.forEach(link => {
+            const page = link.getAttribute('data-page');
+            if (currentPath.includes(page) || (currentPath === '/admin.html' && page === 'admin')) {
+                link.classList.add('active');
+            }
+        });
+    })();
 </script>
 
 <!-- AI 助手浮窗 -->

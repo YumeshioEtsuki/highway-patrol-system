@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token if csrf_token is defined else '' }}">
+    <title>报表中心 - 公路巡查系统</title>
+    <link rel="stylesheet" href="/static/css/common.css">
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card: #0b1223;
+            --muted: #94a3b8;
+            --primary: #5b8bff;
+            --accent: #7af0d8;
+            --stroke: rgba(255,255,255,0.08);
+            --radius: 14px;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: "Space Grotesk", "Microsoft YaHei", sans-serif;
+            margin: 0;
+            min-height: 100vh;
+            background: radial-gradient(120% 120% at 20% 20%, rgba(91,139,255,0.25), transparent 45%),
+                        radial-gradient(100% 140% at 80% 10%, rgba(122,240,216,0.18), transparent 50%),
+                        #050914;
+            background-attachment: fixed;
+            color: #f4f6fb;
+            padding: 32px 18px 80px;
+        }
+        .container { max-width: 1100px; margin: 0 auto; }
+        .page-header {
+            background: linear-gradient(120deg, rgba(91,139,255,0.18), rgba(122,240,216,0.14));
+            padding: 24px 28px; display: flex; justify-content: space-between; align-items: center;
+            border: 1px solid var(--stroke); border-radius: 18px; margin-bottom: 28px; backdrop-filter: blur(10px);
+        }
+        .user-badge { padding: 8px 14px; border-radius: 999px; background: rgba(122,240,216,0.16); color: #9ff6e2; font-weight: 600; font-size: 14px; border: 1px solid rgba(122,240,216,0.3); }
+        .main { display: grid; grid-template-columns: 380px 1fr; gap: 20px; }
+        .panel { background: linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01)); border: 1px solid var(--stroke); border-radius: 16px; padding: 24px; }
+        .panel h2 { margin: 0 0 16px 0; font-size: 18px; }
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; margin-bottom: 8px; color: #cbd5e1; font-weight: 600; font-size: 14px; }
+        .form-group input, .form-group select { width: 100%; padding: 12px 14px; border: 1px solid var(--stroke); border-radius: 10px; background: rgba(255,255,255,0.05); color: #f4f6fb; }
+        .form-helper { font-size: 12px; color: var(--muted); margin-top: 6px; }
+        .btn { padding: 12px 18px; border-radius: 10px; border: none; font-weight: 700; cursor: pointer; }
+        .btn-primary { background: linear-gradient(135deg, #5b8bff, #4a68ff); color: #fff; }
+        .btn-secondary { background: rgba(255,255,255,0.1); color: #cbd5e1; border: 1px solid var(--stroke); }
+        .tasks { display: grid; gap: 12px; }
+        .taREDACTEDcard { background: linear-gradient(135deg, rgba(91,139,255,0.08), rgba(122,240,216,0.04)); border: 1px solid rgba(91,139,255,0.2); border-radius: 12px; padding: 16px; display: flex; justify-content: space-between; align-items: center; }
+        .empty { text-align: center; color: var(--muted); }
+        @media (max-width: 768px) { .main { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="page-header">
+            <h1>📑 报表中心</h1>
+            <div class="header-right">
+                <span id="userBadge" class="user-badge">{{ username if username is defined else '游客' }}</span>
+                <a href="/admin.html" class="btn btn-secondary">← 返回管理后台</a>
+            </div>
+        </div>
+        <div class="main">
+            <div class="panel">
+                <h2>🧩 表单配置</h2>
+                <div id="formContainer"></div>
+            </div>
+            <div class="panel">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <h2>📋 执行队列</h2>
+                    <button class="btn btn-secondary" onclick="refreshTasks()">刷新</button>
+                </div>
+                <div id="tasksList" class="tasks">
+                    <div class="empty">暂无任务</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="notification" class="notification"></div>
+
+    <script src="/static/js/common.js"></script>
+    <script src="/static/js/tasks.js"></script>
+    <script src="/static/js/reports.js"></script>
+</body>
+</html>

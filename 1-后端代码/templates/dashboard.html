@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token if csrf_token is defined else '' }}">
+    <title>运营总览 - 公路巡查系统</title>
+    <link rel="stylesheet" href="/static/css/common.css">
+    <style>
+        /* Dashboard 页面特有样式 */
+        .header-right{display:flex;align-items:center;gap:12px}
+        @media(max-width:768px){.header-right{flex-direction:column;width:100%}.card,.card.wide{grid-column:span 12}.kpi{grid-template-columns:repeat(2,1fr)}}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="page-header">
+            <h1>📊 运营总览</h1>
+            <div class="header-right">
+                <span class="user-badge" id="userBadge">{{ username if username is defined else '游客' }}</span>
+                <a href="/admin.html" class="btn btn-secondary">← 返回管理后台</a>
+            </div>
+        </div>
+
+        <div class="grid">
+            <!-- KPI 概览 -->
+            <div class="card wide">
+                <h2>📈 关键指标</h2>
+                <div id="kpiContainer" class="kpi"></div>
+            </div>
+
+            <!-- 过滤器表单 -->
+            <div class="card">
+                <h2>🧩 过滤器</h2>
+                <div id="filterForm"></div>
+            </div>
+
+            <!-- 快捷操作 -->
+            <div class="card">
+                <h2>⚡ 快捷操作</h2>
+                <div id="quickActions"></div>
+            </div>
+
+            <!-- 最近任务 -->
+            <div class="card wide">
+                <h2>📋 最近任务</h2>
+                <div id="recentTasks"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 通知容器（与 tasks.html 保持一致） -->
+    <div id="notification" class="notification"></div>
+
+    <script src="/static/js/common.js"></script>
+    <script src="/static/js/tasks.js"></script>
+    <script src="/static/js/dashboard.js"></script>
+</body>
+</html>

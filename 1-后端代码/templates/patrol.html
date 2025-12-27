@@ -29,6 +29,7 @@
             background: radial-gradient(120% 120% at 20% 20%, rgba(91,139,255,0.25), transparent 45%),
                         radial-gradient(100% 140% at 80% 10%, rgba(122,240,216,0.18), transparent 50%),
                         #050914;
+            background-attachment: fixed;
             color: #f4f6fb;
             padding: 26px 18px 60px;
             display: flex;
@@ -1118,6 +1119,28 @@
                 console.log(`加载照片失败 (record ${recordId}):`, e);
             }
         }
+    </script>
+
+    <!-- 通用脚本：自动为有值的下拉表添加样式 -->
+    <script>
+        // 为所有select元素添加has-value类
+        document.addEventListener('DOMContentLoaded', function() {
+            const selects = document.querySelectorAll('select');
+            selects.forEach(select => {
+                // 初始化检查
+                if (select.value && select.value !== '') {
+                    select.classList.add('has-value');
+                }
+                // 监听变化
+                select.addEventListener('change', function() {
+                    if (this.value && this.value !== '') {
+                        this.classList.add('has-value');
+                    } else {
+                        this.classList.remove('has-value');
+                    }
+                });
+            });
+        });
     </script>
 
     <!-- 回到顶部按钮 -->

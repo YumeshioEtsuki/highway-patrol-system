@@ -1,1 +1,1 @@
-# models/__init__.py
+"""Pydantic 数据模型"""

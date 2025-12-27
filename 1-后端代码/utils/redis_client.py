@@ -4,7 +4,7 @@ Redis 客户端与连接管理
 import redis
 import asyncio
 from typing import Optional
-from utils.config import settings
+from settings import settings
 
 class RedisClient:
     """Redis 同步客户端单例"""

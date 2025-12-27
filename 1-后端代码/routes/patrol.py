@@ -101,9 +101,10 @@ async def create_patrol(
                         print(f"[DEBUG] 文件 {idx} 上传异常: {e}")
         print(f"[DEBUG] 共上传 {uploaded_photos} 张照片")
         
-        # 清除相关缓存
+        # 清除相关缓存（统一失效机制）
         await invalidate_cache("patrol:list:*")
         await invalidate_cache("admin:*")
+        await invalidate_cache("stats:*")
         
         return {
             "success": True,

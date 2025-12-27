@@ -2,6 +2,7 @@
 
 import os
 import time
+import json
 from pathlib import Path
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, HTTPException, Depends
@@ -11,20 +12,27 @@ from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from settings import settings
 from utils.utils import initialize_database
-from utils.config import settings
-from utils.deps import get_current_user, CurrentUser
-from utils.logger import app_logger
-from utils.rate_limit import limiter
+from core.deps import get_current_user, CurrentUser
+from core.logger import app_logger
+from core.rate_limit import limiter
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from slowapi import _rate_limit_exceeded_handler
+from celery_app import celery_app
+from workers.report.tasks import export_large_excel, generate_monthly_report
 
 # 加载 .env 文件
-# 配置加载统一由 utils.config.Settings 完成；此处不再重复加载 .env
+# 配置加载统一由 settings.py（基于 pydantic-settings）完成
 
 # 导入路由
-from routes import user, patrol, admin, photo, patrol_sse, chat, tasks, monitor
+from routes.auth import router as auth_router
+from routes.patrol import patrol_router, sse_router, photo_router
+from routes.admin import admin_router, reports_router, monitor_router, tasks_router as admin_tasks_router
+from routes.chat import router as chat_router
+from routes.tasks import router as tasks_router
+from routes.photos import router as photos_router  # 新增照片管理路由
 
 
 # 定义生命周期事件
@@ -183,19 +191,32 @@ app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
 templates_dir = os.path.join(BASE_DIR, "templates")
 templates = Jinja2Templates(directory=templates_dir)
 
+# 挂载静态资源目录 /static（JS/CSS/Images）
+static_dir = os.path.join(BASE_DIR, "static")
+if not os.path.exists(static_dir):
+    os.makedirs(static_dir, exist_ok=True)
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
 
 # ========================
 # 注册路由
 # ========================
 
-app.include_router(user.router)
-app.include_router(patrol.router)
-app.include_router(admin.router)
-app.include_router(photo.router)
-app.include_router(patrol_sse.router)
-app.include_router(chat.router)
-app.include_router(tasks.router)
-app.include_router(monitor.router)
+# ========================
+# 注册路由
+# ========================
+
+app.include_router(auth_router)
+app.include_router(patrol_router)
+app.include_router(sse_router)
+app.include_router(photo_router)
+app.include_router(admin_router)
+app.include_router(reports_router)
+app.include_router(monitor_router)
+app.include_router(admin_tasks_router)
+app.include_router(chat_router)
+app.include_router(tasks_router)
+app.include_router(photos_router)  # 新增照片管理路由
 
 
 # ========================
@@ -236,6 +257,224 @@ async def map_simple_page(request: Request):
 async def monitor_page(request: Request):
     """数据库性能监控仪表板"""
     return templates.TemplateResponse("monitor.html", {"request": request})
+
+
+@app.get("/dashboard.html", response_class=HTMLResponse, summary="运营总览")
+async def dashboard_page(request: Request):
+    """运营总览页面"""
+    return templates.TemplateResponse("dashboard.html", {"request": request})
+
+
+@app.get("/tasks.html", response_class=HTMLResponse, summary="任务中心")
+async def tasks_page(request: Request):
+    """异步任务管理中心"""
+    return templates.TemplateResponse("tasks.html", {"request": request})
+
+
+@app.get("/reports.html", response_class=HTMLResponse, summary="报表中心")
+async def reports_page(request: Request):
+    """报表中心页面"""
+    return templates.TemplateResponse("reports.html", {"request": request})
+
+# ========================
+# 用户信息 API
+# ========================
+
+@app.get("/api/user/profile", summary="获取用户信息")
+async def get_user_profile(current_user: CurrentUser = Depends(get_current_user)):
+    """获取当前登录用户的基本信息"""
+    return {
+        "username": getattr(current_user, "username", "admin"),
+        "role": getattr(current_user, "role", "admin"),
+        "is_superuser": getattr(current_user, "role", "") == "superuser"
+    }
+
+# ========================
+# 报表 API（Celery 集成）
+# ========================
+
+@app.post("/api/reports/export/excel", summary="导出 Excel 报表")
+async def export_excel_report(request: Request):
+    """异步导出 Excel 报表，返回 task_id"""
+    try:
+        data = await request.json()
+        start = data.get("start_date")
+        end = data.get("end_date")
+        include_photos = data.get("include_photos", "no")
+        
+        if not start or not end:
+            return JSONResponse(status_code=422, content={"detail": "开始/结束日期必填"})
+        
+        # 提交 Celery 任务（使用现有的 export_large_excel）
+        task = export_large_excel.apply_async(
+            args=[start, end, None],
+            expires=3600
+        )
+        
+        return {
+            "task_id": task.id,
+            "status": "queued",
+            "include_photos": include_photos
+        }
+    except Exception as e:
+        app_logger.error(f"导出 Excel 失败: {e}")
+        return JSONResponse(status_code=500, content={"detail": str(e)})
+
+@app.post("/api/reports/export/pdf", summary="导出 PDF 报表")
+async def export_pdf_report(request: Request):
+    """异步导出 PDF 报表，返回 task_id"""
+    try:
+        data = await request.json()
+        start = data.get("start_date")
+        end = data.get("end_date")
+        title = data.get("title", "")
+        
+        if not start or not end:
+            return JSONResponse(status_code=422, content={"detail": "开始/结束日期必填"})
+        
+        # 提交 Celery 任务（Excel 导出后可转 PDF）
+        task = export_large_excel.apply_async(
+            args=[start, end, None],
+            expires=3600
+        )
+        
+        return {
+            "task_id": task.id,
+            "status": "queued",
+            "title": title
+        }
+    except Exception as e:
+        app_logger.error(f"导出 PDF 失败: {e}")
+        return JSONResponse(status_code=500, content={"detail": str(e)})
+
+@app.post("/api/reports/monthly/generate", summary="生成月报")
+async def generate_monthly_report_api(request: Request):
+    """异步生成月报，返回 task_id"""
+    try:
+        data = await request.json()
+        year = data.get("year")
+        month = data.get("month")
+        
+        try:
+            year = int(year)
+            month = int(month)
+        except Exception:
+            return JSONResponse(status_code=422, content={"detail": "年份/月必须为数字"})
+        
+        if year < 2020 or year > 2030 or month < 1 or month > 12:
+            return JSONResponse(status_code=422, content={"detail": "年份或月份不在允许范围"})
+        
+        # 提交 Celery 任务
+        task = generate_monthly_report.apply_async(
+            args=[year, month],
+            expires=3600
+        )
+        
+        return {
+            "task_id": task.id,
+            "status": "queued",
+            "year": year,
+            "month": month
+        }
+    except Exception as e:
+        app_logger.error(f"生成月报失败: {e}")
+        return JSONResponse(status_code=500, content={"detail": str(e)})
+
+@app.get("/api/reports/task/{task_id}", summary="查询报表任务状态")
+async def get_report_task_status(task_id: str):
+    """查询异步任务的执行状态"""
+    try:
+        task = celery_app.AsyncResult(task_id)
+        return {
+            "task_id": task_id,
+            "state": task.state,
+            "result": task.result if task.state == "SUCCESS" else None,
+            "error": str(task.info) if task.state == "FAILURE" else None
+        }
+    except Exception as e:
+        app_logger.error(f"查询任务状态失败: {e}")
+        return JSONResponse(status_code=500, content={"detail": str(e)})
+
+@app.get("/api/reports/download", summary="下载报表文件")
+async def download_report(file_path: str):
+    """下载生成的报表文件"""
+    try:
+        from fastapi.responses import FileResponse
+        
+        # 防止路径遍历攻击
+        safe_path = Path(file_path).resolve()
+        base_dir = Path("exports").resolve()
+        
+        if not str(safe_path).startswith(str(base_dir)):
+            return JSONResponse(status_code=403, content={"detail": "禁止访问"})
+        
+        if not safe_path.exists():
+            return JSONResponse(status_code=404, content={"detail": "文件不存在"})
+        
+        return FileResponse(
+            path=safe_path,
+            filename=safe_path.name,
+            media_type="application/octet-stream"
+        )
+    except Exception as e:
+        app_logger.error(f"下载报表失败: {e}")
+        return JSONResponse(status_code=500, content={"detail": str(e)})
+
+# ========================
+# 仪表盘 KPI API（数据库驱动）
+# ========================
+
+@app.get("/api/dashboard/kpi/today_tasks", summary="今日任务数（mock）")
+async def kpi_today_tasks():
+    """Mock：返回今日任务数"""
+    try:
+        return {"label": "今日任务", "value": 26}
+    except Exception as e:
+        app_logger.error(f"查询今日任务失败: {e}")
+        return {"label": "今日任务", "value": 0}
+
+@app.get("/api/dashboard/kpi/success_rate", summary="任务成功率（mock）")
+async def kpi_success_rate():
+    """Mock：返回任务成功率"""
+    try:
+        return {"label": "成功率", "value": "96%"}
+    except Exception as e:
+        app_logger.error(f"查询成功率失败: {e}")
+        return {"label": "成功率", "value": "0%"}
+
+@app.get("/api/dashboard/kpi/avg_latency", summary="平均耗时（mock）")
+async def kpi_avg_latency():
+    """Mock：返回平均耗时"""
+    try:
+        return {"label": "平均耗时", "value": "1.3s"}
+    except Exception as e:
+        app_logger.error(f"查询平均耗时失败: {e}")
+        return {"label": "平均耗时", "value": "0s"}
+
+@app.get("/api/dashboard/kpi/active_users", summary="活跃用户（mock）")
+async def kpi_active_users():
+    """Mock：返回活跃用户数"""
+    try:
+        return {"label": "活跃用户", "value": 14}
+    except Exception as e:
+        app_logger.error(f"查询活跃用户失败: {e}")
+        return {"label": "活跃用户", "value": 0}
+
+@app.get("/api/dashboard/recent-tasks", summary="最近任务")
+async def get_recent_tasks(limit: int = 10):
+    """获取最近的任务列表"""
+    try:
+        # 占位实现：实际应从数据库查询最近任务
+        # 示例：SELECT id, status, name FROM tasks ORDER BY created_at DESC LIMIT ?
+        return {
+            "recent_tasks": [
+                {"task_id": f"TASK-{1000+i}", "name": f"任务 {i+1}", "state": "SUCCESS" if i % 2 == 0 else "PENDING"}
+                for i in range(min(limit, 5))
+            ]
+        }
+    except Exception as e:
+        app_logger.error(f"查询最近任务失败: {e}")
+        return {"recent_tasks": []}
 
 
 # ========================

@@ -4,11 +4,65 @@ import os
 import re
 import time
 import mysql.connector
+from mysql.connector.errors import PoolError
 from mysql.connector.pooling import MySQLConnectionPool
 from .config import db_config
 import sqlparse
 from sqlparse.tokens import Comment
-from .algorithm import hash_password
+
+# 导入密码哈希函数
+def hash_password(password: str) -> str:
+    """哈希密码（Argon2）"""
+    try:
+        from argon2 import PasswordHasher
+        ph = PasswordHasher()
+        return ph.hash(password)
+    except ImportError:
+        # Fallback to bcrypt if argon2 not available
+        import bcrypt
+        return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+
+def verify_password(hash_str: str, password: str) -> bool:
+    """验证密码 - 支持多种格式：
+    1. Argon2: $argon2id$v=19$...
+    2. SHA256 salt:hash（冒号分隔）
+    3. 明文（不推荐）
+    4. 无盐 SHA256（64字符hex）
+    """
+    import hashlib
+    
+    # 格式 1: Argon2
+    if hash_str.startswith('$argon2'):
+        try:
+            from argon2 import PasswordHasher
+            from argon2.exceptions import VerifyMismatchError
+            ph = PasswordHasher()
+            try:
+                ph.verify(hash_str, password)
+                return True
+            except VerifyMismatchError:
+                return False
+        except ImportError:
+            return False
+    
+    # 格式 2: SHA256 salt:hash（旧格式）
+    if ':' in hash_str:
+        parts = hash_str.split(':')
+        if len(parts) == 2:
+            salt, stored_hash = parts
+            computed = hashlib.sha256((salt + password).encode()).hexdigest()
+            return computed == stored_hash
+    
+    # 格式 3: 明文
+    if hash_str == password:
+        return True
+    
+    # 格式 4: 旧版无盐 SHA256（64字符hex）
+    if len(hash_str) == 64:
+        if hash_str.lower() == hashlib.sha256(password.encode()).hexdigest():
+            return True
+    
+    return False
 
 
 def remove_comments_from_statement(stmt: str) -> str:
@@ -33,7 +87,8 @@ _CONN_POOL = None
 try:
     _CONN_POOL = MySQLConnectionPool(
         pool_name="app_pool",
-        pool_size=int(os.getenv("DB_POOL_SIZE", "5")),
+        pool_size=int(os.getenv("DB_POOL_SIZE", "50")),  # 提升池大小，缓冲高并发
+        pool_reset_session=True,
         host=db_config['host'],
         user=db_config['user'],
         password=db_config['password'],
@@ -46,9 +101,14 @@ except Exception:
 
 def get_db_connection():
     if _CONN_POOL:
-        conn = _CONN_POOL.get_connection()
-        conn.autocommit = False
-        return conn
+        try:
+            conn = _CONN_POOL.get_connection()
+            conn.autocommit = False
+            return conn
+        except PoolError:
+            # 池耗尽时回退到直连，避免接口直接 500
+            pass
+
     return mysql.connector.connect(
         host=db_config['host'],
         user=db_config['user'],
@@ -167,10 +227,10 @@ def execute_sql_file(sql_file_path, skip_read_only_queries=False, print_query_re
             )
 
             if skip_read_only_queries and is_read_only:
-                print(f"  → ⏭️ 跳过只读查询: {clean_stmt[:60]}...")
+                print(f"  → SKIP {clean_stmt[:60]}...")
                 continue
 
-            print(f"  → 执行: {clean_stmt[:60]}..." if len(clean_stmt) > 60 else f"  → 执行: {clean_stmt}")
+            print(f"  → EXEC {clean_stmt[:60]}..." if len(clean_stmt) > 60 else f"  → EXEC {clean_stmt}")
 
             try:
                 cursor.execute(clean_stmt)
@@ -194,24 +254,28 @@ def execute_sql_file(sql_file_path, skip_read_only_queries=False, print_query_re
                     pass
 
             except mysql.connector.Error as err:
-                all_success = False
-                print(f"    ❌ 语句执行失败: {err}")
-                if stop_on_error:
-                    raise  # 重新抛出，触发外层 rollback
-                # 否则：继续执行下一条
+                # 忽略重复索引错误（索引已存在时，继续执行不失败）
+                if err.errno == 1061:  # ER_DUP_KEYNAME
+                    print(f"    [SKIP] 索引已存在: {err}")
+                else:
+                    all_success = False
+                    print(f"    [FAIL] 语句执行失败: {err}")
+                    if stop_on_error:
+                        raise  # 重新抛出，触发外层 rollback
+                    # 否则：继续执行下一条
 
         # 只有在全部成功 且 不是纯测试阶段时才 commit
         # 但为了简单，这里我们让调用方决定是否需要事务（测试阶段通常不需要）
         connection.commit()
         if all_success:
-            print("  → ✅ 全部语句执行成功")
+            print("  ✓ All statements executed successfully")
         else:
-            print("  → ⚠️ 部分语句失败，但已继续执行完毕")
+            print("  ⚠ Some statements failed but continued")
 
         return all_success
 
     except Exception as e:
-        print(f"  → ❌ 脚本级错误: {e}")
+        print(f"  ✗ Script error: {e}")
         connection.rollback()
         return False
     finally:
@@ -353,7 +417,6 @@ def initialize_database(step='all', skip_read_only_queries=True):
     import os
     import mysql.connector
     from models.schema import CREATE_TABLES_SQL
-    from utils.test_data import get_test_data
     
     print("\n" + "=" * 50)
     print("开始数据库初始化...")
@@ -407,7 +470,9 @@ def initialize_database(step='all', skip_read_only_queries=True):
             
             if user_count == 0:
                 print("📝 插入初始数据...")
-                TEST_DATA = get_test_data()
+                # 测试数据已在 scripts/add_hangzhou_data.py 中提供
+                # 此处跳过自动导入，用户需手动运行 python scripts/add_hangzhou_data.py
+                TEST_DATA = {}
                 
                 for table_name, rows in TEST_DATA.items():
                     if not rows:
@@ -437,7 +502,8 @@ def initialize_database(step='all', skip_read_only_queries=True):
                 print(f"  ✅ 已插入 {user_count} 个用户")
                 print(f"  ✅ 已插入 {segment_count} 条路段")
                 print(f"  ✅ 已插入 {problem_count} 种问题类型")
-                print("✅ 初始数据插入完成")
+                print("✅ 数据表结构初始化完成")
+                print("💡 要插入测试数据，请运行: python scripts/add_hangzhou_data.py")
             else:
                 print(f"📋 数据库已有数据（{user_count} 个用户），跳过插入")
         

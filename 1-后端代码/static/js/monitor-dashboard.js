@@ -10,16 +10,21 @@ let authToken = null;
 // 初始化
 document.addEventListener('DOMContentLoaded', async () => {
     // 从 localStorage 获取 token
-    authToken = localStorage.getItem('token');
+    authToken = localStorage.getItem('access_token');
     
     if (!authToken) {
         // 如果没有 token，重定向到登录页面
-        window.location.href = '/login';
+        window.location.href = '/patrol.html';
         return;
     }
 
-    // 初始化图表
-    initCharts();
+    // 初始化图表（确保 Chart.js 已加载）
+    if (typeof Chart === 'undefined') {
+        console.warn('[monitor] Chart.js 仍未加载，延迟 500ms 后重试');
+        setTimeout(() => initCharts(), 500);
+    } else {
+        initCharts();
+    }
     
     // 加载数据
     await refreshData();
@@ -32,6 +37,10 @@ document.addEventListener('DOMContentLoaded', async () => {
  * 刷新所有数据
  */
 async function refreshData() {
+    // 显示全局加载状态
+    const loadingIndicator = document.querySelector('.loading-overlay');
+    if (loadingIndicator) loadingIndicator.style.display = 'block';
+    
     try {
         // 并行加载数据
         const [metrics, history, slowQueries, health, recommendations] = await Promise.all([
@@ -53,8 +62,11 @@ async function refreshData() {
         updateHealthStatus(metrics, recommendations);
 
     } catch (error) {
-        console.error('Error refreshing data:', error);
-        showError('无法加载监控数据');
+        console.error('[monitor] Error refreshing data:', error);
+        showError('⚠️ 无法加载监控数据：' + (error.message || '未知错误'));
+    } finally {
+        // 隐藏加载状态
+        if (loadingIndicator) loadingIndicator.style.display = 'none';
     }
 }
 
@@ -66,10 +78,27 @@ async function getMetrics() {
         headers: { 'Authorization': `Bearer ${authToken}` }
     });
     
-    if (!response.ok) throw new Error('Failed to fetch metrics');
+    if (!response.ok) {
+        const errorText = await response.text();
+        console.error('[monitor] 获取指标失败:', response.status, errorText);
+        throw new Error(`HTTP ${response.status}: 无法获取性能指标`);
+    }
+    
     const data = await response.json();
-    metricsData = data.data;
-    return data.data;
+    console.log('[monitor] 指标数据:', data);
+    
+    // API返回的数据结构：{ status: 'success', data: {...} } 或直接返回 data
+    if (data.status === 'success' && data.data) {
+        metricsData = data.data;
+        return data.data;
+    } else if (data && typeof data === 'object' && !data.status) {
+        // 直接返回数据对象的情况
+        metricsData = data;
+        return data;
+    } else {
+        console.error('[monitor] 数据格式不符:', data);
+        throw new Error('数据格式错误：' + JSON.stringify(data));
+    }
 }
 
 /**
@@ -124,7 +153,16 @@ async function getRecommendations() {
  * 更新性能指标卡片
  */
 function updateMetrics(metrics) {
-    if (!metrics) return;
+    const container = document.getElementById('metricsGrid');
+    if (!container) {
+        console.warn('[monitor] metricsGrid not found');
+        return;
+    }
+    
+    if (!metrics) {
+        container.innerHTML = '<div class="empty-state" style="text-align:center;padding:20px;color:#94a3b8;">📭 暂无数据</div>';
+        return;
+    }
 
     const html = `
         <div class="metric-card">
@@ -164,13 +202,20 @@ function updateMetrics(metrics) {
         </div>
     `;
 
-    document.getElementById('metricsGrid').innerHTML = html;
+    container.innerHTML = html;
 }
 
 /**
  * 初始化图表
  */
 function initCharts() {
+    // 检查 Chart.js 是否加载成功
+    if (typeof Chart === 'undefined') {
+        console.error('[monitor] Chart.js 未加载，请检查 CDN 或网络连接');
+        showError('📊 图表库加载失败，请刷新页面重试');
+        return;
+    }
+
     const defaultOptions = {
         responsive: true,
         maintainAspectRatio: false,
@@ -188,7 +233,11 @@ function initCharts() {
     };
 
     // 查询速率图表
-    const queriesCtx = document.getElementById('queriesChart').getContext('2d');
+    const queriesCtx = document.getElementById('queriesChart')?.getContext('2d');
+    if (!queriesCtx) {
+        console.warn('[initCharts] queriesChart canvas 元素未找到');
+        return;
+    }
     charts.queries = new Chart(queriesCtx, {
         type: 'line',
         data: {
@@ -264,7 +313,10 @@ function initCharts() {
  * 更新图表数据
  */
 function updateCharts(historyData) {
-    if (!historyData.data) return;
+    if (!historyData || !historyData.data) {
+        console.warn('[monitor] updateCharts: 历史数据为空');
+        return;
+    }
 
     const data = historyData.data;
 
@@ -530,6 +582,10 @@ function escapeHtml(text) {
  * 显示错误
  */
 function showError(message) {
-    console.error(message);
-    // 可以在页面上显示错误提示
+    console.error('[monitor] Error:', message);
+    const container = document.getElementById('metricsGrid');
+    if (container) {
+        container.innerHTML = `<div class="error-state" style="text-align:center;padding:40px;color:#ef4444;background:rgba(239,68,68,0.1);border-radius:12px;margin:20px 0;">${message}</div>`;
+    }
+    // 可以添加 toast 提示
 }

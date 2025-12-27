@@ -7,10 +7,12 @@ import logging
 from datetime import datetime, timedelta
 from typing import List, Dict, Optional
 from utils.utils import get_db_connection
-from models.slow_query import SlowQueryLog, SlowQueryStats
-from utils.config import settings
+from settings import settings
 
 logger = logging.getLogger(__name__)
+
+# 注：SlowQueryLog 和 SlowQueryStats 已在重构时移除
+# 此模块仅保留用于兼容性，实际功能已禁用
 
 # 慢查询阈值（毫秒）
 SLOW_QUERY_THRESHOLD = 1000

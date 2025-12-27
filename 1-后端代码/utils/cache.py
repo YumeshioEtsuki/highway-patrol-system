@@ -76,8 +76,10 @@ def _generate_cache_key(prefix: str, func_name: str, params: dict) -> str:
     生成缓存键
     格式: prefix:func_name:param_hash
     """
-    # 排序参数以确保一致性
-    param_str = json.dumps(params, sort_keys=True, default=str)
+    # 过滤分页参数，避免缓存污染
+    exclude_keys = {"page_size", "page", "limit", "offset"}
+    filtered_params = {k: v for k, v in params.items() if k not in exclude_keys}
+    param_str = json.dumps(filtered_params, sort_keys=True, default=str)
     param_hash = hashlib.md5(param_str.encode()).hexdigest()[:8]
     return f"{prefix}:{func_name}:{param_hash}"
 

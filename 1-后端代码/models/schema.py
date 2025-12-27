@@ -63,9 +63,6 @@ CREATE_TABLES_SQL = [
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='巡查记录表';
     """,
     """
-    CREATE INDEX idx_data_type ON InspectionRecord(data_type);
-    """,
-    """
     CREATE TABLE Photo (
         photo_id INT PRIMARY KEY AUTO_INCREMENT,
         record_id INT NOT NULL,
@@ -78,4 +75,9 @@ CREATE_TABLES_SQL = [
         FOREIGN KEY (record_id) REFERENCES InspectionRecord(record_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='照片表';
     """
+]
+
+# 索引创建语句（在表创建完成后执行）
+CREATE_INDEXES_SQL = [
+    "CREATE INDEX idx_data_type ON InspectionRecord(data_type);"
 ]
