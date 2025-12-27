@@ -21,6 +21,29 @@ echo ============================================================
 echo.
 
 REM ===============================
+REM 检查环境配置
+REM ===============================
+echo [0/5] 检查环境配置...
+
+if not exist ".env" (
+    echo.
+    echo [错误] 未检测到 .env 配置文件！
+    echo.
+    echo 请先运行配置向导：
+    echo    bin\setup_password.bat
+    echo.
+    echo 或手动创建：
+    echo    copy .env.example .env
+    echo    然后编辑 .env 设置 DATABASE_PASSWORD
+    echo.
+    pause
+    exit /b 1
+)
+
+echo [OK] .env 配置文件已存在
+echo.
+
+REM ===============================
 REM 检查 Redis 是否已安装
 REM ===============================
 echo [1/5] 检查 Redis...
