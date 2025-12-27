@@ -68,15 +68,14 @@ Page({
    */
   async loadRecords() {
     this.setData({ loading: true });
-
     try {
       const params = {};
       if (this.data.filterStatus) {
         params.status = this.data.filterStatus;
       }
-
+      console.log('[请求参数]', params);
       const res = await request.get('/api/patrol', params);
-      
+      console.log('[响应数据]', res);
       // 处理数据
       const records = (res.records || []).map(item => ({
         ...item,
@@ -88,13 +87,14 @@ Page({
           `${app.globalData.baseUrl}${item.photos[0].photo_url}` : null,
         photoCount: item.photos ? item.photos.length : 0
       }));
-
       this.setData({
         recordList: records,
         loading: false
       });
     } catch (err) {
       console.error('加载记录失败:', err);
+      wx.showToast({ title: '加载记录失败', icon: 'none' });
+      wx.setStorageSync('lastError', { type: 'loadRecords', error: err, time: Date.now() });
       this.setData({ loading: false });
     }
   },
@@ -106,10 +106,9 @@ Page({
     try {
       const userId = app.globalData.userInfo?.user_id || app.globalData.userInfo?.userId;
       if (!userId || !app.globalData.token) return;
-
-      // 后端统计接口：/api/stats?user_id=xxx，返回 total_records/pending_count/processing_count/completed_count
+      console.log('[统计请求]', { user_id: userId });
       const res = await request.get('/api/stats', { user_id: userId }, { showLoading: false });
-
+      console.log('[统计响应]', res);
       this.setData({
         totalCount: res.total_records || 0,
         pendingCount: res.pending_count || 0,
@@ -117,6 +116,8 @@ Page({
       });
     } catch (err) {
       console.error('加载统计失败:', err);
+      wx.showToast({ title: '加载统计失败', icon: 'none' });
+      wx.setStorageSync('lastError', { type: 'loadStats', error: err, time: Date.now() });
     }
   },
 
