@@ -13,8 +13,18 @@ class Settings(BaseSettings):
     DATABASE_HOST: str = "localhost"
     DATABASE_PORT: int = 3306
     DATABASE_USER: str = "root"
-    DATABASE_PASSWORD: str = "REDACTED"
+    DATABASE_PASSWORD: Optional[str] = None
     DATABASE_NAME: str = "road_patrol_db"
+    
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # 验证必填的敏感配置
+        if not self.DATABASE_PASSWORD:
+            raise ValueError(
+                "DATABASE_PASSWORD 未配置！\n"
+                "请设置环境变量 DATABASE_PASSWORD 或在 .env 文件中配置 DATABASE_PASSWORD=your_password\n"
+                "参考文档: docs/SECURITY_CONFIG.md"
+            )
     
     # 向后兼容的别名
     @property

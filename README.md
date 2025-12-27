@@ -13,6 +13,24 @@
   - **推荐使用 Docker**：`.\bin\start_redis.bat`
   - 或下载 Windows 版本
 
+### 🔐 安全配置（首次必做）
+
+**1. 创建配置文件**
+```powershell
+# 复制配置模板
+Copy-Item .env.example .env
+```
+
+**2. 修改数据库密码**
+编辑 `.env` 文件，设置真实密码：
+```env
+DATABASE_PASSWORD=你的MySQL密码
+```
+
+⚠️ **重要**: `.env` 文件已被 `.gitignore` 排除，不会被提交到 Git。
+
+详细配置说明：[docs/SECURITY_CONFIG.md](docs/SECURITY_CONFIG.md)
+
 ### ⚡ 一键启动
 
 **完整功能（Redis + Celery + FastAPI）** - 推荐
