@@ -7,11 +7,24 @@
 观察"实时新照片"区域是否有新照片显示。
 """
 
+import os
 import time
+from pathlib import Path
+
 import requests
+from dotenv import load_dotenv
 from requests.auth import HTTPBasicAuth
 
-BASE_URL = "http://127.0.0.1:5000"
+env_path = Path(__file__).resolve().parents[2] / ".env"
+if env_path.exists():
+    load_dotenv(env_path)
+
+BASE_URL = os.getenv("TEST_BASE_URL", "http://127.0.0.1:5000")
+ADMIN_USER = os.getenv("TEST_ADMIN_USER", "admin")
+ADMIN_PASSWORD = os.getenv("TEST_ADMIN_PASSWORD")
+
+if not ADMIN_PASSWORD:
+    raise ValueError("❌ TEST_ADMIN_PASSWORD 未配置！请在环境变量或 .env 中设置测试账号密码")
 
 def test_sse_photos():
     print("=" * 60)
@@ -22,7 +35,7 @@ def test_sse_photos():
     print("\n[步骤1] 登录获取访问令牌...")
     login_resp = requests.post(
         f"{BASE_URL}/api/login",
-        json={"username": "admin", "password": "REDACTED"}
+        json={"username": ADMIN_USER, "password": ADMIN_PASSWORD}
     )
     
     if login_resp.status_code != 200:

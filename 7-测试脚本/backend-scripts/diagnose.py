@@ -5,6 +5,7 @@
 import os
 import sys
 from pathlib import Path
+from dotenv import load_dotenv
 
 # 设置 UTF-8 编码
 if sys.stdout.encoding != 'utf-8':
@@ -15,14 +16,16 @@ if sys.stdout.encoding != 'utf-8':
         pass
 
 os.environ['SKIP_DB_INIT'] = '1'
-os.environ['DEEPSEEK_API_KEY'] = 'REDACTED'
 
 # 加载 .env
 env_path = Path(__file__).parent.parent / '.env'
 if env_path.exists():
-    from dotenv import load_dotenv
     load_dotenv(env_path)
     print(f"[OK] Loaded .env")
+
+api_key = os.getenv("DEEPSEEK_API_KEY")
+if not api_key:
+    raise ValueError("❌ DEEPSEEK_API_KEY is required! 请在环境变量或 .env 中设置")
 
 print("[INFO] Importing app...")
 try:

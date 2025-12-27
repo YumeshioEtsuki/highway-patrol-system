@@ -69,33 +69,13 @@ docker rm highway-redis
 # 删除数据卷（慎用！会清空所有数据）
 docker volume rm redis-data
 ```
-
-### Redis 操作
-
-```bash
-# 进入 Redis CLI
-docker exec -it highway-redis redis-cli
-
-# 查看所有键
-docker exec -it highway-redis redis-cli KEYS "*"
-
-# 清空所有数据
-docker exec -it highway-redis redis-cli FLUSHALL
-
-# 查看内存使用
-docker exec -it highway-redis redis-cli INFO memory
-
-# 监控实时命令
-docker exec -it highway-redis redis-cli MONITOR
-```
-
----
-
-## ⚙️ 配置说明
-
-### 容器参数解释
+> ⚠️ 请先设置环境变量 `REDIS_PASSWORD`（或在 `.env` 中配置），不要在命令行写明文密码。
 
 ```bash
+# PowerShell (临时)
+$env:REDIS_PASSWORD="REDACTED"
+
+# 启动带密码的 Redis（从环境变量读取）
 docker run -d \                          # 后台运行
   --name highway-redis \                 # 容器名称
   -p 6379:6379 \                         # 端口映射 (宿主机:容器)

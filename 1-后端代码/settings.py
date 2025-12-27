@@ -18,11 +18,15 @@ class Settings(BaseSettings):
     
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        # 优先从 DB_PASSWORD 环境变量读取（向后兼容 DATABASE_PASSWORD）
+        env_pwd = os.getenv("DB_PASSWORD")
+        if env_pwd:
+            self.DATABASE_PASSWORD = env_pwd
         # 验证必填的敏感配置
         if not self.DATABASE_PASSWORD:
             raise ValueError(
                 "DATABASE_PASSWORD 未配置！\n"
-                "请设置环境变量 DATABASE_PASSWORD 或在 .env 文件中配置 DATABASE_PASSWORD=your_password\n"
+                "请设置环境变量 DB_PASSWORD 或 DATABASE_PASSWORD，或在 .env 中配置相应字段\n"
                 "参考文档: docs/SECURITY_CONFIG.md"
             )
     
