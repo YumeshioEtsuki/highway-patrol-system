@@ -6,12 +6,23 @@
 ## 🚀 快速开始
 
 ### 环境要求
-- Python 3.8+
-- MySQL 5.7+
-- Node.js (微信开发者工具)
-- Redis 5.0+ (推荐，用于缓存和异步任务)
-  - **推荐使用 Docker**：`.\bin\start_redis.bat`
-  - 或下载 Windows 版本
+
+#### 🔴 必需依赖
+- **Python 3.10+** — 运行环境
+- **MySQL 8.0+** — 核心数据库
+
+#### 🟡 推荐依赖（生产环境必需）
+- **Docker Desktop** — 容器化部署、Redis 运行
+  - 快速启动：`.\bin\start_redis.bat`
+- **Redis 7+** — 缓存和 Celery Broker
+  - Docker 方式（推荐）或本地安装
+
+#### 🟢 可选依赖（附加 AI 功能）
+- **Ollama** — AI 聊天和照片分析
+  - 下载：https://ollama.ai
+  - 拉取模型：`ollama pull qwen:7b`
+
+**详细依赖说明**：[docs/ops/DEPENDENCIES_GUIDE.md](./docs/ops/DEPENDENCIES_GUIDE.md)
 
 ### 🔐 安全配置（首次必做）
 

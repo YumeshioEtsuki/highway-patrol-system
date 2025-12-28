@@ -23,7 +23,7 @@ echo.
 REM ===============================
 REM 检查环境配置
 REM ===============================
-echo [0/5] 检查环境配置...
+echo [0/6] 检查环境配置...
 
 REM BOOTSTRAP_ADMIN 提示：仅限开发/初始化场景
 if "%BOOTSTRAP_ADMIN%"=="1" (
@@ -51,7 +51,7 @@ if "%SECURE_MODE%"=="1" (
         exit /b 1
     )
 ) else (
-    if not exist "..\1-后端代码\.env" (
+    if not exist "%~dp0..\1-后端代码\.env" (
         echo [错误] 未检测到 ..\1-后端代码\.env 配置文件！
         echo.
         echo 请先运行配置向导：
@@ -69,7 +69,7 @@ if "%SECURE_MODE%"=="1" (
 REM ===============================
 REM 检查 Redis 是否已安装
 REM ===============================
-echo [1/5] 检查 Redis...
+echo [1/6] 检查 Redis...
 
 REM 优先检查 Docker
 where docker >nul 2>&1
@@ -109,7 +109,7 @@ REM ===============================
 REM 启动 Redis（后台运行）
 REM ===============================
 echo.
-echo [2/5] 启动 Redis 服务器...
+echo [2/6] 启动 Redis 服务器...
 
 if "%USE_DOCKER_REDIS%"=="1" (
     REM 使用 Docker Redis
@@ -121,17 +121,32 @@ if "%USE_DOCKER_REDIS%"=="1" (
         if %errorlevel% == 0 (
             echo [INFO] 启动已存在的 Docker Redis 容器...
             docker start highway-redis >nul 2>&1
-            timeout /t 2 /nobreak >nul
-            echo [OK] Docker Redis 启动成功（端口 6379）
+            echo [INFO] 等待 Redis 完全启动...
+            timeout /t 3 /nobreak >nul
         ) else (
             echo [INFO] 创建并启动 Docker Redis 容器...
             docker run -d --name highway-redis -p 6379:6379 -v redis-data:/data --restart unless-stopped redis:7-alpine redis-server --appendonly yes >nul 2>&1
-            timeout /t 3 /nobreak >nul
-            echo [OK] Docker Redis 创建并启动成功（端口 6379）
+            echo [INFO] 等待 Redis 完全启动...
+            timeout /t 4 /nobreak >nul
         )
     )
+    REM 确认 Redis 就绪（ping 检查）
+    echo [INFO] 等待 Redis 就绪...
+    for /L %%i in (1,1,15) do (
+        docker exec highway-redis redis-cli ping >nul 2>&1
+        if %errorlevel% == 0 (
+            echo [OK] Docker Redis 已就绪（端口 6379）
+            timeout /t 2 /nobreak >nul
+            goto redis_ready
+        )
+        echo [INFO] Redis 初始化中... (%%i/15)
+        timeout /t 1 /nobreak >nul
+    )
+    echo [WARN] Redis 启动超时，继续启动应用（缓存功能可能不可用）
+    :redis_ready
+    goto skip_redis_check
 ) else (
-    REM 使用本地 Redis
+    REM 使用本地 Redis（如果 Docker 不可用）
     tasklist /FI "IMAGENAME eq redis-server.exe" 2>NUL | find /I /N "redis-server.exe">NUL
     if %errorlevel% == 0 (
         echo [OK] 本地 Redis 已在运行
@@ -160,11 +175,13 @@ if "%USE_DOCKER_REDIS%"=="1" (
     )
 )
 
+:skip_redis_check
 REM ===============================
 REM 检查端口 5000
 REM ===============================
 echo.
-echo [3/5] 检查端口 5000...
+echo [3/6] 检查端口 5000...
+:port_check
 netstat -ano | findstr ":5000 " >nul 2>&1
 if %errorlevel% == 0 (
     echo [WARN] 端口 5000 被占用，正在清理...
@@ -173,6 +190,7 @@ if %errorlevel% == 0 (
         echo [OK] 已停止进程 %%a
     )
     timeout /t 2 /nobreak >nul
+    goto port_check
 ) else (
     echo [OK] 端口 5000 可用
 )
@@ -181,7 +199,7 @@ REM ===============================
 REM 检查 Python
 REM ===============================
 echo.
-echo [4/5] 检查 Python 环境...
+echo [4/6] 检查 Python 环境...
 python --version >nul 2>&1
 if errorlevel 1 (
     echo [ERROR] 未检测到 Python，请安装 Python 3.10+ 并加入 PATH
@@ -191,10 +209,27 @@ if errorlevel 1 (
 echo [OK] Python 已安装
 
 REM ===============================
-REM 启动 Celery Worker（后台运行）
+REM 检查 Ollama（AI 模型服务）- 可选
 REM ===============================
 echo.
-echo [5/5] 启动 Celery Worker...
+echo [4.5/6] 检查 Ollama（AI 模型服务 - 可选）...
+
+REM 检查 Ollama 服务是否运行
+timeout /t 1 /nobreak >nul
+curl -s http://127.0.0.1:11434/api/tags >nul 2>&1
+if %errorlevel% == 0 (
+    echo [OK] Ollama 服务已在运行，AI 功能可用
+) else (
+    echo [INFO] Ollama 服务未运行（AI 聊天功能将不可用，其他功能正常）
+    echo.
+    echo 📥 如需使用 AI 功能，请启动 Ollama：
+    echo    1. 下载和安装：https://ollama.ai
+    echo    2. 启动服务：ollama serve
+    echo    3. 拉取模型（首次）：ollama pull qwen:7b
+    echo.
+)
+
+echo [5/6] 启动 Celery Worker...
 
 REM 检查是否已有 Celery Worker 运行
 tasklist /FI "WINDOWTITLE eq Celery Worker*" 2>NUL | find /I /N "python">NUL
@@ -208,6 +243,38 @@ if %errorlevel% == 0 (
     timeout /t 3 /nobreak >nul
     echo [OK] Celery Worker 已启动（新窗口）
 )
+
+REM ===============================
+REM Wait for Redis to be ready
+REM ===============================
+echo.
+echo [6/6] 检查 Redis 稳定性...
+
+setlocal enabledelayedexpansion
+
+if "%USE_DOCKER_REDIS%"=="1" (
+    set "redis_ready=0"
+    
+    for /L %%i in (1,1,30) do (
+        docker exec highway-redis redis-cli ping >nul 2>&1
+        if !errorlevel! == 0 (
+            set "redis_ready=1"
+            echo [OK] Redis is ready
+            timeout /t 3 /nobreak >nul
+            goto start_fastapi
+        )
+        timeout /t 1 /nobreak >nul
+    )
+    
+    if !redis_ready! == 0 (
+        echo [WARN] Redis not responding - using memory cache
+    )
+) else (
+    echo [INFO] Local Redis mode
+)
+
+:start_fastapi
+endlocal
 
 REM ===============================
 REM 启动 FastAPI 服务器（当前窗口）

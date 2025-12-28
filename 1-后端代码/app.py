@@ -17,6 +17,7 @@ from utils.utils import initialize_database
 from core.deps import get_current_user, CurrentUser
 from core.logger import app_logger
 from core.rate_limit import limiter
+from core.dependencies_check import DependencyChecker
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from slowapi import _rate_limit_exceeded_handler
@@ -42,6 +43,44 @@ async def lifespan(app: FastAPI):
     # 启动时：初始化数据库（可通过环境变量跳过以便重复测试）
     print("\n" + "=" * 50)
     print("[INFO] Starting application...")
+    
+    # 检查外部依赖
+    print("\n[INFO] 检查外部依赖...")
+    import os as os_module
+    check_config = {
+        "check_ollama": True,
+        "check_redis": True,
+        "check_database": True,
+        "ollama": {
+            "host": os_module.getenv("OLLAMA_HOST", "127.0.0.1"),
+            "port": int(os_module.getenv("OLLAMA_PORT", 11434))
+        },
+        "redis": {
+            "host": os_module.getenv("REDIS_HOST", "localhost"),
+            "port": int(os_module.getenv("REDIS_PORT", 6379))
+        },
+        "database": {
+            "host": settings.DATABASE_HOST,
+            "port": settings.DATABASE_PORT,
+            "user": settings.DATABASE_USER,
+            "password": settings.DATABASE_PASSWORD,
+            "database": settings.DATABASE_NAME
+        }
+    }
+    
+    dep_results = await DependencyChecker.run_startup_checks(check_config)
+    
+    # 显示检查结果
+    for service_name, check_info in dep_results.get("checks", {}).items():
+        status_symbol = "[OK]" if check_info.get("available") else "[FAIL]"
+        print(f"  {status_symbol} {service_name}: {check_info.get('message', 'Unknown')}")
+    
+    # 如果数据库不可用，警告
+    if not dep_results.get("all_critical_available"):
+        print("\n[WARN] Critical dependencies unavailable! Please ensure database server is running")
+    
+    print()
+    
     skip_db_init = os.getenv("SKIP_DB_INIT", "0") == "1"
     if skip_db_init:
         print("[INFO] SKIP_DB_INIT=1 detected, skipping database init")
