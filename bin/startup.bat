@@ -12,6 +12,14 @@ cd /d "%~dp0.."
 
 REM 检查配置文件（后端实际读取 1-后端代码/.env）
 echo [0/3] 检查环境配置...
+if "%BOOTSTRAP_ADMIN%"=="1" (
+    if "%SECURE_MODE%"=="1" (
+        powershell -Command "Write-Host '[警告] BOOTSTRAP_ADMIN=1 在 SECURE_MODE 下会被忽略，请改回 0 并改用 bin/create_admin.py 创建管理员' -ForegroundColor Red"
+    ) else (
+        powershell -Command "Write-Host '[提示] BOOTSTRAP_ADMIN=1 仅用于临时创建默认管理员，完成后请改回 0；若已存在 admin 会被初始化逻辑自动跳过' -ForegroundColor Yellow"
+    )
+)
+
 if "%SECURE_MODE%"=="1" (
     echo [INFO] 安全模式已启用：跳过 .env 文件读取，改为使用系统环境变量
     if "%DB_PASSWORD%"=="" if "%DATABASE_PASSWORD%"=="" (
@@ -57,7 +65,7 @@ if %errorlevel% == 0 (
 
 echo.
 echo [2/3] 切换到后端目录...
-cd /d "%~dp01-后端代码"
+cd /d "%~dp0..\1-后端代码"
 if %errorlevel% neq 0 (
     echo [ERROR] 无法找到后端目录
     pause

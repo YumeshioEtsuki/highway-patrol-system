@@ -33,9 +33,23 @@ class Settings(BaseSettings):
         broker_url = os.getenv("BROKER_URL")
         if broker_url:
             self.CELERY_BROKER_URL = broker_url
+        else:
+            # 动态构造 Celery broker URL，避免无密码 Redis 的 AUTH 错误
+            if self.REDIS_PASSWORD:
+                self.CELERY_BROKER_URL = f"redis://:{self.REDIS_PASSWORD}@{self.REDIS_HOST}:{self.REDIS_PORT}/1"
+            else:
+                self.CELERY_BROKER_URL = f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/1"
+        
         result_backend = os.getenv("RESULT_BACKEND")
         if result_backend:
             self.CELERY_RESULT_BACKEND = result_backend
+        else:
+            # 同样处理 result backend
+            if self.REDIS_PASSWORD:
+                self.CELERY_RESULT_BACKEND = f"redis://:{self.REDIS_PASSWORD}@{self.REDIS_HOST}:{self.REDIS_PORT}/2"
+            else:
+                self.CELERY_RESULT_BACKEND = f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/2"
+        
         # 验证必填的敏感配置
         if not self.DATABASE_PASSWORD:
             raise ValueError(

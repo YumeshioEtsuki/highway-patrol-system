@@ -14,20 +14,25 @@ class RedisClient:
     def get_client(cls) -> redis.Redis:
         """获取或创建 Redis 客户端"""
         if cls._instance is None:
-            cls._instance = redis.Redis(
-                host=settings.REDIS_HOST,
-                port=settings.REDIS_PORT,
-                db=settings.REDIS_DB,
-                password=settings.REDIS_PASSWORD,
-                decode_responses=True,
-                socket_connect_timeout=5,
-                socket_keepalive=True,
-                socket_keepalive_options={
+            # 只有当密码非空时才传递，避免无密码 Redis 的 AUTH 错误
+            redis_kwargs = {
+                "host": settings.REDIS_HOST,
+                "port": settings.REDIS_PORT,
+                "db": settings.REDIS_DB,
+                "decode_responses": True,
+                "socket_connect_timeout": 5,
+                "socket_keepalive": True,
+                "socket_keepalive_options": {
                     1: 1,  # TCP_KEEPIDLE
                     2: 3,  # TCP_KEEPINTVL
                     3: 5,  # TCP_KEEPCNT
                 },
-            )
+            }
+            # 仅在密码非空时添加
+            if settings.REDIS_PASSWORD:
+                redis_kwargs["password"] = settings.REDIS_PASSWORD
+            
+            cls._instance = redis.Redis(**redis_kwargs)
             # 测试连接
             try:
                 cls._instance.ping()

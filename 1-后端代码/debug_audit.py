@@ -1,5 +1,5 @@
 import mysql.connector
-from utils.config import db_config
+from settings import db_config
 
 conn = mysql.connector.connect(**db_config)
 cursor = conn.cursor(dictionary=True)
@@ -23,3 +23,5 @@ total_count = cursor.fetchone()['cnt']
 print(f"  总记录数: {total_count}")
 
 conn.close()
+
+from settings import db_config

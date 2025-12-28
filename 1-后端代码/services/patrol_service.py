@@ -10,7 +10,7 @@ from io import BytesIO
 from fastapi.responses import StreamingResponse
 from PIL import Image, ImageDraw, ImageFont
 from settings import settings
-from utils.config import db_config
+from settings import db_config
 from core.sse import sse_message
 from utils.utils import get_db_connection, hash_password, verify_password
 from models.schema import CREATE_TABLES_SQL

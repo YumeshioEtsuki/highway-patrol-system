@@ -25,28 +25,16 @@ REM 检查环境配置
 REM ===============================
 echo [0/5] 检查环境配置...
 
-REM 统一到项目根目录，避免从 system32 等目录运行导致找不到 .env
-cd /d "%~dp0.."
-
-if "%SECURE_MODE%"=="1" (
-    echo [INFO] 安全模式已启用：跳过 .env 文件读取，改为使用系统环境变量
-) else (
-    if not exist ".env" (
-        echo.
-        echo [错误] 未检测到 .env 配置文件！
-        echo.
-        echo 请先运行配置向导：
-        echo    bin\setup_password.bat
-        echo.
-        echo 或手动创建：
-        echo    copy .env.example .env
-        echo    然后编辑 .env 设置 DATABASE_PASSWORD
-        echo.
-        pause
-        exit /b 1
+REM BOOTSTRAP_ADMIN 提示：仅限开发/初始化场景
+if "%BOOTSTRAP_ADMIN%"=="1" (
+    if "%SECURE_MODE%"=="1" (
+        powershell -Command "Write-Host '[警告] BOOTSTRAP_ADMIN=1 在 SECURE_MODE 下会被忽略，请改回 0 并改用 bin/create_admin.py 创建管理员' -ForegroundColor Red"
+    ) else (
+        powershell -Command "Write-Host '[提示] BOOTSTRAP_ADMIN=1：将在启动时创建默认管理员' -ForegroundColor Yellow"
     )
-
-    echo [OK] .env 配置文件已存在
+    echo.
+) else (
+    echo [OK] BOOTSTRAP_ADMIN=0（使用 bin/create_admin.py 显式创建管理员）
     echo.
 )
 
@@ -63,15 +51,15 @@ if "%SECURE_MODE%"=="1" (
         exit /b 1
     )
 ) else (
-    if not exist "1-后端代码\.env" (
-        echo [错误] 未检测到 1-后端代码\.env 配置文件！
+    if not exist "..\1-后端代码\.env" (
+        echo [错误] 未检测到 ..\1-后端代码\.env 配置文件！
         echo.
         echo 请先运行配置向导：
         echo    bin\setup_password.bat
         echo.
         echo 或手动创建：
-        echo    copy 1-后端代码\.env.example 1-后端代码\.env
-        echo    然后编辑 1-后端代码\.env 设置 DATABASE_PASSWORD
+        echo    copy ..\1-后端代码\.env.example ..\1-后端代码\.env
+        echo    然后编辑 ..\1-后端代码\.env 设置 DATABASE_PASSWORD
         echo.
         pause
         exit /b 1
@@ -105,7 +93,7 @@ if %errorlevel% neq 0 (
     echo 📥 其他安装方式：
     echo    1. Windows版本: https://github.com/microsoftarchive/redis/releases
     echo    2. WSL2安装: sudo apt install redis-server
-    echo    3. 查看完整指南: .\bin\REDIS_DOCKER_GUIDE.md
+    echo    3. 查看完整指南: .\docs\ops\REDIS_DOCKER_GUIDE.md
     echo.
     echo ⏭️  跳过 Redis，继续启动其他服务（功能会降级）
     timeout /t 5 /nobreak
@@ -190,17 +178,17 @@ if %errorlevel% == 0 (
 )
 
 REM ===============================
-REM 切换到后端目录
+REM 检查 Python
 REM ===============================
 echo.
-echo [4/5] 切换到后端目录...
-cd /d "%~dp0..\1-后端代码"
-if %errorlevel% neq 0 (
-    echo [ERROR] 无法找到后端目录
+echo [4/5] 检查 Python 环境...
+python --version >nul 2>&1
+if errorlevel 1 (
+    echo [ERROR] 未检测到 Python，请安装 Python 3.10+ 并加入 PATH
     pause
     exit /b 1
 )
-echo [OK] 当前目录: %cd%
+echo [OK] Python 已安装
 
 REM ===============================
 REM 启动 Celery Worker（后台运行）
@@ -214,7 +202,9 @@ if %errorlevel% == 0 (
     echo [OK] Celery Worker 已在运行
 ) else (
     REM 启动 Celery Worker（新窗口）- 使用 python -m 方式避免 PATH 问题
+    pushd "%~dp0..\1-后端代码"
     start "Celery Worker" cmd /k "title Celery Worker - 异步任务队列 && python -m celery -A celery_app worker --loglevel=info --pool=solo"
+    popd
     timeout /t 3 /nobreak >nul
     echo [OK] Celery Worker 已启动（新窗口）
 )
@@ -231,14 +221,18 @@ echo.
 echo 🚀 正在启动 FastAPI 服务器...
 echo ============================================================
 echo.
-set SKIP_DB_INIT=1
-set APPLY_INDEXES=1
-setlocal
-if "%APPLY_INDEXES%"=="1" (
-    set APPLY_INDEXES_ON_START=1
-)
-python bin\start_server.py --skip-db-init
-endlocal
+
+REM 切换到项目根目录（本脚本位于 bin/，根目录为上一层）
+pushd "%~dp0\.."
+
+REM 默认使用 dev 环境，可通过第一个参数覆盖
+set ENV=%1
+if "%ENV%"=="" set ENV=dev
+
+REM 调用根级 start_server.py 完成环境切换+校验+启动
+python start_server.py --env %ENV%
+
+popd
 
 REM 如果 FastAPI 退出，提示用户
 echo.

@@ -97,13 +97,13 @@ if __name__ == '__main__':
             # 使用数据库目录中的索引脚本（从后端/bin/ 向上到项目根目录，再找 3-数据库）
             idx_path = Path(__file__).resolve().parent.parent.parent / "3-数据库" / "02_create_indexes.sql"
             if idx_path.exists():
-                print(f"[INFO] 应用索引脚本: {idx_path}")
+                print(f"[INFO] Applying index script: {idx_path}")
                 ok = execute_sql_file(str(idx_path), skip_read_only_queries=True, print_query_results=False, stop_on_error=False)
-                print("[OK] 索引脚本执行完成" if ok else "[WARN] 索引脚本执行部分失败")
+                print("[OK] Index script completed" if ok else "[WARN] Index script partially failed")
             else:
-                print(f"[WARN] 未找到索引脚本: {idx_path}")
+                print(f"[WARN] Index script not found: {idx_path}")
         except Exception as e:
-            print(f"[WARN] 索引脚本执行失败: {e}")
+            print(f"[WARN] Index script execution failed: {e}")
 
     # 启动服务器
     import uvicorn
@@ -117,20 +117,20 @@ if __name__ == '__main__':
     server = uvicorn.Server(config)
     
     print(f"\n{'='*60}")
-    print(f"  🚀 服务器启动中...")
-    print(f"  📍 地址: http://{HOST}:{PORT}")
-    print(f"  📚 API 文档: http://{HOST}:{PORT}/docs")
-    print(f"  💬 AI 助手已集成 (Ollama + 千问)")
+    print(f"  [*] Server starting...")
+    print(f"  [*] Address: http://{HOST}:{PORT}")
+    print(f"  [*] API docs: http://{HOST}:{PORT}/docs")
+    print(f"  [*] AI assistant integrated (Ollama + Qwen)")
     if SKIP_DB_INIT:
-        print(f"  ⚠️ 已启用 SKIP_DB_INIT=1：将跳过数据库初始化")
-        print(f"     若为首次启动或表缺失，部分接口将返回空数据或需要初始化。")
-        print(f"     可执行 reset_db.py 或移除 SKIP_DB_INIT 后重启。")
+        print(f"  [WARN] SKIP_DB_INIT=1 enabled: skipping database initialization")
+        print(f"         If first run or tables missing, some endpoints may return empty.")
+        print(f"         Run reset_db.py or remove SKIP_DB_INIT and restart.")
     if APPLY_INDEXES:
-        print(f"  🧩 已启用 APPLY_INDEXES：启动前运行索引与审计表脚本")
-    print(f"  按 Ctrl+C 停止服务器")
+        print(f"  [*] APPLY_INDEXES enabled: running index and audit table script")
+    print(f"  Press Ctrl+C to stop server")
     print(f"{'='*60}\n")
     
     try:
         asyncio.run(server.serve())
     except KeyboardInterrupt:
-        print("\n[INFO] 服务器已停止")
+        print("\n[INFO] Server stopped")

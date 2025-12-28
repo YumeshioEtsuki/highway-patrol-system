@@ -109,6 +109,21 @@ def get_db_connection():
             # 池耗尽时回退到直连，避免接口直接 500
             pass
 
+    # Debug: log actual DB config used at connect time
+    try:
+        import logging
+        _log = logging.getLogger("db")
+        msg = "DB connect params host=%s user=%s password=%s database=%s" % (
+            db_config.get('host'),
+            db_config.get('user'),
+            repr(db_config.get('password')),
+            db_config.get('database'),
+        )
+        _log.error(msg)
+        print("[DEBUG] " + msg)
+    except Exception:
+        print("[DEBUG] db logging failed")
+
     return mysql.connector.connect(
         host=db_config['host'],
         user=db_config['user'],
@@ -422,6 +437,14 @@ def initialize_database(step='all', skip_read_only_queries=True):
     print("开始数据库初始化...")
     print("=" * 50)
 
+    SECURE_MODE = os.getenv("SECURE_MODE", "0") == "1"
+    BOOTSTRAP_ADMIN = os.getenv("BOOTSTRAP_ADMIN", "0") == "1"
+    if BOOTSTRAP_ADMIN:
+        if SECURE_MODE:
+            print("⚠️ BOOTSTRAP_ADMIN=1 在 SECURE_MODE 下会被忽略，请使用脚本 bin/create_admin.py 显式创建管理员。")
+        else:
+            print("ℹ️ BOOTSTRAP_ADMIN=1 已启用：仅用于开发/初始化缺省管理员。完成后请恢复为 0 以减少风险。")
+
     conn = None
     cursor = None
     try:
@@ -463,17 +486,37 @@ def initialize_database(step='all', skip_read_only_queries=True):
         else:
             print("📋 数据表已存在")
         
-        # 检查是否已有数据
+        # 检查是否已有数据，并在明确启用时引导创建默认管理员
         if step == 'all':
             cursor.execute("SELECT COUNT(*) FROM User")
             user_count = cursor.fetchone()[0]
-            
+            # 业界做法：管理员账号创建应为显式运维动作，避免默认弱口令
+            import os
+            cursor.execute("SELECT COUNT(*) FROM User WHERE username=%s", ('admin',))
+            admin_exists = cursor.fetchone()[0] > 0
+            if admin_exists and BOOTSTRAP_ADMIN:
+                print("ℹ️ 已存在 admin 账号，建议将 BOOTSTRAP_ADMIN 设回 0（避免遗留默认入口）")
+            if not admin_exists:
+                if BOOTSTRAP_ADMIN and not SECURE_MODE:
+                    print("🛡️ 未检测到管理员账号，已开启 BOOTSTRAP_ADMIN，创建默认 admin...")
+                    from passlib.context import CryptContext
+                    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+                    admin_plain = os.getenv("DEFAULT_ADMIN_PASSWORD", "REDACTED")
+                    cursor.execute(
+                        """
+                        INSERT INTO User (username, password, real_name, phone, email, role, created_at)
+                        VALUES (%s, %s, %s, %s, %s, %s, NOW())
+                        """,
+                        ('admin', pwd_context.hash(admin_plain), '系统管理员', '11451419198', 'admin@example.com', 'admin')
+                    )
+                    conn.commit()
+                    print("✅ 默认管理员创建完成（开发/测试环境）")
+                else:
+                    print("⚠️ 未检测到管理员账号。请运行 bin/create_admin.py 或设置 BOOTSTRAP_ADMIN=1 并提供强口令。")
+
             if user_count == 0:
                 print("📝 插入初始数据...")
-                # 测试数据已在 scripts/add_hangzhou_data.py 中提供
-                # 此处跳过自动导入，用户需手动运行 python scripts/add_hangzhou_data.py
                 TEST_DATA = {}
-                
                 for table_name, rows in TEST_DATA.items():
                     if not rows:
                         continue
@@ -490,22 +533,17 @@ def initialize_database(step='all', skip_read_only_queries=True):
                                 vals.append(v)
                         insert_sql = f"INSERT INTO {table_name} ({', '.join(cols)}) VALUES ({', '.join(sql_vals)})"
                         cursor.execute(insert_sql, vals)
-                
                 conn.commit()
-                
-                # 显示插入结果
                 cursor.execute("SELECT COUNT(*) FROM RoadSegment")
                 segment_count = cursor.fetchone()[0]
                 cursor.execute("SELECT COUNT(*) FROM ProblemType")
                 problem_count = cursor.fetchone()[0]
-                
                 print(f"  ✅ 已插入 {user_count} 个用户")
                 print(f"  ✅ 已插入 {segment_count} 条路段")
                 print(f"  ✅ 已插入 {problem_count} 种问题类型")
                 print("✅ 数据表结构初始化完成")
-                print("💡 要插入测试数据，请运行: python scripts/add_hangzhou_data.py")
             else:
-                print(f"📋 数据库已有数据（{user_count} 个用户），跳过插入")
+                print(f"📋 数据库已有数据（{user_count} 个用户）")
         
         print("\n" + "=" * 50)
         print("✅ 数据库初始化全部成功！")

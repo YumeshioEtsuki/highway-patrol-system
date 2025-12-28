@@ -70,7 +70,7 @@ bin\stop_all.bat
 
 ### 📖 详细说明
 
-- [完整启动指南](bin/STARTUP_GUIDE.md) - Redis安装、手动启动、监控
+- [完整启动指南](docs/ops/STARTUP_GUIDE.md) - Redis安装、手动启动、监控
 - [Redis与Celery说明](4-文档/功能说明/REDIS_CELERY说明.md) - 异步架构详解
 
 ### 🔗 访问地址

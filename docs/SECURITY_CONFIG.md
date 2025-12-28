@@ -192,7 +192,7 @@ set REDIS_PASS=your_redis_password
 
 ## 📚 相关文档
 
-- [启动指南](../bin/STARTUP_GUIDE.md)
+- [启动指南](ops/STARTUP_GUIDE.md)
 - [部署文档](../4-文档/核心文档/SETUP.md)
 - [API 文档](../4-文档/核心文档/API接口文档.md)
 

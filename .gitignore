@@ -1,3 +1,21 @@
+# Environment files
+.env
+tooling/env/production.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Logs
+logs/
+
+# Node / front-end (if any)
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
 # Python
 __pycache__/
 *.pyc
