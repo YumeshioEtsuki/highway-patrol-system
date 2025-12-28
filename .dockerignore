@@ -1,0 +1,12 @@
+.git
+**/__pycache__/
+**/*.py[cod]
+*.log
+logs
+photos
+exports
+reports
+.venv
+.env
+.env.*
+tooling/archive
