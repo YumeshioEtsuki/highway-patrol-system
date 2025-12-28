@@ -1491,6 +1491,8 @@ tbody tr:hover { background: rgba(91,139,255,0.08); }
     function changeDataTypeFilter() {
         currentDataType = document.getElementById('dataTypeFilter').value;
         CURRENT_PAGE = 1; // 重置到第一页
+        console.log('🔄 [changeDataTypeFilter] 已切换data_type为:', currentDataType);
+        // 清除缓存（通过时间戳参数）
         loadRecords();
         loadStats();
     }
@@ -2741,8 +2743,20 @@ tbody tr:hover { background: rgba(91,139,255,0.08); }
                 if (recordQuick) recordQuick.value = '';
                 CURRENT_PAGE = 1;
                 
+                // 同时重置审计过滤器，确保能看到新生成的数据
+                const as = document.getElementById('auditStart');
+                const ae = document.getElementById('auditEnd');
+                const aq = document.getElementById('auditQuick');
+                if (as) as.value = '';
+                if (ae) ae.value = '';
+                if (aq) aq.value = '';
+                AUDIT_CURRENT_PAGE = 1;
+                
                 await loadRecords();
                 await loadStats();
+                if (typeof loadAudit === 'function') {
+                    loadAudit().catch(err => console.warn('[GenerateFake] 审计刷新失败:', err));
+                }
                 
                 const table = document.getElementById('recordTable');
                 if (table) table.scrollIntoView({ behavior: 'smooth', block: 'start' });

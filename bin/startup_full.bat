@@ -207,11 +207,11 @@ if errorlevel 1 (
     exit /b 1
 )
 echo [OK] Python 已安装
+echo.
 
 REM ===============================
 REM 检查 Ollama（AI 模型服务）- 可选
 REM ===============================
-echo.
 echo [4.5/6] 检查 Ollama（AI 模型服务 - 可选）...
 
 REM 检查 Ollama 服务是否运行
@@ -228,6 +228,7 @@ if %errorlevel% == 0 (
     echo    3. 拉取模型（首次）：ollama pull qwen:7b
     echo.
 )
+echo.
 
 echo [5/6] 启动 Celery Worker...
 
