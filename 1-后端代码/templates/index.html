@@ -75,6 +75,29 @@
             color: var(--muted);
             font-size: 14px;
         }
+        .admin-link {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            padding: 10px 16px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--stroke);
+            border-radius: 10px;
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .admin-link:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(255,255,255,0.15);
+            color: #e2e8f0;
+            transform: translateY(-1px);
+        }
         input, select {
             width: 100%;
             padding: 10px 12px;
@@ -104,6 +127,7 @@
     </style>
 </head>
 <body>
+    <a href="admin.html" class="admin-link" title="管理员入口">⚙️ 管理员</a>
     <div class="card">
         <h1>🛣️ 公路巡查系统</h1>
         <p class="sub">基于 FastAPI + MySQL，支持巡查上报、后台管控与统计导出。</p>
@@ -113,16 +137,15 @@
                 <p class="feature-desc">上报问题、上传照片、查看个人巡查记录。</p>
             </div>
             <div class="feature-card">
-                <p class="feature-title">管理员看板</p>
-                <p class="feature-desc">多维筛选、导出 Excel、实时统计与问题分类概览。</p>
+                <p class="feature-title">数据可视化</p>
+                <p class="feature-desc">世界地图热力分析、问题分布统计与趋势展示。</p>
             </div>
             <div class="feature-card">
-                <p class="feature-title">诊断与重置</p>
-                <p class="feature-desc">数据库校验、状态检查、一键重置（含测试数据）。</p>
+                <p class="feature-title">管理员看板</p>
+                <p class="feature-desc">多维筛选、导出Excel、实时统计（需管理员权限）。</p>
             </div>
         </div>
-        <a href="patrol.html" class="btn">👤 巡查员登录</a>
-        <a href="admin.html" class="btn" id="adminBtn">🛠️ 管理员入口</a>
+        <a href="patrol.html" class="btn">👤 用户登录</a>
         <a href="map.html" class="btn">🌍 世界地图分析</a>
     </div>
     <div class="footer">

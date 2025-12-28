@@ -433,7 +433,7 @@
       mapChart = echarts.init(document.getElementById('worldMap'));
       console.log('✅ 地图实例已创建');
       
-      // 配置地图
+      // 配置地图（通过 geo 控制视口，series 绑定 geoIndex）
       const option = {
         backgroundColor: 'transparent',
         tooltip: {
@@ -451,12 +451,29 @@
             color: ['#1e3a8a', '#2563eb']
           }
         },
-        series: [{
-          type: 'map',
+        geo: {
           map: 'world',
           roam: true,
+          center: [104, 35],
+          zoom: 1.8,
+          itemStyle: {
+            areaColor: '#1e3a8a',
+            borderColor: '#3b82f6',
+            borderWidth: 0.8
+          },
+          emphasis: {
+            itemStyle: {
+              areaColor: '#2563eb',
+              borderColor: '#60a5fa',
+              borderWidth: 1.5
+            }
+          }
+        },
+        series: [{
+          type: 'map',
+          geoIndex: 0,
+          roam: true,
           aspectScale: 0.85,
-          zoom: 1.2,
           label: {
             show: false // 默认不显示国名，避免密集
           },
@@ -563,7 +580,8 @@
           type: 'map',
           map: 'china',
           roam: true,
-          zoom: 1.2,
+            zoom: 1.6,
+            center: [105, 36],
           label: {
             show: true,
             color: '#94a3b8',
@@ -928,16 +946,16 @@
       document.getElementById('worldMap').innerHTML = '<div style="padding:24px;color:#7af0d8">⏳ 正在加载地图...</div>';
       
       try {
-        // 先加载统计数据和图表
+        // 先加载统计数据和图表（世界视图）
         console.log('📊 加载统计数据...');
         const stats = await fetchStats({ scope:'world', region:'' });
         console.log('✅ 统计数据加载成功:', stats);
         renderCharts(stats);
-        
+
         // 清除加载提示
         document.getElementById('worldMap').innerHTML = '';
-        
-        // 再初始化地图
+
+        // 再初始化地图（默认世界视图，但视口居中中国且放大）
         console.log('🗺️ 初始化地图...');
         await initMap();
         console.log('✅ 地图初始化成功');
