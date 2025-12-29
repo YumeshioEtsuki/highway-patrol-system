@@ -1,44 +1,49 @@
 @echo off
+setlocal enabledelayedexpansion
 chcp 65001 >nul
 
+:start
 echo.
 echo ============================================================
-echo � 公路巡查系统 - 快速启动菜单
+echo Highway Patrol System - Quick Start Menu
 echo ============================================================
 echo.
-echo 【核心功能】
-echo   1. 🚀 快速启动（开发模式）
-echo   2. 🚀 完整启动（Redis + Celery + FastAPI）
-echo   3. 📊 数据库检查
+echo [Core Functions]
+echo   1. Quick Start (Dev Mode)
+echo   2. Full Start (Redis + Celery + FastAPI)
+echo   3. Database Check
 echo.
-echo 【开发工具】
-echo   4. 🔧 配置管理工具（Web/CLI）
+echo [Dev Tools]
+echo   4. Config Manager (Web/CLI)
 echo.
-echo   0. 退出
+echo   0. Exit
 echo.
 echo ============================================================
 echo.
 
-set /p choice="请选择 (0-4): "
+set /p choice="Select (0-4): "
 
 if "%choice%"=="1" (
     call "%~dp0startup.bat"
+    goto :start
 ) else if "%choice%"=="2" (
     call "%~dp0startup_full.bat"
+    goto :start
 ) else if "%choice%"=="3" (
     cd /d "%~dp0.."
     python check_db.py
     pause
+    goto :start
 ) else if "%choice%"=="4" (
     echo.
     echo ============================================================
-    echo 🔧 配置管理工具
+    echo Config Manager
     echo ============================================================
-    echo   1. 🌐 Web 界面（推荐）
-    echo   2. 📟 命令行界面
-    echo   0. 返回主菜单
+    echo   1. Web UI (Recommended)
+    echo   2. CLI
+    echo   0. Back to Main Menu
     echo ============================================================
-    set /p tool_choice="请选择: "
+    set /p tool_choice="Select: "
     if "!tool_choice!"=="1" (
         call "%~dp0env-manager-web.bat"
     ) else if "!tool_choice!"=="2" (
@@ -50,7 +55,7 @@ if "%choice%"=="1" (
 ) else if "%choice%"=="0" (
     exit /b 0
 ) else (
-    echo ❌ 无效选择
+    echo Invalid choice
     pause
     goto :start
 )

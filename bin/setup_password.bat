@@ -2,32 +2,29 @@
 chcp 65001 >nul
 setlocal EnableDelayedExpansion
 
-REM 统一到项目根目录（脚本位于 bin 下，上一级为项目根）
 pushd "%~dp0.."
 
 echo.
 echo ========================================
-echo   🔐 数据库密码配置向导
+echo   Database Password Setup Wizard
 echo ========================================
 echo.
 
-REM 安全模式提示：启用后系统将忽略 .env，仅使用系统环境变量
 if /i "%SECURE_MODE%"=="1" (
-    echo [信息] 检测到已启用 SECURE_MODE=1（安全模式）
-    echo [提示] 在安全模式下，应用不会读取 .env 文件，推荐直接设置环境变量：
-    echo         set DB_PASSWORD=your_password  或  set DATABASE_PASSWORD=your_password
-    set /p continue_secure="仍要创建/更新 .env 文件吗？(y/N): "
+    echo [INFO] SECURE_MODE=1 detected
+    echo [TIP] In secure mode, app ignores .env and uses system environment variables
+    echo       Recommended: set DB_PASSWORD=your_password or set DATABASE_PASSWORD=your_password
+    set /p continue_secure="Still want to create/update .env? (y/N): "
     if /i not "!continue_secure!"=="y" (
-        echo [取消] 已按安全模式跳过 .env 写入。你可直接运行启动脚本。
+        echo [CANCEL] Skipped .env creation in secure mode
         popd
         pause
         exit /b 0
     )
 )
 
-REM 检查 .env 文件是否存在
 if exist ".env" (
-    echo [信息] 检测到已存在 .env 文件
+    echo [INFO] Found existing .env file
     set /p overwrite="是否覆盖？(y/N): "
     if /i not "!overwrite!"=="y" (
         echo [取消] 保持现有配置
