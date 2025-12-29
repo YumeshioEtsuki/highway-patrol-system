@@ -1,15 +1,15 @@
 # models/schema.py
 
-# 数据库建表语句（按外键依赖顺序排列）
+# 数据库建表语句（按外键依赖顺序排列，都使用 IF NOT EXISTS 避免重复创建错误）
 CREATE_TABLES_SQL = [
     """
-    CREATE TABLE Department (
+    CREATE TABLE IF NOT EXISTS Department (
         department_id INT PRIMARY KEY AUTO_INCREMENT,
         department_name VARCHAR(100) NOT NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='部门表';
     """,
     """
-    CREATE TABLE RoadSegment (
+    CREATE TABLE IF NOT EXISTS RoadSegment (
         segment_id INT PRIMARY KEY AUTO_INCREMENT,
         segment_name VARCHAR(100) NOT NULL,
         start_number INT NOT NULL,
@@ -20,7 +20,7 @@ CREATE_TABLES_SQL = [
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='路段信息表';
     """,
     """
-    CREATE TABLE User (
+    CREATE TABLE IF NOT EXISTS User (
         user_id INT PRIMARY KEY AUTO_INCREMENT,
         username VARCHAR(50) NOT NULL UNIQUE,
         password VARCHAR(255) NOT NULL,
@@ -35,14 +35,14 @@ CREATE_TABLES_SQL = [
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户表';
     """,
     """
-    CREATE TABLE ProblemType (
+    CREATE TABLE IF NOT EXISTS ProblemType (
         type_id INT PRIMARY KEY AUTO_INCREMENT,
         type_name VARCHAR(50) NOT NULL,
         parent_id INT
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='问题类型表';
     """,
     """
-    CREATE TABLE InspectionRecord (
+    CREATE TABLE IF NOT EXISTS InspectionRecord (
         record_id INT PRIMARY KEY AUTO_INCREMENT,
         user_id INT NOT NULL,
         upload_time DATETIME NOT NULL,
@@ -63,7 +63,7 @@ CREATE_TABLES_SQL = [
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='巡查记录表';
     """,
     """
-    CREATE TABLE Photo (
+    CREATE TABLE IF NOT EXISTS Photo (
         photo_id INT PRIMARY KEY AUTO_INCREMENT,
         record_id INT NOT NULL,
         photo_type ENUM('test_pictures', 'after_fix') NOT NULL,
@@ -74,10 +74,26 @@ CREATE_TABLES_SQL = [
         is_watermarked BOOLEAN DEFAULT TRUE,
         FOREIGN KEY (record_id) REFERENCES InspectionRecord(record_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='照片表';
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS AuditLog (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        user_id INT,
+        username VARCHAR(50),
+        action VARCHAR(100) NOT NULL COMMENT '操作类型：登录/新增/修改/删除等',
+        resource VARCHAR(255) COMMENT '操作资源：记录ID/用户ID等',
+        details TEXT COMMENT '操作详情JSON',
+        ip_address VARCHAR(45) COMMENT '操作IP地址',
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '操作时间',
+        FOREIGN KEY (user_id) REFERENCES User(user_id) ON DELETE SET NULL,
+        INDEX idx_user_id (user_id),
+        INDEX idx_action (action),
+        INDEX idx_timestamp (timestamp)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='审计日志表';
     """
 ]
 
 # 索引创建语句（在表创建完成后执行）
 CREATE_INDEXES_SQL = [
-    "CREATE INDEX idx_data_type ON InspectionRecord(data_type);"
+    "CREATE INDEX IF NOT EXISTS idx_data_type ON InspectionRecord(data_type);"
 ]

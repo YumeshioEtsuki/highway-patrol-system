@@ -14,6 +14,40 @@ from settings import db_config
 from core.sse import sse_message
 from utils.utils import get_db_connection, hash_password, verify_password
 from models.schema import CREATE_TABLES_SQL
+from core.logger import setup_logger
+
+logger = setup_logger(__name__)
+
+
+def _ensure_audit_table(cur, conn):
+    """Ensure AuditLog table exists; create if missing (id, user_id, action, resource, details, timestamp)."""
+    try:
+        cur.execute("SHOW TABLES LIKE 'AuditLog'")
+        exists = cur.fetchone()
+        if exists:
+            return
+        cur.execute(
+            """
+            CREATE TABLE AuditLog (
+                id INT PRIMARY KEY AUTO_INCREMENT,
+                user_id INT,
+                username VARCHAR(50),
+                action VARCHAR(100) NOT NULL COMMENT '操作类型：登录/新增/修改/删除等',
+                resource VARCHAR(255) COMMENT '操作资源：记录ID/用户ID等',
+                details TEXT COMMENT '操作详情JSON',
+                ip_address VARCHAR(45) COMMENT '操作IP地址',
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '操作时间',
+                INDEX idx_user_id (user_id),
+                INDEX idx_action (action),
+                INDEX idx_timestamp (timestamp)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='审计日志表';
+            """
+        )
+        conn.commit()  # 🔥 关键：提交事务
+        logger.info("🛠️ [audit] 已自动创建 AuditLog 表")
+    except Exception as e:
+        logger.error(f"❌ [audit] 创建AuditLog表失败: {e}")
+        conn.rollback()
 
 # 统计缓存（优先使用 Redis，失败则使用内存）
 _STATS_CACHE = {}
@@ -102,6 +136,7 @@ def insert_audit_log(user_id: int, action: str, resource: str, details: str | No
     try:
         conn = get_db_connection()
         cur = conn.cursor()
+        _ensure_audit_table(cur, conn)  # 🔥 传入conn参数
         cur.execute(
             """
             INSERT INTO AuditLog (user_id, action, resource, details)
@@ -110,6 +145,10 @@ def insert_audit_log(user_id: int, action: str, resource: str, details: str | No
             (user_id, action, resource, details)
         )
         conn.commit()
+        try:
+            logger.info(f"📝 [audit] user_id={user_id}, action={action}, resource={resource}")
+        except Exception:
+            pass
         cur.close()
         conn.close()
     except Exception:
@@ -128,6 +167,15 @@ def get_audit_logs(action: str | None = None, user_id: int | None = None,
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     try:
+        _ensure_audit_table(cursor, conn)  # 🔥 传入conn参数
+        # 统一操作中文文案映射
+        action_map = {
+            "mark_processing": "标记处理中",
+            "mark_completed": "标记已完成",
+            "reinit_database": "重置数据库",
+            "generate_data": "生成数据",
+            "clean_test_data": "清理测试数据",
+        }
         sql = """
             SELECT id, user_id, action, resource, details, timestamp
             FROM AuditLog
@@ -188,6 +236,10 @@ def get_audit_logs(action: str | None = None, user_id: int | None = None,
 
         cursor.execute(sql, params + [page_size, offset])
         rows = cursor.fetchall()
+        # 增强：附加中文操作名称，前端/导出可直接使用
+        for r in rows:
+            act = (r.get('action') or '').strip()
+            r['action_label'] = action_map.get(act, act or '未知操作')
         return {
             'records': rows,
             'total': int(total or 0),
@@ -1277,7 +1329,20 @@ def _ensure_seed_data(conn, cursor):
     # 用户
     cursor.execute("SELECT COUNT(*) FROM User")
     if cursor.fetchone()[0] == 0:
-        admin_pwd_plain = os.getenv("DEFAULT_ADMIN_PASSWORD", "REDACTED")
+        # 优先使用环境变量，如果未设置则生成随机强密码
+        admin_pwd_plain = os.getenv("DEFAULT_ADMIN_PASSWORD")
+        if not admin_pwd_plain:
+            # 生成16位随机强密码（包含大小写字母、数字、特殊字符）
+            import secrets
+            import string
+            alphabet = string.ascii_letters + string.digits + '!@#$%^&*'
+            admin_pwd_plain = ''.join(secrets.choice(alphabet) for _ in range(16))
+            print(f"\n{'='*60}")
+            print(f"⚠️  自动生成的管理员密码（请立即保存）:")
+            print(f"   用户名: admin")
+            print(f"   密码: {admin_pwd_plain}")
+            print(f"{'='*60}\n")
+        
         inspector_pwd_plain = os.getenv("DEFAULT_INSPECTOR_PASSWORD", "inspector")
         cursor.executemany(
             """
@@ -1407,17 +1472,16 @@ def generate_fake_records(count: int = 50, with_photos: bool = False):
                     )
                     photo_id = cursor.lastrowid
 
-                    # 推送 SSE 照片事件（若前端已订阅）
-                    try:
-                        from routes.patrol.sse_routes import push_new_photo_event
-                        # 转换为HTTP可访问的URL
-                        photo_http_url = f"/photos/{filename}"
-                        push_new_photo_event(record_id, photo_id, photo_http_url)
-                    except ImportError:
-                        # 若 SSE 路由未加载，忽略此错误（推送可选）
-                        pass
-                    except Exception as e:
-                        print(f"[SSE] 推送照片事件失败: {e}")
+                    # 推送 SSE 照片事件（限流：只推送前10张或每10%的照片）
+                    should_push_sse = (i < 10) or ((i + 1) % max(1, int(count / 10)) == 0)
+                    if should_push_sse:
+                        try:
+                            from routes.patrol.sse_routes import push_new_photo_event
+                            photo_http_url = f"/photos/{filename}"
+                            push_new_photo_event(record_id, photo_id, photo_http_url)
+                        except Exception:
+                            # 推送失败静默忽略（不影响主流程）
+                            pass
                 
                 # 每 BATCH_SIZE 条记录提交一次，避免大事务超时
                 if (i + 1) % BATCH_SIZE == 0:
@@ -1568,15 +1632,17 @@ def stream_generate_fake_records(count: int = 50, with_photos: bool = False):
                             """,
                             (record_id, 'test_pictures', filepath, filename, len(base_bytes), 1)
                         )
-                        # 推送 SSE 照片事件到前端实时面板
-                        try:
-                            photo_id = cursor.lastrowid
-                            from routes.patrol.sse_routes import push_new_photo_event
-                            photo_http_url = f"/photos/{filename}"
-                            push_new_photo_event(record_id, photo_id, photo_http_url)
-                        except Exception as e:
-                            # 推送失败不影响主流程
-                            print(f"[SSE] 推送照片事件失败: {e}")
+                        # 推送 SSE 照片事件（限流：只推送前10张或每10%的照片，避免过载）
+                        photo_id = cursor.lastrowid
+                        should_push_sse = (i < 10) or ((i + 1) % max(1, int(count / 10)) == 0)
+                        if should_push_sse:
+                            try:
+                                from routes.patrol.sse_routes import push_new_photo_event
+                                photo_http_url = f"/photos/{filename}"
+                                push_new_photo_event(record_id, photo_id, photo_http_url)
+                            except Exception as e:
+                                # 推送失败不影响主流程（静默忽略）
+                                pass
                     
                     # 更频繁地报告进度：每条或每10%
                     should_report = (i + 1) % max(1, int(count / 10)) == 0 or (i + 1) % BATCH_SIZE == 0
@@ -1598,6 +1664,19 @@ def stream_generate_fake_records(count: int = 50, with_photos: bool = False):
             conn.commit()
             cursor.close()
             conn.close()
+            
+            # 生成数据后清除所有统计缓存
+            try:
+                from utils.redis_client import cache_delete_pattern
+                cache_delete_pattern("admin_stats:*")
+                cache_delete_pattern("admin:stats:*")
+                cache_delete_pattern("admin:patrol:list:*")
+                cache_delete_pattern("patrol:list:*")
+                yield sse_message('info', '🧹 已清除所有统计缓存')
+                yield '\n'
+            except Exception as e:
+                yield sse_message('warning', f'⚠️ 清除缓存失败: {str(e)[:50]}')
+                yield '\n'
             
             photo_msg = f"，含 {inserted_count} 张图片" if with_photos else ""
             yield sse_message('success', f'✅ 成功生成 {inserted_count}/{count} 条数据{photo_msg}')
@@ -1738,7 +1817,16 @@ def stream_reinit_database_with_step(step):
                 try:
                     first_line = stmt.strip().split('\n')[0].strip()
                     parts = first_line.split()
-                    table_name = parts[2] if len(parts) >= 3 and parts[0].upper() == 'CREATE' and parts[1].upper() == 'TABLE' else 'unknown_table'
+                    # 支持 CREATE TABLE IF NOT EXISTS TableName 语法
+                    if parts[0].upper() == 'CREATE' and parts[1].upper() == 'TABLE':
+                        if len(parts) >= 6 and parts[2].upper() == 'IF' and parts[3].upper() == 'NOT' and parts[4].upper() == 'EXISTS':
+                            table_name = parts[5]  # CREATE TABLE IF NOT EXISTS TableName
+                        elif len(parts) >= 3:
+                            table_name = parts[2]  # CREATE TABLE TableName
+                        else:
+                            table_name = 'unknown_table'
+                    else:
+                        table_name = 'unknown_table'
                 except:
                     table_name = 'unknown_table'
                 cursor.execute(stmt)
@@ -1773,6 +1861,14 @@ def stream_reinit_database_with_step(step):
             except Exception as e:
                 # 列可能已存在，不影响业务
                 yield sse_message('info', f'ℹ️ data_type 列处理: {str(e)[:50]}')
+
+            # 插入基础数据（含默认管理员），确保重置后可登录
+            try:
+                yield sse_message('log', '🔧 正在插入基础数据（管理员/路段/问题类型）...')
+                _ensure_seed_data(conn, cursor)
+                yield sse_message('success', '✅ 基础数据已插入（默认管理员：admin）')
+            except Exception as e:
+                yield sse_message('warning', f'⚠️ 基础数据插入失败: {str(e)[:60]}')
 
             if step == '1':
                 yield sse_message('success', '✅ 数据库表结构初始化完成！')
@@ -1822,6 +1918,18 @@ def stream_reinit_database_with_step(step):
                 cursor.close()
             if conn:
                 conn.close()
+            
+            # 清除所有缓存，避免显示旧统计数据
+            try:
+                from utils.redis_client import cache_delete_pattern
+                cache_delete_pattern("admin_stats:*")
+                cache_delete_pattern("admin:stats:*")
+                cache_delete_pattern("admin:patrol:list:*")
+                cache_delete_pattern("patrol:list:*")
+                yield sse_message('info', '🧹 已清除所有统计缓存')
+            except Exception as e:
+                yield sse_message('warning', f'⚠️ 清除缓存失败: {str(e)[:50]}')
+            
             yield sse_message('complete', '🏁 重置操作结束')
     return StreamingResponse(generate(), media_type='text/event-stream')
 

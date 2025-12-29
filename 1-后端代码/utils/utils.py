@@ -12,19 +12,23 @@ from sqlparse.tokens import Comment
 
 # 导入密码哈希函数
 def hash_password(password: str) -> str:
-    """哈希密码（Argon2）"""
+    """哈希密码（优先 bcrypt，更稳定）"""
     try:
-        from argon2 import PasswordHasher
-        ph = PasswordHasher()
-        return ph.hash(password)
-    except ImportError:
-        # Fallback to bcrypt if argon2 not available
         import bcrypt
         return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+    except Exception:
+        # Fallback to argon2 if bcrypt fails
+        try:
+            from argon2 import PasswordHasher
+            ph = PasswordHasher()
+            return ph.hash(password)
+        except Exception:
+            raise ValueError("No password hashing backend available")
 
 def verify_password(hash_str: str, password: str) -> bool:
     """验证密码 - 支持多种格式：
     1. Argon2: $argon2id$v=19$...
+    1b. bcrypt: $2b$/$2a$/$2y$...
     2. SHA256 salt:hash（冒号分隔）
     3. 明文（不推荐）
     4. 无盐 SHA256（64字符hex）
@@ -43,6 +47,14 @@ def verify_password(hash_str: str, password: str) -> bool:
             except VerifyMismatchError:
                 return False
         except ImportError:
+            return False
+
+    # 格式 1b: bcrypt（由 passlib/默认管理员创建时使用 $2b$ 前缀）
+    if hash_str.startswith(('$2a$', '$2b$', '$2y$', '$2x$')):
+        try:
+            import bcrypt
+            return bcrypt.checkpw(password.encode(), hash_str.encode())
+        except Exception:
             return False
     
     # 格式 2: SHA256 salt:hash（旧格式）
@@ -501,7 +513,18 @@ def initialize_database(step='all', skip_read_only_queries=True):
                     print("🛡️ 未检测到管理员账号，已开启 BOOTSTRAP_ADMIN，创建默认 admin...")
                     from passlib.context import CryptContext
                     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-                    admin_plain = os.getenv("DEFAULT_ADMIN_PASSWORD", "REDACTED")
+                    # 优先使用环境变量，如果未设置则生成随机强密码
+                    admin_plain = os.getenv("DEFAULT_ADMIN_PASSWORD")
+                    if not admin_plain:
+                        import secrets
+                        import string
+                        alphabet = string.ascii_letters + string.digits + '!@#$%^&*'
+                        admin_plain = ''.join(secrets.choice(alphabet) for _ in range(16))
+                        print(f"\n{'='*60}")
+                        print(f"⚠️  自动生成的管理员密码（请立即保存）:")
+                        print(f"   用户名: admin")
+                        print(f"   密码: {admin_plain}")
+                        print(f"{'='*60}\n")
                     cursor.execute(
                         """
                         INSERT INTO User (username, password, real_name, phone, email, role, created_at)

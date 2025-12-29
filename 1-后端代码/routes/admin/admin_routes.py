@@ -45,8 +45,11 @@ async def audit_list(
 ):
     """审计日志分页查询（管理员权限）"""
     try:
-        return get_audit_logs(action=action, user_id=user_id, start_date=start_date, end_date=end_date,
+        logger.info(f"📥 [audit_list] 入参 action={action}, user_id={user_id}, start={start_date}, end={end_date}, keyword={keyword}, page={page}, page_size={page_size}")
+        result = get_audit_logs(action=action, user_id=user_id, start_date=start_date, end_date=end_date,
                               keyword=keyword, page=page or 1, page_size=page_size or 50)
+        logger.info(f"📤 [audit_list] 返回 total={result.get('total', 0)} 条")
+        return result
     except Exception as e:
         # 若数据库未初始化或审计表不存在，友好返回空数据而非 500
         msg = str(e).lower()
@@ -87,7 +90,7 @@ async def audit_export(
             writer.writerow([
                 rec.get('id', ''),
                 rec.get('user_id', ''),
-                rec.get('action', ''),
+                rec.get('action_label', rec.get('action', '')),
                 rec.get('resource', ''),
                 rec.get('details', ''),
                 rec.get('timestamp', '')
@@ -241,10 +244,14 @@ async def api_patrol_list_admin(
 async def admin_stats(
     start_date: Optional[str] = Query(None, description="开始日期 YYYY-MM-DD"),
     end_date: Optional[str] = Query(None, description="结束日期 YYYY-MM-DD"),
-    data_type: Optional[str] = Query(None, description="数据类型（real/test），不传则统计全部"),
+    # 兼容大小驼峰：同时支持 data_type 与 dataType
+    data_type: Optional[str] = Query(None, description="数据类型（real/test），不传则统计全部", alias="dataType"),
+    # 允许前端传 _t 作为缓存穿透参数（用于装饰器级缓存）
+    _t: Optional[str] = Query(None, description="缓存穿透参数，可忽略"),
     admin: CurrentUser = Depends(get_current_admin_qs)
 ):
     try:
+        logger.info(f"📈 [admin_stats] 入参 start={start_date}, end={end_date}, data_type={data_type}, _t={_t}")
         return get_admin_stats(start_date=start_date, end_date=end_date, data_type=data_type)
     except Exception as e:
         logger.error(f"Admin stats error: {e}", exc_info=True)
@@ -325,6 +332,15 @@ async def reinit(
         step_value = 'all'
     
     result = reinit_database(step=step_value, skip_read_only_queries=True)
+    # 清理与重置相关的缓存，避免旧统计/列表残留
+    try:
+        cache_delete_pattern("admin_stats:*")
+        cache_delete_pattern("admin:stats:*")
+        cache_delete_pattern("admin:patrol:list:*")
+        cache_delete_pattern("patrol:list:*")
+        logger.info("🧹 重置后已清空统计/列表相关缓存")
+    except Exception:
+        pass
     insert_audit_log(admin.user_id, "reinit_database", f"step:{step_value}")
     return result
 
@@ -430,6 +446,48 @@ async def clean_test_data_endpoint(
     except Exception as e:
         logger.error(f"清理测试数据失败: {e}")
         raise HTTPException(status_code=500, detail=f'清理测试数据失败: {str(e)}')
+
+
+@router.post("/admin/clear-cache", summary="清除所有Redis缓存")
+@limiter.limit("5/minute")
+async def clear_all_cache(
+    request: Request,
+    admin: CurrentUser = Depends(get_current_admin_qs)
+):
+    """
+    手动清除所有Redis缓存
+    需要管理员权限
+    
+    Returns:
+        dict: {'success': bool, 'cleared_count': int}
+    """
+    try:
+        # 清除所有相关缓存模式
+        patterns = [
+            "admin_stats:*",
+            "admin:stats:*",
+            "admin:patrol:list:*",
+            "patrol:list:*",
+            "admin:export:*",
+            "public:stats:*"
+        ]
+        
+        total_cleared = 0
+        for pattern in patterns:
+            cleared = cache_delete_pattern(pattern)
+            total_cleared += cleared if isinstance(cleared, int) else 0
+        
+        logger.info(f"🧹 管理员 {admin.username} 手动清除了 {total_cleared} 个缓存键")
+        insert_audit_log(admin.user_id, "clear_cache", f"cleared:{total_cleared}")
+        
+        return {
+            'success': True,
+            'cleared_count': total_cleared,
+            'message': f'已清除 {total_cleared} 个缓存键'
+        }
+    except Exception as e:
+        logger.error(f"清除缓存失败: {e}")
+        raise HTTPException(status_code=500, detail=f'清除缓存失败: {str(e)}')
 
 
 @router.get("/verify", summary="验证数据库状态")

@@ -893,6 +893,9 @@ tbody tr:hover { background: rgba(91,139,255,0.08); }
                         <option value="real">仅真实数据</option>
                         <option value="test">仅测试数据</option>
                         </select>
+                        <button onclick="forceClearCacheAndReload()" class="btn btn-secondary" style="padding:6px 12px;font-size:12px;" title="清除Redis缓存并刷新统计">
+                            🧹 清除缓存
+                        </button>
                     </p>
                     <!-- 统计卡片骨架屏 -->
                     <div id="statsSkeleton" class="stats-skeleton" style="display:none;">
@@ -1060,6 +1063,9 @@ tbody tr:hover { background: rgba(91,139,255,0.08); }
                     <div id="live-photos" class="live-photos">
                         <div class="live-photos__header">
                             <strong>📸 实时新照片：</strong>
+                            <span id="sse-status" class="sse-status" style="margin-left: 10px; font-size: 12px; color: #999;">
+                                ⚪ 未连接
+                            </span>
                             <button id="live-photos-toggle" class="live-photos__toggle" onclick="toggleLivePhotos()">⮟</button>
                         </div>
                         <div id="live-photos-body" class="live-photos__body"></div>
@@ -1366,15 +1372,51 @@ tbody tr:hover { background: rgba(91,139,255,0.08); }
         }
     }
 
+    // 更新SSE连接状态指示器
+    function updateSSEStatus(status, color, icon) {
+        const statusEl = document.getElementById('sse-status');
+        if (statusEl) {
+            statusEl.textContent = `${icon} ${status}`;
+            statusEl.style.color = color;
+        }
+    }
+
     function startPhotoStream() {
         if (photoSource) photoSource.close();
         const token = getAccessToken();
         if (!token) return;
+        
+        updateSSEStatus('正在连接...', '#f39c12', '🟡');
+        
         const url = `/api/sse/patrol-photo?token=${encodeURIComponent(token)}`;
         photoSource = new EventSource(url);
+        
+        // 连接打开事件（初始连接和重连都会触发）
+        photoSource.onopen = function() {
+            console.log('[SSE] 照片流连接成功（或重连成功）');
+            updateSSEStatus('已连接', '#27ae60', '🟢');
+            // 清除错误提示
+            const container = document.getElementById("live-photos-body");
+            const errorMsg = container.querySelector('[data-error]');
+            if (errorMsg) errorMsg.remove();
+        };
         photoSource.onmessage = function(e) {
             const payload = JSON.parse(e.data || '{}');
+            
+            // 处理心跳事件（保持连接活跃）
+            if (payload.event === "heartbeat") {
+                console.log('[SSE] 💓 收到心跳，连接正常');
+                updateSSEStatus('已连接 💓', '#27ae60', '🟢');
+                // 清除任何错误提示
+                const container = document.getElementById("live-photos-body");
+                const oldError = container.querySelector('[data-error]');
+                if (oldError) oldError.remove();
+                return;
+            }
+            
+            // 处理照片事件
             if (payload.event === "new_photo") {
+                updateSSEStatus('已连接 📸', '#27ae60', '🟢');
                 const { record_id, photo_url } = payload.data || {};
                 if (!record_id || !photo_url) return;
                 const container = document.getElementById("live-photos-body");
@@ -1432,33 +1474,64 @@ tbody tr:hover { background: rgba(91,139,255,0.08); }
         };
         photoSource.onerror = (event) => {
             console.error('SSE 照片流连接错误:', event);
-            const container = document.getElementById("live-photos-body");
-            // 避免重复添加错误信息
-            if (!container.querySelector('[data-error]')) {
+            
+            // 检查连接状态：如果是CONNECTING状态，说明浏览器正在自动重连
+            if (photoSource.readyState === EventSource.CONNECTING) {
+                console.log('[SSE] 照片流正在自动重连...（状态：CONNECTING）');
+                // 更新状态为重连中，等待onopen事件确认重连成功
+                updateSSEStatus('重连中...', '#f39c12', '🟡');
+                
+                // 只在还没有重连提示的情况下添加
+                const container = document.getElementById("live-photos-body");
+                const oldError = container.querySelector('[data-error]');
+                if (!oldError) {
+                    const reconnectMsg = document.createElement('div');
+                    reconnectMsg.setAttribute('data-error', 'true');
+                    reconnectMsg.style.color = '#f39c12';
+                    reconnectMsg.style.padding = '10px';
+                    reconnectMsg.style.borderRadius = '4px';
+                    reconnectMsg.style.backgroundColor = '#fff3cd';
+                    reconnectMsg.textContent = '🔄 实时推送正在重连...';
+                    container.appendChild(reconnectMsg);
+                }
+                return;
+            }
+            
+            // 如果是CLOSED状态，需要手动重连（浏览器不会自动重连）
+            if (photoSource.readyState === EventSource.CLOSED) {
+                console.log('[SSE] 照片流已关闭（状态：CLOSED），准备手动重连...');
+                updateSSEStatus('已断开', '#e74c3c', '🔴');
+                
+                photoSource.close();
+                photoSource = null;
+                
+                const container = document.getElementById("live-photos-body");
+                const oldError = container.querySelector('[data-error]');
+                if (oldError) oldError.remove();
+                
                 const errorMsg = document.createElement('div');
                 errorMsg.setAttribute('data-error', 'true');
                 errorMsg.style.color = '#e74c3c';
                 errorMsg.style.padding = '10px';
                 errorMsg.style.borderRadius = '4px';
                 errorMsg.style.backgroundColor = '#ffebee';
-                errorMsg.textContent = '⚠️ 实时推送已断开，系统将自动重连...';
+                errorMsg.textContent = '⚠️ 实时推送已断开，3秒后自动重连...';
                 container.appendChild(errorMsg);
                 
-                // 3秒后自动重连
+                // 3秒后重连
                 setTimeout(() => {
-                    console.log('[SSE] 自动重连照片流...');
+                    console.log('[SSE] 执行手动重连...');
+                    const errElem = document.querySelector('[data-error]');
+                    if (errElem) errElem.remove();
                     startPhotoStream();
                 }, 3000);
+                return;
             }
-            // 尝试延迟重连，避免持续报错
-            setTimeout(() => {
-                try {
-                    startPhotoStream();
-                } catch (err) {
-                    console.warn('[照片流重连失败]', err);
-                }
-            }, 2000);
+            
+            // 其他状态（如OPEN = 1，虽然不太可能在onerror中出现）
+            console.log('[SSE] 连接异常，状态码:', photoSource.readyState);
         };
+        
         window.addEventListener('beforeunload', () => photoSource && photoSource.close());
     }
 
@@ -1495,6 +1568,48 @@ tbody tr:hover { background: rgba(91,139,255,0.08); }
         // 清除缓存（通过时间戳参数）
         loadRecords();
         loadStats();
+    }
+
+    // ========================
+    // 强制清除缓存并重新加载
+    // ========================
+    async function forceClearCacheAndReload() {
+        const token = getAccessToken();
+        if (!token) {
+            alert('⚠️ 未登录，无法清除缓存');
+            return;
+        }
+        
+        if (!confirm('🧹 确认清除所有Redis缓存？\n\n这将清除统计数据、列表等所有缓存，下次访问将从数据库重新加载。')) {
+            return;
+        }
+        
+        try {
+            // 调用后端清除缓存接口
+            const res = await fetchWithTimeout('/api/admin/clear-cache', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            console.log('清除缓存响应:', res.status, res.statusText);
+            
+            if (res.ok) {
+                const data = await res.json();
+                alert(`✅ 缓存已清除！\n清除的键数: ${data.cleared_count || '全部'}`);
+                // 立即刷新所有数据
+                CURRENT_PAGE = 1;
+                await loadStats();
+                await loadRecords();
+                if (typeof loadAudit === 'function') loadAudit();
+            } else {
+                const errorText = await res.text();
+                console.error('清除缓存API错误:', res.status, errorText);
+                alert(`⚠️ 清除缓存失败: ${res.status} ${res.statusText}\n${errorText}`);
+            }
+        } catch (e) {
+            console.error('清除缓存失败:', e);
+            alert(`❌ 清除缓存失败: ${e.message}`);
+        }
     }
 
     // ========================
@@ -1959,6 +2074,8 @@ tbody tr:hover { background: rgba(91,139,255,0.08); }
             return;
         }
         const params = buildQueryParams();
+        // 固定追加 _t 以强制缓存穿透，避免装饰器缓存返回旧统计
+        params.append('_t', Date.now().toString());
         const url = params.toString() ? `/api/admin/stats?${params.toString()}` : '/api/admin/stats';
         console.log('🌐 [loadStats] 请求URL:', url);
 
@@ -2627,6 +2744,12 @@ tbody tr:hover { background: rgba(91,139,255,0.08); }
         // 1. 立即启动数据流（不依赖认证完成）
         setTimeout(() => {
             startPhotoStream();
+            // 同步dataTypeFilter的初始值到currentDataType变量
+            const dataTypeFilter = document.getElementById('dataTypeFilter');
+            if (dataTypeFilter) {
+                currentDataType = dataTypeFilter.value || '';
+                console.log('🔄 [初始化] 同步dataTypeFilter初始值:', currentDataType);
+            }
             // 默认展示全部时间范围，避免仅近7天导致数量偏少
             const rs = document.getElementById('startDate');
             const re = document.getElementById('endDate');

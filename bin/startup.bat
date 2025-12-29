@@ -74,10 +74,11 @@ if %errorlevel% neq 0 (
 echo [OK] 当前目录: %cd%
 
 echo.
-echo [3/3] 启动 FastAPI 服务器（开发模式，自动重载）...
+echo [3/3] 启动 FastAPI 服务器（开发模式）...
 echo ============================================================
 echo.
-set SKIP_DB_INIT=1
-python -m uvicorn app:app --host 0.0.0.0 --port 5000 --reload --log-level debug
+rem 统一走项目根目录的 start_server.py，确保 .env 被正确加载并支持 --skip-db-init
+cd /d "%~dp0.."
+python start_server.py --env dev
 
 pause

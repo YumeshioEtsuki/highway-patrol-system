@@ -5,7 +5,7 @@ title 高速公路巡查系统 - 完整启动（Redis + Celery + FastAPI）
 REM ==================================================================
 REM 注意：如需在启动时自动应用数据库索引/审计表，请在命令行运行：
 REM       set APPLY_INDEXES=1 && .\bin\startup_full.bat
-REM 本脚本默认启用 SKIP_DB_INIT=1 以加快启动速度。
+REM 可通过 .env 的 SKIP_DB_INIT 或命令行 --skip-db-init 控制是否跳过数据库初始化。
 REM ==================================================================
 
 echo ============================================================
@@ -297,8 +297,18 @@ REM 默认使用 dev 环境，可通过第一个参数覆盖
 set ENV=%1
 if "%ENV%"=="" set ENV=dev
 
-REM 调用根级 start_server.py 完成环境切换+校验+启动
-python start_server.py --env %ENV%
+REM 展示当前 .env 的 SKIP_DB_INIT 值（仅用于提示，不强制覆盖）
+for /f "tokens=1,* delims==" %%A in ('type "%~dp0\..\.env" ^| findstr /R /C:"^SKIP_DB_INIT="') do set SKIP_DB_INIT_DISPLAY=%%B
+if "%SKIP_DB_INIT_DISPLAY%"=="" set SKIP_DB_INIT_DISPLAY=(未设置)
+echo [INFO] 当前 .env 中 SKIP_DB_INIT=%SKIP_DB_INIT_DISPLAY%
+if "%SKIP_DB_INIT_DISPLAY%"=="1" (
+    echo [WARN] 将跳过数据库初始化（可通过 --skip-db-init 或修改 .env 调整）
+) else (
+    echo [INFO] 将执行启动期数据库初始化检查
+)
+
+REM 透传命令行参数（例如 --skip-db-init），统一到 start_server.py 处理
+python start_server.py --env %ENV% %*
 
 popd
 

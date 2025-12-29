@@ -112,7 +112,9 @@ if __name__ == '__main__':
         host=HOST,
         port=PORT,
         log_level="info",
-        access_log=True
+        access_log=True,
+        timeout_keep_alive=75,  # 增加keep-alive超时（支持SSE长连接）
+        timeout_graceful_shutdown=5
     )
     server = uvicorn.Server(config)
     
