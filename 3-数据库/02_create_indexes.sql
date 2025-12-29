@@ -23,10 +23,10 @@ USE road_patrol_db;
 -- 如果索引已存在，脚本会自动跳过CREATE语句
 
 -- 1. 用户与时间的组合查询
-CREATE INDEX idx_user_created ON InspectionRecord(user_id, upload_time DESC);
+CREATE INDEX idx_user_created ON InspectionRecord(user_id, upload_time);
 
 -- 2. 路段与时间的组合查询
-CREATE INDEX idx_segment_time ON InspectionRecord(segment_id, upload_time DESC);
+CREATE INDEX idx_segment_time ON InspectionRecord(segment_id, upload_time);
 
 -- 3. 照片与记录的快速关联
 CREATE INDEX idx_photo_record_upload ON Photo(record_id, upload_time);
