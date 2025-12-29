@@ -58,6 +58,10 @@ Thumbs.db
 photos/**
 !photos/.gitkeep
 
+# Test generated files
+photos/auto_*.jpg
+1-后端代码/photos/auto_*.jpg
+
 # OS
 .DS_Store
 *.log
