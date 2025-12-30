@@ -4,7 +4,11 @@
 """
 
 import sys
-sys.path.insert(0, r"d:\MySQL Project\highway-patrol-system\1-后端代码")
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+BACKEND_DIR = ROOT / "src"
+sys.path.insert(0, str(BACKEND_DIR))
 
 try:
     from app import app

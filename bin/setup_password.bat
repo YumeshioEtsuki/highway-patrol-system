@@ -2,29 +2,32 @@
 chcp 65001 >nul
 setlocal EnableDelayedExpansion
 
+REM 统一到项目根目录（脚本位于 bin 下，上一级为项目根）
 pushd "%~dp0.."
 
 echo.
 echo ========================================
-echo   Database Password Setup Wizard
+echo   🔐 数据库密码配置向导
 echo ========================================
 echo.
 
+REM 安全模式提示：启用后系统将忽略 .env，仅使用系统环境变量
 if /i "%SECURE_MODE%"=="1" (
-    echo [INFO] SECURE_MODE=1 detected
-    echo [TIP] In secure mode, app ignores .env and uses system environment variables
-    echo       Recommended: set DB_PASSWORD=your_password or set DATABASE_PASSWORD=your_password
-    set /p continue_secure="Still want to create/update .env? (y/N): "
+    echo [信息] 检测到已启用 SECURE_MODE=1（安全模式）
+    echo [提示] 在安全模式下，应用不会读取 .env 文件，推荐直接设置环境变量：
+    echo         set DB_PASSWORD=your_password  或  set DATABASE_PASSWORD=your_password
+    set /p continue_secure="仍要创建/更新 .env 文件吗？(y/N): "
     if /i not "!continue_secure!"=="y" (
-        echo [CANCEL] Skipped .env creation in secure mode
+        echo [取消] 已按安全模式跳过 .env 写入。你可直接运行启动脚本。
         popd
         pause
         exit /b 0
     )
 )
 
+REM 检查 .env 文件是否存在
 if exist ".env" (
-    echo [INFO] Found existing .env file
+    echo [信息] 检测到已存在 .env 文件
     set /p overwrite="是否覆盖？(y/N): "
     if /i not "!overwrite!"=="y" (
         echo [取消] 保持现有配置
@@ -35,7 +38,7 @@ if exist ".env" (
 REM 复制模板（根目录与后端目录各自维护 .env）
 set "ROOT_ENV_EXAMPLE=.env.example"
 set "ROOT_ENV_FILE=.env"
-set "BACKEND_DIR=1-后端代码"
+set "BACKEND_DIR=src"
 set "BACKEND_ENV_EXAMPLE=%BACKEND_DIR%\.env.example"
 set "BACKEND_ENV_FILE=%BACKEND_DIR%\.env"
 

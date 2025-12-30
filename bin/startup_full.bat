@@ -51,15 +51,15 @@ if "%SECURE_MODE%"=="1" (
         exit /b 1
     )
 ) else (
-    if not exist "%~dp0..\1-后端代码\.env" (
-        echo [错误] 未检测到 ..\1-后端代码\.env 配置文件！
+    if not exist "%~dp0..\src\.env" (
+        echo [错误] 未检测到 ..\src\.env 配置文件！
         echo.
         echo 请先运行配置向导：
         echo    bin\setup_password.bat
         echo.
         echo 或手动创建：
-        echo    copy ..\1-后端代码\.env.example ..\1-后端代码\.env
-        echo    然后编辑 ..\1-后端代码\.env 设置 DATABASE_PASSWORD
+        echo    copy ..\\src\.env.example ..\\src\.env
+        echo    然后编辑 ..\\src\.env 设置 DATABASE_PASSWORD
         echo.
         pause
         exit /b 1
@@ -238,7 +238,7 @@ if %errorlevel% == 0 (
     echo [OK] Celery Worker 已在运行
 ) else (
     REM 启动 Celery Worker（新窗口）- 使用 python -m 方式避免 PATH 问题
-    pushd "%~dp0..\1-后端代码"
+    pushd "%~dp0..\\src"
     start "Celery Worker" cmd /k "title Celery Worker - 异步任务队列 && python -m celery -A celery_app worker --loglevel=info --pool=solo"
     popd
     timeout /t 3 /nobreak >nul
@@ -307,8 +307,15 @@ if "%SKIP_DB_INIT_DISPLAY%"=="1" (
     echo [INFO] 将执行启动期数据库初始化检查
 )
 
-REM 透传命令行参数（例如 --skip-db-init），统一到 start_server.py 处理
-python start_server.py --env %ENV% %*
+REM 透传命令行参数（例如 --skip-db-init），统一到 scripts/start_server.py 处理
+set START_ENTRY=scripts\start_server.py
+if not exist "%START_ENTRY%" (
+    echo [ERROR] 找不到启动入口 %START_ENTRY%
+    popd
+    pause
+    exit /b 1
+)
+python %START_ENTRY% --env %ENV% %*
 
 popd
 

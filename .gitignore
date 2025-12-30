@@ -6,23 +6,23 @@ tooling/env/production.env
 __pycache__/
 *.pyc
 *.pyo
+*.egg-info/
+dist/
+build/
 
 # Logs
 logs/
+*.log
 
-# Node / front-end (if any)
+# Node / front-end
 node_modules/
 
 # OS
 .DS_Store
 Thumbs.db
-# Python
-__pycache__/
-*.pyc
-*.pyo
-*.egg-info/
-dist/
-build/
+*.swp
+*.swo
+*~
 
 # Environments
 .venv/
@@ -34,37 +34,28 @@ ENV/
 # IDE & Editor
 .vscode/
 .idea/
-*.swp
-*.swo
-*~
-.DS_Store
-Thumbs.db
 
 # Local configs & secrets
 .env
-1-后端代码/.env
-1-后端代码/.env.local
+src/.env
+src/.env.local
 
 # Debug & test scripts
 .debug/
-1-后端代码/diagnose_connection.py
-1-后端代码/generate_test_records.py
-1-后端代码/init_db_fresh.py
+src/diagnose_connection.py
+src/generate_test_records.py
+src/init_db_fresh.py
 
 # Project-specific ignores
-1-后端代码/photos/**
-!1-后端代码/photos/.gitkeep
-1-后端代码/logs/
+src/photos/**
+!src/photos/.gitkeep
+src/logs/
 photos/**
 !photos/.gitkeep
 
 # Test generated files
 photos/auto_*.jpg
-1-后端代码/photos/auto_*.jpg
-
-# OS
-.DS_Store
-*.log
+src/photos/auto_*.jpg
 
 # Python caches & coverage
 .pytest_cache/
@@ -73,5 +64,5 @@ photos/auto_*.jpg
 coverage.xml
 
 # Miniprogram / Node
-2-小程序代码/node_modules/
-node_modules/
+miniprogram/node_modules/
+

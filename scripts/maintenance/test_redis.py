@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 """快速测试 Redis 连接"""
 import sys
-sys.path.insert(0, "1-后端代码")
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+BACKEND_DIR = ROOT / "src"
+sys.path.insert(0, str(BACKEND_DIR))
 
 from settings import settings
 from utils.redis_client import RedisClient

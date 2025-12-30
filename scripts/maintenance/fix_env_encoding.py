@@ -3,7 +3,7 @@
 import sys
 from pathlib import Path
 
-backend_dir = Path(__file__).resolve().parent / "1-后端代码"
+backend_dir = Path(__file__).resolve().parents[2] / "src"
 env_file = backend_dir / ".env"
 
 if env_file.exists():

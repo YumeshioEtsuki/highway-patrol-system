@@ -2,9 +2,12 @@
 """检查数据库初始化状态"""
 import sys
 import os
+from pathlib import Path
 
-sys.path.insert(0, "1-后端代码")
-os.chdir("1-后端代码")
+ROOT = Path(__file__).resolve().parents[2]
+BACKEND_DIR = ROOT / "src"
+sys.path.insert(0, str(BACKEND_DIR))
+os.chdir(BACKEND_DIR)
 
 from utils.utils import get_db_connection
 

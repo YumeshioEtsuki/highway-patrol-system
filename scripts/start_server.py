@@ -4,11 +4,12 @@ import sys
 import argparse
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent
+# Project root and backend dir (moved to src/)
+ROOT = Path(__file__).resolve().parent.parent
 TOOLING_DIR = ROOT / "tooling"
 ENV_DIR = TOOLING_DIR / "env"
 TARGET_ENV = ROOT / ".env"
-BACKEND_DIR = ROOT / "1-后端代码"
+BACKEND_DIR = ROOT / "src"
 
 MAPPING = {
     "dev": "local.dev.env",

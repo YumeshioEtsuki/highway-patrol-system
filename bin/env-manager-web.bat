@@ -22,10 +22,15 @@ if not exist ".venv" (
 
 call .venv\Scripts\activate.bat
 
-python -c "import fastapi, uvicorn" >nul 2>&1
+python -c "import fastapi, uvicorn, jinja2" >nul 2>&1
 if errorlevel 1 (
     echo [INFO] Installing dependencies...
-    pip install fastapi uvicorn -q
+    pip install fastapi uvicorn jinja2 -q
+    if errorlevel 1 (
+        echo [ERROR] Failed to install dependencies
+        pause
+        exit /b 1
+    )
 )
 
 echo [INFO] Starting web server...

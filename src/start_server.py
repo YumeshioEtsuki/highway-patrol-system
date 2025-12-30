@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-同名启动包装：转发到 1-后端代码/bin/start_server.py，保持项目既有行为。
+同名启动包装：转发到 src/bin/start_server.py，保持项目既有行为。
 """
 import sys
 from pathlib import Path

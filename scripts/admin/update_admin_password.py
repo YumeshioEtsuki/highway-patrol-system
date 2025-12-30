@@ -6,10 +6,12 @@ import bcrypt
 import pymysql
 from pathlib import Path
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '1-后端代码'))
+ROOT = Path(__file__).resolve().parents[2]
+BACKEND_DIR = ROOT / "src"
+sys.path.insert(0, str(BACKEND_DIR))
 
 from dotenv import load_dotenv
-load_dotenv('.env')
+load_dotenv(ROOT / '.env')
 
 # 要设置的新密码
 NEW_PASSWORD = os.getenv('DEFAULT_ADMIN_PASSWORD', 'MIMASHI123')

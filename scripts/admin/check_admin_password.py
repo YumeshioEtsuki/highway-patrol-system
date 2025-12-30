@@ -2,10 +2,14 @@
 """检查admin用户的密码"""
 import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '1-后端代码'))
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+BACKEND_DIR = ROOT / "src"
+sys.path.insert(0, str(BACKEND_DIR))
 
 from dotenv import load_dotenv
-load_dotenv('.env')
+load_dotenv(ROOT / '.env')
 
 import pymysql
 import bcrypt

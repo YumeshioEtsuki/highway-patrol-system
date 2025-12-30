@@ -94,8 +94,8 @@ if __name__ == '__main__':
     # 可选：启动前应用索引优化
     if APPLY_INDEXES:
         try:
-            # 使用数据库目录中的索引脚本（从后端/bin/ 向上到项目根目录，再找 3-数据库）
-            idx_path = Path(__file__).resolve().parent.parent.parent / "3-数据库" / "02_create_indexes.sql"
+            # 使用数据库目录中的索引脚本（从后端/bin/ 向上到项目根目录，再找 database）
+            idx_path = Path(__file__).resolve().parent.parent.parent / "database" / "02_create_indexes.sql"
             if idx_path.exists():
                 print(f"[INFO] Applying index script: {idx_path}")
                 ok = execute_sql_file(str(idx_path), skip_read_only_queries=True, print_query_results=False, stop_on_error=False)

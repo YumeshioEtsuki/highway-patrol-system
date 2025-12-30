@@ -10,7 +10,7 @@ echo.
 REM 统一到项目根目录，避免从 system32 等目录运行导致找不到 .env
 cd /d "%~dp0.."
 
-REM 检查配置文件（后端实际读取 1-后端代码/.env）
+REM 检查配置文件（后端实际读取 src/.env）
 echo [0/3] 检查环境配置...
 if "%BOOTSTRAP_ADMIN%"=="1" (
     if "%SECURE_MODE%"=="1" (
@@ -33,15 +33,15 @@ if "%SECURE_MODE%"=="1" (
         exit /b 1
     )
 ) else (
-    if not exist "1-后端代码\.env" (
-        echo [错误] 未检测到 1-后端代码\.env 配置文件！
+    if not exist "src\.env" (
+        echo [错误] 未检测到 src\.env 配置文件！
         echo.
         echo 请先运行配置向导：
         echo    bin\setup_password.bat
         echo.
         echo 或手动创建：
-        echo    copy 1-后端代码\.env.example 1-后端代码\.env
-        echo    然后编辑 1-后端代码\.env 设置 DATABASE_PASSWORD
+        echo    copy src\.env.example src\.env
+        echo    然后编辑 src\.env 设置 DATABASE_PASSWORD
         echo.
         pause
         exit /b 1
@@ -64,14 +64,13 @@ if %errorlevel% == 0 (
 )
 
 echo.
-echo [2/3] 切换到后端目录...
-cd /d "%~dp0..\1-后端代码"
-if %errorlevel% neq 0 (
-    echo [ERROR] 无法找到后端目录
+echo [2/3] 检查后端目录...
+if not exist "%~dp0..\src" (
+    echo [ERROR] 无法找到后端目录 src
     pause
     exit /b 1
 )
-echo [OK] 当前目录: %cd%
+echo [OK] 后端目录存在: %~dp0..\src
 
 echo.
 echo [3/3] 启动 FastAPI 服务器（开发模式）...
@@ -79,6 +78,6 @@ echo ============================================================
 echo.
 rem 统一走项目根目录的 start_server.py，确保 .env 被正确加载并支持 --skip-db-init
 cd /d "%~dp0.."
-python start_server.py --env dev
+python scripts\start_server.py --env dev
 
 pause

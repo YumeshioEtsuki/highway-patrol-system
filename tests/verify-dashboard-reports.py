@@ -216,7 +216,7 @@ def main():
     if not check_server_health():
         print_error("服务器未运行！")
         print_info("请先启动后端应用:")
-        print("    cd 1-后端代码")
+        print("    cd src")
         print("    python -m uvicorn app:app --reload")
         sys.exit(1)
 
