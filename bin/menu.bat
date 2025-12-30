@@ -31,7 +31,7 @@ if "%choice%"=="1" (
     goto :start
 ) else if "%choice%"=="3" (
     cd /d "%~dp0.."
-    python check_db.py
+    python scripts\database\check_db.py
     pause
     goto :start
 ) else if "%choice%"=="4" (

@@ -75,6 +75,26 @@ class EnvManager:
                 keys.update(matches)
         return sorted(keys)
     
+    def get_all_values(self, env: str) -> Dict[str, str]:
+        """获取指定环境的所有键值对"""
+        result = {}
+        path = self.files.get(env)
+        
+        if not path or not path.exists():
+            return result
+        
+        content = path.read_text(encoding="utf-8")
+        for line in content.split('\n'):
+            line = line.strip()
+            if line and '=' in line and not line.startswith('#'):
+                key, val = line.split('=', 1)
+                key = key.strip()
+                val = val.strip()
+                if key:
+                    result[key] = val
+        
+        return result
+    
     def validate_syntax(self, path: Path) -> Tuple[bool, str]:
         """验证 .env 文件语法"""
         if not path.exists():

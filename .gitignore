@@ -48,6 +48,9 @@ src/init_db_fresh.py
 
 # Project-specific ignores
 src/photos/**
+
+# AI cache (optional: remove this line if you want to share AI recommendations)
+tooling/scripts/ai_recommendations_cache.json
 !src/photos/.gitkeep
 src/logs/
 photos/**

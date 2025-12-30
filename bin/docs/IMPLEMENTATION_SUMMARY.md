@@ -30,7 +30,7 @@ bash bin/menu.sh         # Linux/macOS
 #### 3️⃣ **核心库（可复用）**
 - 🏛️ `lib/env_manager.py` - 数据层（Model）
 - ✅ `lib/validators.py` - 验证层（Business Logic）
-- 🖥️ `web/app.py` - Web UI（View + Controller）
+- 🖥️ `web/env_manager_app.py` - Web UI（View + Controller）
 
 **特点**：
 - Web和CLI共享同一套业务逻辑
@@ -90,7 +90,7 @@ bash bin/menu.sh         # Linux/macOS
 | **Model** | `lib/env_manager.py` | 数据读写、业务逻辑 |
 | **Validator** | `lib/validators.py` | 数据验证、推荐规则 |
 | **View** | `web/templates/` | UI 渲染 |
-| **Controller** | `web/app.py` | 请求处理、路由 |
+| **Controller** | `web/env_manager_app.py` | 请求处理、路由 |
 
 ✨ **优势**：改某一层不影响其他层
 
@@ -247,7 +247,7 @@ steps:
 ```
 
 ### 添加 REST API
-在 `web/app.py` 中添加新的 `@app.post()` 路由，使用 `lib` 中的类
+在 `web/env_manager_app.py` 中添加新的 `@app.post()` 路由，使用 `lib` 中的类
 
 ---
 
@@ -273,8 +273,8 @@ steps:
 
 如果你想：
 - 添加新的推荐规则 → 编辑 `lib/validators.py`
-- 改进 UI → 编辑 `web/app.py` 中的 HTML 模板
-- 添加新功能 → 在 `web/app.py` 中添加路由
+- 改进 UI → 编辑 `web/env_manager_app.py` 中的 HTML 模板
+- 添加新功能 → 在 `web/env_manager_app.py` 中添加路由
 - 脚本集成 → 使用 `lib` 中的类
 
 所有都很简单！因为我们遵循了行业规范的分层架构。

@@ -35,4 +35,4 @@ fi
 
 # 启动Web服务
 echo "⏳ 启动服务..."
-python tooling/scripts/web/app.py
+python tooling/scripts/web/env_manager_app.py

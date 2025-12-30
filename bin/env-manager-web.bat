@@ -34,6 +34,6 @@ if errorlevel 1 (
 )
 
 echo [INFO] Starting web server...
-python tooling\scripts\web\app.py
+python tooling\scripts\web\env_manager_app.py
 
 pause

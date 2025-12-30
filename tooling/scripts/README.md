@@ -39,7 +39,7 @@ tooling/scripts/
 | **Model** | `lib/env_manager.py` | 数据读写、业务逻辑 | Django Models, Eloquent |
 | **Validator** | `lib/validators.py` | 数据验证、规则引擎 | Django Forms, Pydantic |
 | **View** | `web/templates/` | UI 渲染 | Jinja2, Django Templates |
-| **Controller** | `web/app.py`, `cli/manage_env.py` | 请求处理、路由 | Flask Routes, FastAPI |
+| **Controller** | `web/env_manager_app.py`, `cli/manage_env.py` | 请求处理、路由 | Flask Routes, FastAPI |
 
 **优势**：
 - ✅ 核心逻辑独立，不依赖 UI 框架，易于测试
@@ -199,6 +199,169 @@ help_text = get_help_text("SECURE_MODE")
 
 ---
 
+## 🤖 AI 智能推荐功能（新特性）
+
+### 概述
+
+环境变量管理工具现已集成 **AI 智能助手**，基于 Ollama 提供：
+- 🎯 **动态推荐值生成** - 根据变量名和当前配置智能推荐
+- 📚 **智能帮助文档** - 自动生成详细的配置说明
+- 🔄 **自动回退** - AI 不可用时自动使用静态推荐
+
+### 前置要求
+
+1. **安装 Ollama**：
+   ```bash
+   # Windows: 访问 https://ollama.ai 下载安装
+   # Linux/macOS:
+   curl -fsSL https://ollama.ai/install.sh | sh
+   ```
+
+2. **下载模型**：
+   ```bash
+   ollama pull qwen:7b  # 推荐：通义千问，中文支持好
+   # 或其他模型：
+   # ollama pull llama2
+   # ollama pull mixtral
+   ```
+
+3. **启动服务**：
+   ```bash
+   ollama serve
+   # 默认运行在 http://127.0.0.1:11434
+   ```
+
+### 使用方式
+
+#### 在 Web 工具中
+
+AI 功能默认启用，无需额外配置：
+
+1. 访问 http://127.0.0.1:5051
+2. 选择任意环境变量点击 "Edit"
+3. **AI 自动分析** 当前值并生成智能推荐
+4. 查看 AI 提供的最佳实践建议和注意事项
+
+#### 在代码中使用
+
+```python
+from lib import get_recommendations, get_help_text, get_ai_helper
+
+# 检查 AI 是否可用
+ai_helper = get_ai_helper()
+if ai_helper.is_available():
+    print("✅ AI 助手已就绪")
+
+# 获取 AI 推荐值（自动回退）
+current = {"dev": "True", "test": "False", "demo": "False", "prod": "False"}
+recommendations = get_recommendations("DEBUG", current_values=current, use_ai=True)
+# AI 可用时返回智能推荐，不可用时返回静态推荐
+
+# 获取 AI 帮助文档
+help_text = get_help_text("LOG_LEVEL", use_ai=True)
+```
+
+#### 测试 AI 功能
+
+运行测试脚本：
+```bash
+cd tooling/scripts
+python test_ai.py
+```
+
+输出示例：
+```
+🤖 AI 助手功能测试
+
+============================================================
+测试 1: AI 服务可用性
+============================================================
+✅ Ollama 服务正常运行
+   API URL: http://127.0.0.1:11434/api/chat
+   Model: qwen:7b
+
+============================================================
+测试 2: AI 推荐值生成
+============================================================
+环境变量: DEBUG
+当前值: {'dev': 'True', 'test': 'False', 'demo': 'False', 'prod': 'False'}
+
+正在请求 AI 推荐...
+[AI] 为 DEBUG 生成推荐值
+[AI] 说明: 开发环境启用调试便于排查问题，生产环境必须关闭以保护敏感信息
+
+推荐值:
+  dev: True
+  test: True
+  demo: False
+  prod: False
+```
+
+### 配置 AI
+
+编辑 `tooling/scripts/.env.ai`：
+
+```bash
+# Ollama API 配置
+OLLAMA_API_URL=http://127.0.0.1:11434/api/chat
+OLLAMA_MODEL=qwen:7b
+
+# AI 功能开关
+AI_ENABLED=1
+
+# 请求超时
+AI_REQUEST_TIMEOUT=30
+```
+
+### AI vs 静态推荐对比
+
+| 特性 | 静态推荐 | AI 智能推荐 |
+|------|---------|-------------|
+| **响应速度** | 即时 | 3-5 秒 |
+| **灵活性** | 固定值 | 根据上下文动态生成 |
+| **说明质量** | 简短 | 详细且个性化 |
+| **依赖** | 无 | 需要 Ollama |
+| **准确性** | 人工维护 | AI 分析 |
+| **新配置支持** | 需要更新代码 | 自动支持 |
+
+### 工作原理
+
+```
+用户请求推荐
+    ↓
+尝试调用 AI (Ollama)
+    ↓ (成功)
+返回 AI 生成的推荐 + 说明
+    ↓ (失败/超时/不可用)
+自动回退到静态推荐
+    ↓
+返回结果给用户
+```
+
+### 优势
+
+1. **智能化**：AI 理解变量语义，提供上下文感知的推荐
+2. **可扩展**：新增任意环境变量无需修改代码
+3. **安全**：本地运行，不会上传敏感信息
+4. **可靠**：AI 失败时自动回退，不影响核心功能
+5. **学习能力**：AI 可分析当前配置给出改进建议
+
+### 常见问题
+
+**Q: 没有 Ollama 可以用吗？**
+A: 可以！工具会自动回退到静态推荐，所有功能正常。
+
+**Q: AI 响应很慢怎么办？**
+A: 检查 Ollama 是否正常运行，或在 `.env.ai` 中调整超时时间。
+
+**Q: 可以用其他 AI 模型吗？**
+A: 可以！修改 `.env.ai` 中的 `OLLAMA_MODEL`，如 `llama2`, `mixtral` 等。
+
+**Q: AI 推荐不准确怎么办？**
+A: 可以选择手动输入自定义值，或禁用 AI（`use_ai=False`）使用静态推荐。
+
+---
+
 ## 📚 扩展与集成示例
 
 ### 添加新的配置项
@@ -250,7 +413,7 @@ jobs:
 
 ### 添加 REST API
 
-在 `web/app.py` 中添加：
+在 `web/env_manager_app.py` 中添加：
 
 ```python
 @app.post("/api/config/{key}")
