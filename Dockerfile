@@ -6,14 +6,14 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /app
 
-COPY "1-后端代码/requirements.txt" ./requirements.txt
+COPY "src/requirements.txt" ./requirements.txt
 RUN python -m venv /opt/venv \
     && /opt/venv/bin/pip install --upgrade pip \
     && /opt/venv/bin/pip install -r requirements.txt
 
 ENV PATH="/opt/venv/bin:${PATH}"
 
-COPY "1-后端代码" /app
+COPY "src" /app
 
 EXPOSE 5000
 
