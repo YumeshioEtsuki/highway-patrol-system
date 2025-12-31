@@ -2,86 +2,521 @@
 <html>
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>分析配置 - {{key}}</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; margin: 0; }
-        .container { max-width: 1000px; margin: 0 auto; padding: 20px; }
-        .card { background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 30px; }
-        h2 { color: #333; margin-bottom: 20px; }
-        h3 { color: #333; margin-bottom: 10px; }
-        .help-box { background: #e8f4f8; border-left: 4px solid #0066cc; padding: 15px; margin-bottom: 20px; border-radius: 4px; }
-        .help-box p { color: #333; margin: 0; }
-        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background: #f9f9f9; font-weight: 600; color: #333; }
-        tr:hover { background: #f5f5f5; }
-        input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
-        input[type="text"] { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
-        .button-group { display: flex; gap: 10px; margin-top: 20px; }
-        button { padding: 10px 24px; border: none; border-radius: 4px; font-size: 14px; cursor: pointer; font-weight: 500; }
-        .btn-primary { background: #0066cc; color: white; }
-        .btn-primary:hover { background: #0052a3; }
-        .btn-secondary { background: #f0f0f0; color: #333; }
-        .btn-secondary:hover { background: #e0e0e0; }
-        code { color: #0066cc; background: #f5f5f5; padding: 2px 6px; border-radius: 3px; }
-        label { display: block; margin-bottom: 8px; color: #333; font-weight: 500; }
-        hr { margin: 30px 0; border: none; border-top: 1px solid #ddd; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        
+        /* 顶部标题区 */
+        .header {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 20px 30px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h2 {
+            color: #333;
+            margin: 0;
+        }
+        .header code {
+            color: #0066cc;
+            background: #f5f5f5;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        .cache-btn {
+            padding: 8px 16px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .cache-btn:hover {
+            background: #5a6268;
+        }
+        .ai-trigger-btn {
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        }
+        .ai-trigger-btn:hover {
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5);
+            transform: translateY(-1px);
+        }
+        
+        /* 静态推荐提示卡片 */
+        .static-info-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 2px dashed #dee2e6;
+        }
+        .static-badge {
+            display: inline-block;
+            background: #6c757d;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        .static-info-card p {
+            color: #495057;
+            margin: 0;
+            line-height: 1.6;
+        }
+        
+        /* Loading 遮罩 */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .loading-overlay.active {
+            display: flex;
+        }
+        .loading-content {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* AI 说明卡片 */
+        .ai-info-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            color: white;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+        .ai-badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        .ai-info-card h3 {
+            color: white;
+            margin-bottom: 12px;
+            font-size: 18px;
+        }
+        .ai-explanation {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            backdrop-filter: blur(10px);
+        }
+        .ai-practices {
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        /* 反馈按钮 */
+        .feedback-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            backdrop-filter: blur(10px);
+        }
+        .feedback-btn:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.3);
+        }
+        .feedback-positive:hover {
+            background: rgba(76, 175, 80, 0.3);
+        }
+        .feedback-negative:hover {
+            background: rgba(244, 67, 54, 0.3);
+        }
+        #feedback-message {
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 500;
+        }
+        
+        /* 主内容卡片 */
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+        
+        /* 帮助文本框 */
+        .help-box {
+            background: #e8f4f8;
+            border-left: 4px solid #0066cc;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        .help-box p {
+            color: #333;
+            margin: 0;
+            line-height: 1.6;
+        }
+        
+        /* 表格样式 */
+        h3 { color: #333; margin-bottom: 15px; font-size: 18px; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 14px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        th {
+            background: #f9f9f9;
+            font-weight: 600;
+            color: #333;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        tr:hover {
+            background: #f5f5f5;
+        }
+        .env-name {
+            font-weight: 600;
+            color: #333;
+            text-transform: uppercase;
+        }
+        .current-value {
+            font-family: 'Courier New', monospace;
+            color: #666;
+            font-size: 13px;
+        }
+        .recommended-value {
+            font-family: 'Courier New', monospace;
+            color: #0066cc;
+            font-weight: 600;
+            font-size: 14px;
+            background: #e7f3ff;
+            padding: 6px 10px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+        
+        /* 复选框 */
+        input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #0066cc;
+        }
+        
+        /* 按钮组 */
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        button, .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-primary {
+            background: #0066cc;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #0052a3;
+        }
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+        
+        /* 分隔线 */
+        hr {
+            margin: 30px 0;
+            border: none;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        /* 自定义值区域 */
+        .custom-section {
+            background: #fafafa;
+            padding: 20px;
+            border-radius: 6px;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #0066cc;
+            box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+        .checkbox-group {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="card">
-            <h2>Analysis: <code>{{key}}</code></h2>
-            
-            <div class="help-box">
-                <p><strong>Info:</strong> {{help_text}}</p>
+        <!-- 顶部标题和缓存管理 -->
+        <div class="header">
+            <div>
+                <h2>配置分析: <code>{{key}}</code></h2>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <form method="post" action="/ai-recommend" style="display: inline;">
+                    <input type="hidden" name="key" value="{{key}}">
+                    <button type="submit" class="ai-trigger-btn" onclick="showAILoading()">
+                        🤖 使用 AI 智能推荐
+                    </button>
+                </form>
+                <a href="/ai-cache?return_key={{key}}" class="cache-btn">管理缓存</a>
+            </div>
+        </div>
+        
+        {% if ai_explanation %}
+        <!-- AI 智能分析卡片 -->
+        <div class="ai-info-card">
+            <span class="ai-badge">🤖 AI 智能推荐</span>
+            <h3>推荐理由</h3>
+            <div class="ai-explanation">
+                <p>{{ai_explanation}}</p>
+            </div>
+            {% if ai_corrections %}
+            <div class="ai-explanation" style="margin-top: 10px;">
+                <p><strong>⚙️ 纠偏记录：</strong></p>
+                <ul style="margin-left: 16px; line-height: 1.6;">
+                    {% for c in ai_corrections %}
+                    <li>{{c}}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+            <div class="ai-practices">
+                <strong>💡 最佳实践：</strong> {{ai_best_practices}}
             </div>
             
-            <h3>Current vs Recommended Values</h3>
+            <!-- AI 反馈按钮 -->
+            <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.2);">
+                <p style="margin-bottom: 10px; font-size: 14px;">这个推荐对你有帮助吗？</p>
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="submitFeedback('{{key}}', 'positive')" class="feedback-btn feedback-positive">
+                        👍 有帮助
+                    </button>
+                    <button onclick="submitFeedback('{{key}}', 'negative')" class="feedback-btn feedback-negative">
+                        👎 不准确
+                    </button>
+                </div>
+                <div id="feedback-message" style="margin-top: 10px; font-size: 13px; display: none;"></div>
+            </div>
+        </div>
+        {% else %}
+        <!-- 静态推荐提示 -->
+        <div class="static-info-card">
+            <span class="static-badge">📋 静态推荐</span>
+            <p>当前显示的是基于最佳实践的静态推荐值。点击上方 "🤖 使用 AI 智能推荐" 按钮获取基于项目上下文的个性化建议。</p>
+        </div>
+        {% endif %}
+        
+        <!-- 帮助文档 -->
+        <div class="card">
+            <div class="help-box">
+                <p><strong>📖 配置说明：</strong> {{help_text}}</p>
+            </div>
+            
+            <!-- 推荐值对比表 -->
+            <h3>当前值 vs 推荐值</h3>
             <table>
-                <tr>
-                    <th>Environment</th>
-                    <th>Current Value</th>
-                    <th>Recommended Value</th>
-                    <th>Apply</th>
-                </tr>
-                {% for env in envs %}
-                <tr>
-                    <td style="font-weight: bold; color: #333;">{{env}}</td>
-                    <td style="font-family: monospace; color: #666;">{{current.get(env, "(not set)")}}</td>
-                    <td style="font-family: monospace; color: #0066cc; font-weight: bold;">{{recommend.get(env, "")}}</td>
-                    <td><input type="checkbox" name="env" value="{{env}}" checked form="apply-form"></td>
-                </tr>
-                {% endfor %}
+                <thead>
+                    <tr>
+                        <th>环境</th>
+                        <th>当前值</th>
+                        <th>AI 推荐值</th>
+                        <th style="text-align: center;">应用</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for env in envs %}
+                    <tr>
+                        <td class="env-name">{{env}}</td>
+                        <td class="current-value">{{current.get(env, "(未设置)")}}</td>
+                        <td>
+                            <span class="recommended-value">{{recommend.get(env, "")}}</span>
+                        </td>
+                        <td style="text-align: center;">
+                            <input type="checkbox" name="env" value="{{env}}" checked form="apply-form">
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
             </table>
             
+            <!-- 应用推荐值 -->
             <form id="apply-form" method="post" action="/apply">
                 <input type="hidden" name="key" value="{{key}}">
                 <div class="button-group">
-                    <button type="submit" class="btn-primary">Apply Recommended Values</button>
-                    <a href="/"><button type="button" class="btn-secondary">← Back</button></a>
+                    <button type="submit" class="btn-primary">✅ 应用推荐值</button>
+                    <a href="javascript:void(0)" onclick="window.location.href='/?t='+Date.now()" class="btn btn-secondary">← 返回首页</a>
                 </div>
-            </form>
-            
-            <hr>
-            
-            <h3>Apply Custom Value</h3>
-            <form method="post" action="/custom">
-                <input type="hidden" name="key" value="{{key}}">
-                <div style="margin-bottom: 20px;">
-                    <label>Custom Value:</label>
-                    <input type="text" name="value">
-                </div>
-                <div style="margin-bottom: 20px;">
-                    <label>Select Environments:</label>
-                    {% for env in envs %}
-                    <label style="display: inline-block; margin-right: 20px;">
-                        <input type="checkbox" name="env" value="{{env}}" checked> {{env}}
-                    </label>
-                    {% endfor %}
-                </div>
-                <button type="submit" class="btn-primary">Apply Custom Value</button>
             </form>
         </div>
+        
+        <!-- 自定义值区域 -->
+        <div class="card">
+            <div class="custom-section">
+                <h3 style="margin-top: 0;">🎯 应用自定义值</h3>
+                <form method="post" action="/custom">
+                    <input type="hidden" name="key" value="{{key}}">
+                    <div style="margin-bottom: 20px;">
+                        <label>自定义值:</label>
+                        <input type="text" name="value" placeholder="输入自定义配置值...">
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <label>选择要应用的环境:</label>
+                        <div class="checkbox-group">
+                            {% for env in envs %}
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="env" value="{{env}}" checked>
+                                <span style="text-transform: uppercase; font-weight: 500;">{{env}}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-primary">应用自定义值</button>
+                </form>
+            </div>
+        </div>
     </div>
+    
+    <!-- AI Loading 遮罩 -->
+    <div id="aiLoadingOverlay" class="loading-overlay">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <h3 style="color: #333; margin: 0;">🤖 AI 正在分析项目配置...</h3>
+            <p style="color: #666; margin-top: 10px;">正在读取环境文件并生成智能推荐，请稍候</p>
+        </div>
+    </div>
+    
+    <script>
+        function showAILoading() {
+            document.getElementById('aiLoadingOverlay').classList.add('active');
+            return true;
+        }
+        
+        async function submitFeedback(key, feedbackType) {
+            try {
+                const formData = new FormData();
+                formData.append('key', key);
+                formData.append('feedback', feedbackType);
+                
+                const response = await fetch('/ai-feedback', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                const messageDiv = document.getElementById('feedback-message');
+                messageDiv.textContent = result.message || '感谢您的反馈！';
+                messageDiv.style.display = 'block';
+                
+                // 3秒后隐藏消息
+                setTimeout(() => {
+                    messageDiv.style.display = 'none';
+                }, 3000);
+                
+                // 禁用按钮防止重复提交
+                document.querySelectorAll('.feedback-btn').forEach(btn => {
+                    btn.disabled = true;
+                    btn.style.opacity = '0.5';
+                    btn.style.cursor = 'not-allowed';
+                });
+            } catch (error) {
+                console.error('提交反馈失败:', error);
+                const messageDiv = document.getElementById('feedback-message');
+                messageDiv.textContent = '❌ 提交失败，请稍后重试';
+                messageDiv.style.display = 'block';
+            }
+        }
+    </script>
 </body>
 </html>

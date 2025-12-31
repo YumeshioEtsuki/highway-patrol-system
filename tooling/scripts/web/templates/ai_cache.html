@@ -92,6 +92,24 @@
             font-style: italic;
         }
         
+        /* 置信度标签 */
+        .confidence-badge {
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .confidence-high {
+            background: #4caf50;
+        }
+        .confidence-medium {
+            background: #ff9800;
+        }
+        .confidence-low {
+            background: #f44336;
+        }
+        
         /* 空状态 */
         .empty-state {
             text-align: center;
@@ -105,14 +123,23 @@
         
         /* 按钮 */
         .btn {
-            padding: 10px 24px;
+            padding: 8px 20px;
             border: none;
             border-radius: 4px;
-            font-size: 14px;
+            font-size: 13px;
             cursor: pointer;
             font-weight: 500;
             text-decoration: none;
             display: inline-block;
+            background: #f0f0f0;
+            color: #333;
+            transition: all 0.2s;
+            border: 1px solid #ddd;
+        }
+        .btn:hover {
+            background: #e0e0e0;
+            border-color: #ccc;
+            transform: translateY(-1px);
         }
         .btn-primary {
             background: #0066cc;
@@ -127,13 +154,6 @@
         }
         .btn-danger:hover {
             background: #c82333;
-        }
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-        }
-        .btn-secondary:hover {
-            background: #5a6268;
         }
         
         .actions {
@@ -176,10 +196,20 @@
 <body>
     <div class="container">
         <div class="card">
-            <h1>🤖 AI 缓存管理</h1>
-            <p class="subtitle">管理 AI 生成的环境变量推荐值缓存</p>
-            
-            <p class="back-link"><a href="/">← 返回首页</a></p>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                <div>
+                    <h1 style="margin-bottom: 5px;">🤖 AI 缓存管理</h1>
+                    <p class="subtitle" style="margin-bottom: 0;">管理 AI 生成的环境变量推荐值缓存</p>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    {% if request.query_params.get('return_key') %}
+                    <a href="/analyze?key={{ request.query_params.get('return_key') }}" class="btn" style="text-decoration: none;">← 返回上一页</a>
+                    {% else %}
+                    <a href="/" class="btn" style="text-decoration: none;">← 返回上一页</a>
+                    {% endif %}
+                    <a href="/" class="btn" style="text-decoration: none;">返回首页</a>
+                </div>
+            </div>
             
             {% if message %}
             <div class="message">{{ message }}</div>
@@ -189,6 +219,10 @@
                 <div class="stat-item">
                     <div class="stat-label">缓存项数</div>
                     <div class="stat-value">{{ cache_count }}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">生成记录数</div>
+                    <div class="stat-value">{{ generation_count_total }}</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-label">状态</div>
@@ -202,38 +236,170 @@
                 </div>
             </div>
             
+            <!-- 自适应权重信息 -->
+            {% if weights_info %}
+            <div style="background: #f0f8ff; border-left: 4px solid #2196F3; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
+                <h3 style="color: #1976D2; font-size: 16px; margin-bottom: 10px;">
+                    🧠 自适应权重系统状态
+                </h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 14px;">
+                    <div>
+                        <div style="color: #666; margin-bottom: 5px;"><strong>当前模式:</strong></div>
+                        <div style="color: #333;">{{ weights_info.description }}</div>
+                    </div>
+                    <div>
+                        <div style="color: #666; margin-bottom: 5px;"><strong>训练样本数:</strong></div>
+                        <div style="color: #333;">{{ weights_info.global_stats.total_applied }} 个推荐应用记录</div>
+                    </div>
+                </div>
+                <div style="margin-top: 15px; padding: 10px; background: white; border-radius: 4px;">
+                    <div style="color: #666; margin-bottom: 8px; font-weight: 600;">当前权重分配:</div>
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; font-size: 13px;">
+                        <div style="text-align: center; padding: 8px; background: #e3f2fd; border-radius: 4px;">
+                            <div style="color: #1976D2; font-weight: 600; font-size: 18px;">{{ (weights_info.current_weights.feedback * 100)|int }}%</div>
+                            <div style="color: #666; font-size: 12px;">用户反馈</div>
+                        </div>
+                        <div style="text-align: center; padding: 8px; background: #e8f5e9; border-radius: 4px;">
+                            <div style="color: #388E3C; font-weight: 600; font-size: 18px;">{{ (weights_info.current_weights.stability * 100)|int }}%</div>
+                            <div style="color: #666; font-size: 12px;">稳定性</div>
+                        </div>
+                        <div style="text-align: center; padding: 8px; background: #fff3e0; border-radius: 4px;">
+                            <div style="color: #F57C00; font-weight: 600; font-size: 18px;">{{ (weights_info.current_weights.consistency * 100)|int }}%</div>
+                            <div style="color: #666; font-size: 12px;">一致性</div>
+                        </div>
+                        <div style="text-align: center; padding: 8px; background: #f3e5f5; border-radius: 4px;">
+                            <div style="color: #7B1FA2; font-weight: 600; font-size: 18px;">{{ (weights_info.current_weights.frequency * 100)|int }}%</div>
+                            <div style="color: #666; font-size: 12px;">应用频率</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
             {% if cache_count > 0 %}
             <div class="cache-list">
                 <h2 style="margin-bottom: 15px; color: #333;">缓存的配置项</h2>
-                {% for key, values in cache.items()|sort %}
+                {% for key, entry in cache.items()|sort %}
                 <div class="cache-item">
-                    <div class="cache-key">{{ key }}</div>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; gap: 12px;">
+                        <div style="display: flex; flex-direction: column; gap: 6px; align-items: flex-start;">
+                            <div class="cache-key">{{ key }}</div>
+                            <div style="font-size: 11px; color: #999; font-style: italic;">
+                                💡 系统自动选择置信度最高的版本用于推荐
+                            </div>
+                            <form method="post" action="/ai-cache/clear-item" style="margin: 0;">
+                                <input type="hidden" name="key" value="{{ key }}" />
+                                <button type="submit" class="btn btn-danger" style="padding: 6px 10px; font-size: 12px;">
+                                    🗑️ 清除此项
+                                </button>
+                            </form>
+                        </div>
+                        <div style="font-size: 12px; color: #666; text-align: right; display: flex; flex-direction: column; gap: 6px; align-items: flex-end;">
+                            {% set confidence_pct = ((entry.confidence | default(0)) * 100) | int %}
+                            
+                            <!-- 综合置信度 -->
+                            <div style="margin-bottom: 8px;">
+                                {% if confidence_pct >= 80 %}{% set badge_class = 'confidence-high' %}{% elif confidence_pct >= 50 %}{% set badge_class = 'confidence-medium' %}{% else %}{% set badge_class = 'confidence-low' %}{% endif %}
+                                <span class="confidence-badge {{ badge_class }}" style="display: inline-block;">
+                                    综合置信度 {{ confidence_pct }}%
+                                </span>
+                            </div>
+                            
+                            <!-- 多维指标 -->
+                            <div style="background: #f5f5f5; padding: 8px; border-radius: 4px; margin-bottom: 8px;">
+                                <!-- 用户反馈 -->
+                                <div style="margin-bottom: 6px;">
+                                    <span style="font-weight: 600;">用户反馈:</span>
+                                    <span>👍 {{ entry.positive_feedback|default(0) }} / 👎 {{ entry.negative_feedback|default(0) }}</span>
+                                </div>
+                                
+                                <!-- 应用频率 -->
+                                <div style="margin-bottom: 6px;">
+                                    <span style="font-weight: 600;">应用:</span>
+                                    <span title="推荐值被应用的次数">{{ entry.apply_count|default(0) }} 次</span>
+                                </div>
+                                
+                                <!-- 稳定性 -->
+                                {% if entry.apply_count|default(0) > 0 %}
+                                <div style="margin-bottom: 6px;">
+                                    <span style="font-weight: 600;">稳定性:</span>
+                                    {% set metrics = entry.metrics|default({}) %}
+                                    {% set stability = metrics.get('stability_score', 0) if metrics else 0 %}
+                                    {% set stability_pct = ((stability | default(0)) * 100) | int %}
+                                    <span title="应用后未被修改的比例">{{ stability_pct }}%</span>
+                                    (改{{ entry.modification_count|default(0) }}/{{ entry.apply_count|default(0) }})
+                                </div>
+                                {% endif %}
+                                
+                                <!-- 生成一致性 -->
+                                {% if entry.metrics|default({})|length > 0 %}
+                                <div>
+                                    <span style="font-weight: 600;">一致性:</span>
+                                    {% set metrics = entry.metrics|default({}) %}
+                                    {% set consistency = metrics.get('consistency_score', 0.5) if metrics else 0.5 %}
+                                    {% set consistency_pct = ((consistency | default(0.5)) * 100) | int %}
+                                    <span title="多次生成结果的一致性">{{ consistency_pct }}%</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
                     <div class="cache-values">
+                        {% set recommendations = entry.recommendations if entry.recommendations else entry %}
                         <div class="env-value">
                             <div class="env-label">DEV</div>
                             <div class="env-val">
-                                {% if values.dev %}{{ values.dev }}{% else %}<span class="empty-val">(empty)</span>{% endif %}
+                                {% if recommendations.dev %}{{ recommendations.dev }}{% else %}<span class="empty-val">(empty)</span>{% endif %}
                             </div>
                         </div>
                         <div class="env-value">
                             <div class="env-label">TEST</div>
                             <div class="env-val">
-                                {% if values.test %}{{ values.test }}{% else %}<span class="empty-val">(empty)</span>{% endif %}
+                                {% if recommendations.test %}{{ recommendations.test }}{% else %}<span class="empty-val">(empty)</span>{% endif %}
                             </div>
                         </div>
                         <div class="env-value">
                             <div class="env-label">DEMO</div>
                             <div class="env-val">
-                                {% if values.demo %}{{ values.demo }}{% else %}<span class="empty-val">(empty)</span>{% endif %}
+                                {% if recommendations.demo %}{{ recommendations.demo }}{% else %}<span class="empty-val">(empty)</span>{% endif %}
                             </div>
                         </div>
                         <div class="env-value">
                             <div class="env-label">PROD</div>
                             <div class="env-val">
-                                {% if values.prod %}{{ values.prod }}{% else %}<span class="empty-val">(empty)</span>{% endif %}
+                                {% if recommendations.prod %}{{ recommendations.prod }}{% else %}<span class="empty-val">(empty)</span>{% endif %}
                             </div>
                         </div>
                     </div>
+                    
+                    <!-- 生成历史记录 -->
+                    {% if entry.history|default([])|length > 0 %}
+                    <details style="margin-top: 10px; padding: 10px; background: #f9f9f9; border-radius: 4px; border-left: 3px solid #999;">
+                        <summary style="cursor: pointer; font-weight: 600; color: #555; font-size: 13px;">
+                            📋 生成历史 ({{ entry.history|length }} 条记录)
+                        </summary>
+                        <div style="margin-top: 10px;">
+                            {% for hist in entry.history|reverse %}
+                            <div style="padding: 8px; margin-bottom: 6px; background: white; border-radius: 3px; font-size: 12px;">
+                                <div style="color: #666; margin-bottom: 4px;">
+                                    <span style="font-weight: 600;">时间:</span> {{ hist.timestamp[:19] }}
+                                    <span style="margin-left: 10px; font-weight: 600;">Hash:</span> {{ hist.prompt_hash }}
+                                    <span style="margin-left: 10px;">
+                                        {% if hist.success %}
+                                        <span style="color: #4caf50;">✓ 成功</span>
+                                        {% else %}
+                                        <span style="color: #f44336;">✗ 失败</span>
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                <div style="font-family: 'Courier New', monospace; color: #333; font-size: 11px;">
+                                    {{ hist.recommendations|tojson }}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </details>
+                    {% endif %}
                 </div>
                 {% endfor %}
             </div>
@@ -254,13 +420,33 @@
             {% endif %}
             
             <div class="info-box">
-                <h3>ℹ️ 关于 AI 缓存</h3>
+                <h3>ℹ️ 关于 AI 缓存增强机制</h3>
                 <ul>
-                    <li><strong>自动缓存：</strong>AI 成功生成推荐值后会自动保存</li>
-                    <li><strong>加速响应：</strong>再次查询相同变量时直接使用缓存，无需等待 AI</li>
-                    <li><strong>持久化存储：</strong>缓存保存在 <code>ai_recommendations_cache.json</code> 文件中</li>
-                    <li><strong>优先级：</strong>AI 缓存 > AI 实时生成 > 静态推荐</li>
-                    <li><strong>清除时机：</strong>当 AI 模型更新或推荐策略变化时可以清除缓存</li>
+                    <li><strong>智能缓存：</strong>AI 推荐值自动缓存，下次查询直接使用，降低 LLM 调用成本和延迟</li>
+                    
+                    <li><strong>多维置信度评分体系：</strong>综合评估推荐质量，综合置信度 = 用户反馈(30%) + 稳定性(40%) + 一致性(20%) + 频率(10%)
+                        <ul style="margin-top: 5px; margin-bottom: 0;">
+                            <li><strong>用户反馈：</strong>通过 👍/👎 按钮记录用户满意度</li>
+                            <li><strong>应用频率：</strong>推荐值被用户接受和应用的次数，越多说明越靠谱</li>
+                            <li><strong>稳定性：</strong>应用后是否被修改，未被修改的比例越高说明推荐越准确</li>
+                            <li><strong>生成一致性：</strong>多次调用 LLM 时是否生成相同推荐，一致性越高越可信</li>
+                        </ul>
+                    </li>
+                    
+                    <li><strong>🧠 自适应权重机制：</strong>系统会根据历史数据的表现自动调整各指标的权重，无需人工干预
+                        <ul style="margin-top: 5px; margin-bottom: 0;">
+                            <li><strong>高稳定性模式：</strong>当 70% 以上的推荐应用后未被修改时，增加稳定性权重至 50%</li>
+                            <li><strong>高反馈模式：</strong>当用户反馈活跃且准确时，增加反馈权重至 40%</li>
+                            <li><strong>低样本模式：</strong>当样本数 &lt;10 时，降低频率权重避免过拟合</li>
+                            <li><strong>规则增强：</strong>对"10次应用0次修改"、"连续3次点赞"等模式给予额外奖励</li>
+                        </ul>
+                    </li>
+                    
+                    <li><strong>高置信缓存参考：</strong>当置信度 ≥80% 时，在调用 LLM 生成新推荐前，系统会将历史推荐作为强参考，加速 AI 思考</li>
+                    <li><strong>自动学习机制：</strong>系统无需用户干预，自动通过使用行为学习推荐的准确性</li>
+                    <li><strong>三层优先级：</strong>高置信缓存 > 低置信缓存 > AI 实时生成 > 静态推荐</li>
+                    <li><strong>持久化存储：</strong>所有多维指标保存到 <code>ai_recommendations_cache.json</code></li>
+                    <li><strong>清除策略：</strong>当需要重新调整 AI 策略时可清除缓存，系统自动重新学习</li>
                 </ul>
             </div>
         </div>

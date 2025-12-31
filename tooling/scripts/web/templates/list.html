@@ -22,7 +22,7 @@
     <div class="container">
         <div class="card">
             <h1>All Environment Configurations</h1>
-            <p><a href="/">← Back to Home</a></p>
+            <p><a href="javascript:void(0)" onclick="window.location.href='/?t='+Date.now()">← Back to Home</a></p>
             
             {% for env in envs %}
             <h3>{{env.upper()}}</h3>
@@ -40,7 +40,7 @@
             </table>
             {% endfor %}
             
-            <p style="margin-top: 30px;"><a href="/">← Back to Home</a></p>
+            <p style="margin-top: 30px;"><a href="javascript:void(0)" onclick="window.location.href='/?t='+Date.now()">← Back to Home</a></p>
         </div>
     </div>
 </body>

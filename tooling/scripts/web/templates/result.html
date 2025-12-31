@@ -26,12 +26,18 @@
                 <p><strong>Key:</strong> {{key}}</p>
                 <p><strong>Value:</strong> <code>{{value}}</code></p>
                 <p><strong>Mode:</strong> {% if is_custom %}Custom Value{% else %}Recommended Value{% endif %}</p>
-                <p><strong>Updated:</strong> {{updated}}/{{total}} environments</p>
+                <p><strong>Updated:</strong> {{updated|length}}/{{total}} environments</p>
+                {% if updated %}
+                <p style="color: #333;">✅ Updated environments: {{", ".join(updated)}}</p>
+                {% endif %}
+                {% if skipped %}
+                <p style="color: #666;">ℹ️ Already at recommended value: {{", ".join(skipped)}}</p>
+                {% endif %}
                 {% if failed %}
                 <p class="warning">⚠️ Failed environments: {{", ".join(failed)}}</p>
                 {% endif %}
             </div>
-            <p><a href="/">← Back to Home</a> | <a href="/list">View All Configurations</a></p>
+            <p><a href="javascript:void(0)" onclick="window.location.href='/?t='+Date.now()">← Back to Home</a> | <a href="/list">View All Configurations</a></p>
         </div>
     </div>
 </body>

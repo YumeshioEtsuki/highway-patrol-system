@@ -27,6 +27,14 @@ class EnvManager:
         for env, path in self.files.items():
             result[env] = self._read_key_from_file(path, key)
         return result
+
+    def get_value(self, key: str, env: str) -> str:
+        """获取指定环境的单个键值；不存在时返回空字符串"""
+        path = self.files.get(env)
+        if not path or not path.exists():
+            return ""
+        val = self._read_key_from_file(path, key)
+        return "" if val == "(未配置)" else val
     
     def set_value(self, key: str, env: str, value: str) -> bool:
         """设置指定环境的变量值"""
@@ -92,6 +100,46 @@ class EnvManager:
                 val = val.strip()
                 if key:
                     result[key] = val
+        
+        return result
+    
+    def get_all_values_with_comments(self, env: str) -> Dict[str, Dict[str, str]]:
+        """获取指定环境的所有键值对及其注释
+        
+        返回格式: {"KEY_NAME": {"value": "...", "comment": "..."}}
+        """
+        result = {}
+        path = self.files.get(env)
+        
+        if not path or not path.exists():
+            return result
+        
+        content = path.read_text(encoding="utf-8")
+        lines = content.split('\n')
+        
+        pending_comment = []
+        for line in lines:
+            stripped = line.strip()
+            
+            # 收集注释行
+            if stripped.startswith('#'):
+                comment_text = stripped[1:].strip()
+                if comment_text:  # 忽略空注释
+                    pending_comment.append(comment_text)
+            elif stripped and '=' in stripped:
+                # 解析键值对
+                key, val = stripped.split('=', 1)
+                key = key.strip()
+                val = val.strip()
+                if key:
+                    result[key] = {
+                        "value": val,
+                        "comment": " ".join(pending_comment) if pending_comment else ""
+                    }
+                    pending_comment = []  # 清空注释缓存
+            elif not stripped:
+                # 空行清空注释缓存
+                pending_comment = []
         
         return result
     
