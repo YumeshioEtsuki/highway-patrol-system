@@ -41,6 +41,11 @@ TYPE_HINTS = {
     # JWT
     "JWT_ALGORITHM": "string",
     "JWT_EXPIRE_HOURS": "number",
+    "JWT_EXPIRE_MINUTES": "number",
+    "JWT_EXPIRE_SECONDS": "number",
+    # 时间相关
+    "SESSION_TIMEOUT": "number",
+    "CACHE_TTL": "number",
     # 默认密码
     "DEFAULT_ADMIN_PASSWORD": "password",
 }
@@ -575,7 +580,7 @@ class AIHelper:
             normalized[env] = self._normalize_by_type(var_type, key_upper, str_value, env, current_value)
 
         result["recommendations"] = normalized
-        # 标记被纠偏的环境，便于 UI/日志展示
+        # 标记被纠偏的环境，便于 UI/日志展示，附加纠偏原因
         corrections = []
         for env, raw_val in raw_recommendations.items():
             norm_val = normalized.get(env)
@@ -583,7 +588,13 @@ class AIHelper:
                 continue
             raw_s = str(raw_val).strip()
             if raw_s != norm_val:
-                corrections.append(f"{env}: {raw_s} -> {norm_val}")
+                reason = self._get_correction_reason(var_type, key_upper, raw_s, norm_val, env)
+                corrections.append({
+                    "env": env,
+                    "raw": raw_s,
+                    "normalized": norm_val,
+                    "reason": reason
+                })
         if corrections:
             result["corrections"] = corrections
         # 保证 explanation 三段式&字数限制
@@ -856,6 +867,11 @@ class AIHelper:
             try:
                 port = int(''.join(filter(str.isdigit, value)))
                 if 1 <= port <= 65535:
+                    # 检测明显的端口错配
+                    if 'REDIS' in key and port == 3306:  # MySQL端口用在Redis上
+                        port = 6379
+                    elif ('DATABASE' in key or 'MYSQL' in key) and port == 6379:  # Redis端口用在MySQL上
+                        port = 3306
                     return str(port)
                 else:
                     raise ValueError
@@ -888,6 +904,10 @@ class AIHelper:
                 # 根据变量名给默认值
                 if 'REDIS_DB' in key:
                     return current_value or '0'
+                elif 'JWT_EXPIRE_HOURS' in key or 'EXPIRE_HOURS' in key:
+                    return current_value or '24'
+                elif 'JWT_EXPIRE_MINUTES' in key or 'EXPIRE_MINUTES' in key:
+                    return current_value or '1440'
                 elif 'EXPIRE' in key or 'TTL' in key:
                     return current_value or '3600'
                 elif 'TIMEOUT' in key:
@@ -966,6 +986,44 @@ class AIHelper:
             if value in ('(empty)', 'None', 'null', '(未设置)'):
                 return ''
             return value.strip('"\' ')
+
+    def _get_correction_reason(self, var_type: str, key: str, raw_val: str, norm_val: str, env: str) -> str:
+        """生成纠偏原因说明"""
+        type_names = {
+            "bool_01": "布尔值(0/1)",
+            "bool_tf": "布尔值(True/False)",
+            "port": "端口号",
+            "number": "数字",
+            "password": "密码",
+            "host": "主机名/IP",
+            "path": "路径",
+            "string": "字符串"
+        }
+        type_display = type_names.get(var_type, var_type)
+        
+        # 常见纠偏场景说明
+        if var_type == "host" and raw_val in ("0", "1", "true", "false", "True", "False"):
+            return f"检测为{type_display}类型，AI返回的布尔值 '{raw_val}' 无效，已纠正为 '{norm_val}'"
+        elif var_type in ("bool_01", "bool_tf") and raw_val not in ("0", "1", "True", "False", "true", "false"):
+            return f"检测为{type_display}类型，AI返回的 '{raw_val}' 非标准布尔值，已规范化"
+        elif var_type == "password" and env in ("prod", "demo") and norm_val == "":
+            return f"检测为{type_display}类型，{env}环境密码已清空以符合安全最佳实践"
+        elif var_type == "string" and raw_val in ("0", "1", "true", "false", "True", "False"):
+            return f"检测为{type_display}类型，AI返回的字面量 '{raw_val}' 不适用，已保留当前值"
+        elif var_type == "port":
+            if not raw_val.isdigit():
+                return f"检测为{type_display}类型，AI返回的 '{raw_val}' 非有效端口，已纠正"
+            elif "REDIS" in key and raw_val == "3306":
+                return f"检测为Redis{type_display}，AI错误返回MySQL端口 '{raw_val}'，已纠正为Redis默认端口 '{norm_val}'"
+            elif ("DATABASE" in key or "MYSQL" in key) and raw_val == "6379":
+                return f"检测为MySQL{type_display}，AI错误返回Redis端口 '{raw_val}'，已纠正为MySQL默认端口 '{norm_val}'"
+            else:
+                return f"检测为{type_display}类型，已验证端口有效性"
+        elif var_type == "number" and not raw_val.replace("-", "").isdigit():
+            return f"检测为{type_display}类型，AI返回的 '{raw_val}' 非纯数字，已转换"
+        else:
+            return f"根据{type_display}类型规则自动纠正"
+
 
 
 # 全局单例

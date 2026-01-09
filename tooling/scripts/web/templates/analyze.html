@@ -364,10 +364,18 @@
             </div>
             {% if ai_corrections %}
             <div class="ai-explanation" style="margin-top: 10px;">
-                <p><strong>⚙️ 纠偏记录：</strong></p>
-                <ul style="margin-left: 16px; line-height: 1.6;">
+                <p><strong>⚙️ 自动纠偏记录：</strong></p>
+                <p style="font-size: 13px; opacity: 0.9; margin-bottom: 8px;">系统根据变量类型和安全规则自动校正了以下AI推荐值：</p>
+                <ul style="margin-left: 16px; line-height: 1.8; font-size: 14px;">
                     {% for c in ai_corrections %}
-                    <li>{{c}}</li>
+                    <li>
+                        <strong>{{c.env}}</strong>: 
+                        <code style="background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 3px;">{{c.raw}}</code> 
+                        → 
+                        <code style="background: rgba(255,255,255,0.3); padding: 2px 6px; border-radius: 3px;">{{c.normalized}}</code>
+                        <br>
+                        <span style="font-size: 12px; opacity: 0.85; margin-left: 8px;">💡 {{c.reason}}</span>
+                    </li>
                     {% endfor %}
                 </ul>
             </div>
